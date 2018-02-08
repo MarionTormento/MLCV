@@ -9,6 +9,13 @@ s = size(data_train,1)*(1 - 1/exp(1)); %size of bags s
 replacement = 1; % 0 for no replacement and 1 for replacement
 [bags] = bagging(n, s, data_train, replacement);
 
+%% Split Function
+idx = bags{1}(:,1) > 0.5;
+child{1}(:,:) = bags{1}(idx == 1, :);
+child{2}(:,:) = bags{1}(idx == 0, :);
+
+entropyBefore = length(bags{1}(:,3 == 1))/length(bags{1}(:,1)) * log(length(bags{1}(:,3 == 1))/length(bags{1}(:,1)));
+
 %% Plotting
 figure(1)
 scatter(data_test(:,1),data_test(:,2),'.b');
