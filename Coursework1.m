@@ -10,28 +10,7 @@ replacement = 1; % 0 for no replacement and 1 for replacement
 [bags] = bagging(n, s, data_train, replacement);
 
 %% Split Function
-idx = bags{1}(:,1) > 0;
-child{1}(:,:) = bags{1}(idx == 1, :);
-child{2}(:,:) = bags{1}(idx == 0, :);
-
-ent1B = length(bags{1}((bags{1}(:,3) == 1) == 1,:))/length(bags{1}(:,1)) * log(length(bags{1}((bags{1}(:,3) == 1) == 1,:))/length(bags{1}(:,1)));
-ent2B = length(bags{1}((bags{1}(:,3) == 2) == 1,:))/length(bags{1}(:,1)) * log(length(bags{1}((bags{1}(:,3) == 2) == 1,:))/length(bags{1}(:,1)));
-ent3B = length(bags{1}((bags{1}(:,3) == 3) == 1,:))/length(bags{1}(:,1)) * log(length(bags{1}((bags{1}(:,3) == 3) == 1,:))/length(bags{1}(:,1)));
-entB = -ent1B -ent2B -ent3B;
-
-for j = 1:2
-    for i = 1:3
-        if ~isempty(child{j}((child{j}(:,3) == i) == 1,:))
-            entA{j}(i) = length(child{j}((child{j}(:,3) == i) == 1,:))/length(child{j}(:,1)) * log(length(child{j}((child{j}(:,3) == i) == 1,:))/length(child{j}(:,1)));
-        end
-    end
-end
-entA1 = -sum(entA{1});
-entA2 = -sum(entA{2});
-
-entATotal = length(child{1}(:,1))/length(bags{1}(:,1))*entA1 + length(child{2}(:,1))/length(bags{1}(:,1))*entA2;
-
-InfGain = entB - entATotal;
+[children, infogain] = linsplitfunc(bags{1}, 0);
 
 %% Plotting
 figure(1)
@@ -110,5 +89,29 @@ function [bags] = bagging(n, s, data_train, replacement)
             randomIndexTemp(randomIndex) = [];
         end
     end
+end
 
+function [outputnodes, infogain] = linsplitfunc(inputnode, boundary)
+idx = inputnode(:,1) > boundary;
+outputnodes{1}(:,:) = inputnode(idx == 1, :);
+outputnodes{2}(:,:) = inputnode(idx == 0, :);
+
+ent1B = length(inputnode((inputnode(:,3) == 1) == 1,:))/length(inputnode(:,1)) * log(length(inputnode((inputnode(:,3) == 1) == 1,:))/length(inputnode(:,1)));
+ent2B = length(inputnode((inputnode(:,3) == 2) == 1,:))/length(inputnode(:,1)) * log(length(inputnode((inputnode(:,3) == 2) == 1,:))/length(inputnode(:,1)));
+ent3B = length(inputnode((inputnode(:,3) == 3) == 1,:))/length(inputnode(:,1)) * log(length(inputnode((inputnode(:,3) == 3) == 1,:))/length(inputnode(:,1)));
+entB = -ent1B -ent2B -ent3B;
+
+for j = 1:2
+    for i = 1:3
+        if ~isempty(outputnodes{j}((outputnodes{j}(:,3) == i) == 1,:))
+            entA{j}(i) = length(outputnodes{j}((outputnodes{j}(:,3) == i) == 1,:))/length(outputnodes{j}(:,1)) * log(length(outputnodes{j}((outputnodes{j}(:,3) == i) == 1,:))/length(outputnodes{j}(:,1)));
+        end
+    end
+end
+entA1 = -sum(entA{1});
+entA2 = -sum(entA{2});
+
+entATotal = length(outputnodes{1}(:,1))/length(inputnode(:,1))*entA1 + length(outputnodes{2}(:,1))/length(inputnode(:,1))*entA2;
+
+infogain = entB - entATotal;
 end
