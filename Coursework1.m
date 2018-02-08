@@ -10,11 +10,28 @@ replacement = 1; % 0 for no replacement and 1 for replacement
 [bags] = bagging(n, s, data_train, replacement);
 
 %% Split Function
-idx = bags{1}(:,1) > 0.5;
+idx = bags{1}(:,1) > 0;
 child{1}(:,:) = bags{1}(idx == 1, :);
 child{2}(:,:) = bags{1}(idx == 0, :);
 
-entropyBefore = length(bags{1}(:,3 == 1))/length(bags{1}(:,1)) * log(length(bags{1}(:,3 == 1))/length(bags{1}(:,1)));
+ent1B = length(bags{1}((bags{1}(:,3) == 1) == 1,:))/length(bags{1}(:,1)) * log(length(bags{1}((bags{1}(:,3) == 1) == 1,:))/length(bags{1}(:,1)));
+ent2B = length(bags{1}((bags{1}(:,3) == 2) == 1,:))/length(bags{1}(:,1)) * log(length(bags{1}((bags{1}(:,3) == 2) == 1,:))/length(bags{1}(:,1)));
+ent3B = length(bags{1}((bags{1}(:,3) == 3) == 1,:))/length(bags{1}(:,1)) * log(length(bags{1}((bags{1}(:,3) == 3) == 1,:))/length(bags{1}(:,1)));
+entB = -ent1B -ent2B -ent3B;
+
+for j = 1:2
+    for i = 1:3
+        if ~isempty(child{j}((child{j}(:,3) == i) == 1,:))
+            entA{j}(i) = length(child{j}((child{j}(:,3) == i) == 1,:))/length(child{j}(:,1)) * log(length(child{j}((child{j}(:,3) == i) == 1,:))/length(child{j}(:,1)));
+        end
+    end
+end
+entA1 = -sum(entA{1});
+entA2 = -sum(entA{2});
+
+entATotal = length(child{1}(:,1))/length(bags{1}(:,1))*entA1 + length(child{2}(:,1))/length(bags{1}(:,1))*entA2;
+
+InfGain = entB - entATotal;
 
 %% Plotting
 figure(1)
