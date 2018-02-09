@@ -23,26 +23,40 @@ rootNode = bags{1};
 % [children, infoGain] = axisSplitFunc(rootNode, axisSplitThreshold);
 % visnodes(children, replacement, infoGain);
 
+n = 1;
 %Linear Split Function
-linSplitThreshold = [0, -0.25];
-[children, infoGain] = linSplitFunc(rootNode, linSplitThreshold);
-visNodes(children, replacement, infoGain);
+for i = -3:0.1:3
+    m = 1;
+    for j = -0.5:0.1:0.5
+        linSplitThreshold = [i, j];
+        [children, infoGain] = linSplitFunc(rootNode, linSplitThreshold);
+        INFOGain(m,n) = infoGain;
+        % visNodes(children, replacement, infoGain);
+        m = m + 1;
+    end
+    n = n + 1;
+end
+
+[Mx, Ix] = max(max(INFOGain,[],2), [], 1);
+[My, Iy] = max(max(INFOGain,[],1), [], 2);
+maxInfoGain = INFOGain(Ix, Iy);
+
 
 %% Plotting
-figure
-for i = 1:length(data_train)
-    if data_train(i,3) == 1
-        plot(data_train(i,1),data_train(i,2),'or')
-        hold on
-    elseif data_train(i,3) == 2
-        plot(data_train(i,1),data_train(i,2),'+b')
-        hold on
-    elseif data_train(i,3) == 3
-        plot(data_train(i,1),data_train(i,2),'*g')
-        hold on
-    end
-end
-grid on
+% figure
+% for i = 1:length(data_train)
+%     if data_train(i,3) == 1
+%         plot(data_train(i,1),data_train(i,2),'or')
+%         hold on
+%     elseif data_train(i,3) == 2
+%         plot(data_train(i,1),data_train(i,2),'+b')
+%         hold on
+%     elseif data_train(i,3) == 3
+%         plot(data_train(i,1),data_train(i,2),'*g')
+%         hold on
+%     end
+% end
+% grid on
 
 function visNodes(inputs, replacement, infoGain)
 
@@ -169,6 +183,7 @@ for j = 1:2
 end
 entA1 = -sum(entA{1});
 entA2 = -sum(entA{2});
+
 
 entATotal = length(outputnodes{1}(:,1))/length(inputnode(:,1))*entA1 + length(outputnodes{2}(:,1))/length(inputnode(:,1))*entA2;
 
