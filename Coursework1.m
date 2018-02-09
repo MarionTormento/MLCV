@@ -5,18 +5,19 @@ close all
 
 %% Bagging
 n = 4; %number of bags, n
+infoGain = [];
 s = size(data_train,1)*(1 - 1/exp(1)); %size of bags s
 replacement = 1; % 0 for no replacement and 1 for replacement
 [bags] = bagging(n, s, data_train, replacement);
+visnodes(bags, replacement, infoGain);
 
 %% Split Function
-[children, infogain] = linsplitfunc(bags{1}, 0);
+linSplitThreshold = 0.5;
+[children, infoGain] = linsplitfunc(bags{1}, linSplitThreshold);
+visnodes(children, replacement, infoGain);
 
 %% Plotting
-figure(1)
-scatter(data_test(:,1),data_test(:,2),'.b');
-
-figure(2)
+figure
 for i = 1:length(data_train)
     if data_train(i,3) == 1
         plot(data_train(i,1),data_train(i,2),'or')
@@ -31,18 +32,20 @@ for i = 1:length(data_train)
 end
 grid on
 
-figure(3)
-for i = 1:n
+function visnodes(inputs, replacement, infoGain)
+
+figure
+for i = 1:length(inputs)
     subplot(2,2,i)
-    for ii = 1:length(bags{i})
-        if bags{i}(ii,3) == 1
-            plot(bags{i}(ii,1),bags{i}(ii,2),'or')
+    for ii = 1:length(inputs{i})
+        if inputs{i}(ii,3) == 1
+            plot(inputs{i}(ii,1),inputs{i}(ii,2),'or')
             hold on
-        elseif bags{i}(ii,3) == 2
-            plot(bags{i}(ii,1),bags{i}(ii,2),'+b')
+        elseif inputs{i}(ii,3) == 2
+            plot(inputs{i}(ii,1),inputs{i}(ii,2),'+b')
             hold on
-        elseif bags{i}(ii,3) == 3
-            plot(bags{i}(ii,1),bags{i}(ii,2),'*g')
+        elseif inputs{i}(ii,3) == 3
+            plot(inputs{i}(ii,1),inputs{i}(ii,2),'*g')
             hold on
         end
         if replacement == 0
@@ -56,18 +59,28 @@ for i = 1:n
     grid on
 end
 
-figure(4)
-for i = 1:n
+figure
+for i = 1:length(inputs)
     subplot(2,2,i)
-    histogram(bags{i}(:,3))
+    histogram(inputs{i}(:,3))
     xlabel('Catagory')
     ylabel('# of Occurances')
-    if replacement == 0
-        title(['Bag ' num2str(i) ' without replacement'])
-    elseif replacement == 1
-        title(['Bag ' num2str(i) ' with replacement'])
+    if ~isempty(infoGain)
+        if replacement == 0
+            title({['Bag ' num2str(i) ' without replacement,'];['info gain =' num2str(infoGain)]})
+        elseif replacement == 1
+            title({['Bag ' num2str(i) ' with replacement,'];['info gain =' num2str(infoGain)]})
+        end
+    else
+        if replacement == 0
+            title(['Bag ' num2str(i) ' without replacement'])
+        elseif replacement == 1
+            title(['Bag ' num2str(i) ' with replacement'])
+        end
     end
     grid on
+end
+
 end
 
 function [bags] = bagging(n, s, data_train, replacement)
