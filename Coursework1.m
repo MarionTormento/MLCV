@@ -23,24 +23,7 @@ rootNode = bags{1};
 % [children, infoGain] = axisSplitFunc(rootNode, axisSplitThreshold);
 % visnodes(children, replacement, infoGain);
 
-n = 1;
-%Linear Split Function
-for i = -3:0.1:3
-    m = 1;
-    for j = -0.5:0.1:0.5
-        linSplitThreshold = [i, j];
-        [children, infoGain] = linSplitFunc(rootNode, linSplitThreshold);
-        INFOGain(m,n) = infoGain;
-        % visNodes(children, replacement, infoGain);
-        m = m + 1;
-    end
-    n = n + 1;
-end
-
-[Mx, Ix] = max(max(INFOGain,[],2), [], 1);
-[My, Iy] = max(max(INFOGain,[],1), [], 2);
-maxInfoGain = INFOGain(Ix, Iy);
-
+[children, infoGain] = lineNodeSplit(-3, 3, -0.5, 0.5, rootNode);
 
 %% Plotting
 % figure
@@ -115,6 +98,28 @@ for i = 1:length(inputs)
     grid on
 end
 
+end
+
+function [childrenBest, infoGainBest] = lineNodeSplit(minGrad, maxGrad, minXInt, maxXInt, rootNode)
+    
+    n = 1;
+    infoGainBest = [0,0,0];
+    %Linear Split Function
+    for i = minGrad:0.1:maxGrad
+        m = 1;
+        for j = minXInt:0.1:maxXInt
+            linSplitThreshold = [i, j];
+            [children, infoGain] = linSplitFunc(rootNode, linSplitThreshold);
+            if infoGain > infoGainBest(3)
+                 infoGainBest = [m,n,infoGain];
+                 childrenBest = children;
+            end
+            % visNodes(children, replacement, infoGain);
+            m = m + 1;
+        end
+        n = n + 1;
+    end
+    
 end
 
 function [bags] = bagging(n, s, data_train, replacement)
