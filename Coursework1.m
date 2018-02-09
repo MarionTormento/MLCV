@@ -4,17 +4,29 @@ close all
 [data_train, data_test] = getData('Toy_Spiral');
 
 %% Bagging
+
 n = 4; %number of bags, n
-infoGain = [];
 s = size(data_train,1)*(1 - 1/exp(1)); %size of bags s
 replacement = 1; % 0 for no replacement and 1 for replacement
+
+infoGain = []; %initialise infoGain
+
+% bagging and visualise bags, Choose a bag for root node.
 [bags] = bagging(n, s, data_train, replacement);
-visnodes(bags, replacement, infoGain);
+visNodes(bags, replacement, infoGain);
+rootNode = bags{1};
 
 %% Split Function
-linSplitThreshold = 0.5;
-[children, infoGain] = linsplitfunc(bags{1}, linSplitThreshold);
-visnodes(children, replacement, infoGain);
+
+% %Axis Aligned Split Function
+% axisSplitThreshold = 0.5;
+% [children, infoGain] = axisSplitFunc(rootNode, axisSplitThreshold);
+% visnodes(children, replacement, infoGain);
+
+%Linear Split Function
+linSplitThreshold = [0, -0.25];
+[children, infoGain] = linSplitFunc(rootNode, linSplitThreshold);
+visNodes(children, replacement, infoGain);
 
 %% Plotting
 figure
@@ -32,7 +44,7 @@ for i = 1:length(data_train)
 end
 grid on
 
-function visnodes(inputs, replacement, infoGain)
+function visNodes(inputs, replacement, infoGain)
 
 figure
 for i = 1:length(inputs)
@@ -48,11 +60,19 @@ for i = 1:length(inputs)
             plot(inputs{i}(ii,1),inputs{i}(ii,2),'*g')
             hold on
         end
+    if ~isempty(infoGain)
+        if replacement == 0
+            title({['Bag ' num2str(i) ' without replacement,'];['info gain =' num2str(infoGain)]})
+        elseif replacement == 1
+            title({['Bag ' num2str(i) ' with replacement,'];['info gain =' num2str(infoGain)]})
+        end
+    else
         if replacement == 0
             title(['Bag ' num2str(i) ' without replacement'])
         elseif replacement == 1
             title(['Bag ' num2str(i) ' with replacement'])
         end
+    end
         xlabel('x co-ordinate')
         ylabel('y co-ordinate')
     end
@@ -104,10 +124,36 @@ function [bags] = bagging(n, s, data_train, replacement)
     end
 end
 
-function [outputnodes, infogain] = linsplitfunc(inputnode, boundary)
+function [outputnodes, infogain] = axisSplitFunc(inputnode, boundary)
 idx = inputnode(:,1) > boundary;
 outputnodes{1}(:,:) = inputnode(idx == 1, :);
 outputnodes{2}(:,:) = inputnode(idx == 0, :);
+
+ent1B = length(inputnode((inputnode(:,3) == 1) == 1,:))/length(inputnode(:,1)) * log(length(inputnode((inputnode(:,3) == 1) == 1,:))/length(inputnode(:,1)));
+ent2B = length(inputnode((inputnode(:,3) == 2) == 1,:))/length(inputnode(:,1)) * log(length(inputnode((inputnode(:,3) == 2) == 1,:))/length(inputnode(:,1)));
+ent3B = length(inputnode((inputnode(:,3) == 3) == 1,:))/length(inputnode(:,1)) * log(length(inputnode((inputnode(:,3) == 3) == 1,:))/length(inputnode(:,1)));
+entB = -ent1B -ent2B -ent3B;
+
+for j = 1:2
+    for i = 1:3
+        if ~isempty(outputnodes{j}((outputnodes{j}(:,3) == i) == 1,:))
+            entA{j}(i) = length(outputnodes{j}((outputnodes{j}(:,3) == i) == 1,:))/length(outputnodes{j}(:,1)) * log(length(outputnodes{j}((outputnodes{j}(:,3) == i) == 1,:))/length(outputnodes{j}(:,1)));
+        end
+    end
+end
+entA1 = -sum(entA{1});
+entA2 = -sum(entA{2});
+
+entATotal = length(outputnodes{1}(:,1))/length(inputnode(:,1))*entA1 + length(outputnodes{2}(:,1))/length(inputnode(:,1))*entA2;
+
+infogain = entB - entATotal;
+end
+
+function [outputnodes, infogain] = linSplitFunc(inputnode, linSplitThreshold)
+
+idx = sign(inputnode(:,2) - linSplitThreshold(1,1)*inputnode(:,1) - linSplitThreshold(1,2)) < 0;
+outputnodes{1} = inputnode(idx,:);
+outputnodes{2} = inputnode(~idx,:);
 
 ent1B = length(inputnode((inputnode(:,3) == 1) == 1,:))/length(inputnode(:,1)) * log(length(inputnode((inputnode(:,3) == 1) == 1,:))/length(inputnode(:,1)));
 ent2B = length(inputnode((inputnode(:,3) == 2) == 1,:))/length(inputnode(:,1)) * log(length(inputnode((inputnode(:,3) == 2) == 1,:))/length(inputnode(:,1)));
