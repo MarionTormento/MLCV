@@ -1,13 +1,23 @@
-09/02/2018 21:20 Marion
+10/02/2018 15:30 Jean Michel Marre
+Hello my king,
+I modified a bit all of the functions. The new process is now 
 
-I cleaned all of the functions. For the linSplitFun, i left a back up of the code you wrote. Erase if you are ok with my code. I checked, it gives the correct entropy/infoGain.
+[children, infoGain] = optimalNodeSplit(param, rootNode)
+	axisNodeSplit
+		for x=[-1 1]
+			childrenAndInfo
+				compute the outputnodes
+				computeInfo : compute the info gain
+		return best info gain and best children for axis 'x=...'
+	linearNodeSplit
+		for m=[]
+			for p =[]
+				childrenAndInfo
+					samesame
+		return best info gain and best children for linear
+	best Infogain => children and infoGain
+	
+The functions briefly describe in the code.
+Not sure my way is the best way to go... especially the last part of the optimalNodeSplit is not pretty !
 
-What is the difference between axisSplitFunc and linSplitFun ?
-
-I didnt understand part of your code (why axisSF and linSF / how the data are sorted etc).
-So I kept your code (after correction) and commented it at the bottom, and wrote the function the way I saw it. 
-Lets discuss your functions soon so that we can merge our codes :)
-
-Question on your code :
-In linSplitFunc, i don't understand how you sort the data in the beginning... Need more info on how you were trying to separate the space
-lineNodeSplit : line 116, why use m and n when we could use the exact location [i,j] ?
+Cheers

@@ -1,6 +1,5 @@
 clear all
 close all
-clc
 
 [data_train, data_test] = getData('Toy_Spiral');
 
@@ -14,20 +13,25 @@ infoGain = []; %initialise infoGain
 
 % bagging and visualise bags, Choose a bag for root node.
 [bags] = bagging(n, s, data_train, replacement);
-visNodes(bags, replacement, infoGain);
+%visNodes(bags, replacement, infoGain);
 
 %% Split Function
-%[children, infoGain] = lineNodeSplit(-3, 3, -0.5, 0.5, rootNode);
-[children, infoGain] = lineNodeSplit(-1, 1, -1, 1, rootNode);
+rootNode = bags{1};
+%[children, infoGain] = linearNodeSplit(-3, 3, -0.5, 0.5, rootNode);
+%[children, infoGain] = axisNodeSplit(-1, 1, rootNode);
+param.X = [-1, 1];
+param.Grad = [-3, 3];
+param.XInt = [-0.5, 0.5];
+[children, infoGain] = optimalNodeSplit(param, rootNode)
+visNodes(children, replacement, infoGain);
 
-
-%% Recursive test
+% %% Recursive test
 % % Branch 0 -> 1 & 2
 % rootNode = bags{1};
 % [children, infoGain] = lineNodeSplit(-1,1,-1,1,rootNode);
 % clear rootNode
 % visNodes(children, replacement, infoGain);
-% 
+
 % % Branch 2 -> 21 & 22
 % rootNode = children{2};
 % [john, infoGain] = lineNodeSplit(-1,1,-1,1,rootNode);
@@ -95,9 +99,9 @@ for i = 1:length(inputs)
         end
         if ~isempty(infoGain)
             if replacement == 0
-                title({['Bag ' num2str(i) ' without replacement,'];['info gain =' num2str(infoGain)]})
+                title({['Bag ' num2str(i) ' without replacement,'];['info gain = ' num2str(infoGain(1,3))]})
             elseif replacement == 1
-                title({['Bag ' num2str(i) ' with replacement,'];['info gain =' num2str(infoGain)]})
+                title({['Bag ' num2str(i) ' with replacement,'];['info gain = ' num2str(infoGain(1,3))]})
             end
         else
             if replacement == 0
@@ -121,9 +125,9 @@ for i = 1:length(inputs)
     ylabel('# of Occurences')
     if ~isempty(infoGain)
         if replacement == 0
-            title({['Bag ' num2str(i) ' without replacement,'];['info gain =' num2str(infoGain)]})
+            title({['Bag ' num2str(i) ' without replacement,'];['info gain = ' num2str(infoGain(1,3))]})
         elseif replacement == 1
-            title({['Bag ' num2str(i) ' with replacement,'];['info gain =' num2str(infoGain)]})
+            title({['Bag ' num2str(i) ' with replacement,'];['info gain = ' num2str(infoGain(1,3))]})
         end
     else
         if replacement == 0
@@ -137,25 +141,14 @@ end
 
 end
 
-%% MARION CODE
-function [childrenBest, infoGainBest] = lineNodeSplit(minX, maxX, minY, maxY, rootNode)
-    
+function [childrenBest, infoGainBest] = axisNodeSplit(minX, maxX, rootNode) % Compute the best 'x=...' split node for the bag
     infoGainBest = [0,0,0];
-    %Linear Split Function for x=i
-    for i = minX:0.1:maxX
-        linSplitThreshold = [1, i];
-        [children, infoGain] = lineSplitFunc(rootNode, linSplitThreshold);
+    % Axis Split Function for x=i
+    for x = minX:0.1:maxX
+        linSplitThreshold = ['X', x];
+        [children, infoGain] = childrenAndInfo(rootNode, linSplitThreshold);
         if infoGain > infoGainBest(3)
-            infoGainBest = [1, i, infoGain];
-            childrenBest = children;
-        end
-    end
-    %Linear Split Function for y=i
-    for i = minY:0.1:maxY
-        linSplitThreshold = [2, i];
-        [children, infoGain] = lineSplitFunc(rootNode, linSplitThreshold);
-        if infoGain > infoGainBest(3)
-            infoGainBest = [2,i,infoGain];
+            infoGainBest = [NaN, x, infoGain];
             childrenBest = children;
         end
     end
@@ -163,19 +156,69 @@ function [childrenBest, infoGainBest] = lineNodeSplit(minX, maxX, minY, maxY, ro
     clear infoGain
     clear linSplitThreshold
 end
-    
-function [outputnodes, infogain] = lineSplitFunc(inputnode, linSplitThreshold)
 
-split_idx = linSplitThreshold(1);
-split_th = linSplitThreshold(2);
-index = inputnode(:,split_idx) > split_th;
+function [childrenBest, infoGainBest] = linearNodeSplit(minGrad, maxGrad, minXInt, maxXInt, rootNode) % Compute the best "y=mx+p" split node for the bag
+    
+    %n = 1;
+    infoGainBest = [0,0,0];
+    %Linear Split Function y = m*x+p
+    for m = minGrad:0.1:maxGrad
+        %m = 1;
+        for p = minXInt:0.1:maxXInt
+            linSplitThreshold = [m, p];
+            [children, infoGain] = childrenAndInfo(rootNode, linSplitThreshold);
+            if infoGain > infoGainBest(3)
+                 infoGainBest = [m,p,infoGain];
+                 childrenBest = children;
+            end
+            % visNodes(children, replacement, infoGain);
+            % m = m + 1;
+        end
+        %n = n + 1;
+    end
+    
+end
+
+function [childrenBest, infoGainBest] = optimalNodeSplit(param, rootNode) % compute the optimal split node between axis and linear
+    X = param.X;
+    Grad = param.Grad;
+    XInt = param.XInt;
+    
+    [axisCh, axisInfo] = axisNodeSplit(X(1), X(2), rootNode);
+    [linearCh, linearInfo] = linearNodeSplit(Grad(1), Grad(2), XInt(1), XInt(2), rootNode);
+    
+    [maxInfo idxInfo] = max([axisInfo(1,3), linearInfo(1,3)]) %if idxInfo return 1 => Axis, 2 => linear
+    if idxInfo == 1
+        childrenBest = axisCh;
+        infoGainBest = axisInfo;
+    elseif idxInfo == 2
+        childrenBest = linearCh;
+        infoGainBest = linearInfo;
+    end
+end
+    
+function [outputnodes, infoGain] = childrenAndInfo(inputnode, linSplitThreshold)
+
+m = linSplitThreshold(1);
+p = linSplitThreshold(2);
+
+if m == 'X' % Axis aligned x = p
+    index = (inputnode(:,1) - p)>0 ;
+else % Axis aligned y = p and linear function y = m*x+p
+    index = (inputnode(:,2) - p - m*inputnode(:,1))>0 ;
+end
 outputnodes{1} = inputnode(index == 0,:);
 outputnodes{2} = inputnode(index == 1,:);
 
-clear split_idx
-clear split_th
+clear m
+clear p
 clear index
 
+infoGain = computeInfo(inputnode, outputnodes);
+
+end % return the ouput nodes for desired threhold, and the corresponding info gain
+
+function info = computeInfo(inputnode, outputnodes)
 %% Entropy before
 for i=1:3
     if ~isempty(inputnode((inputnode(:,3) == i) == 1,:))
@@ -199,10 +242,10 @@ clear prob_parent
 clear prob
 
 %% Information gain
-infogain = entBefore - entAfter;
+info = entBefore - entAfter;
 clear entAfter
 clear entBefore
-end
+end %compute the info gain
 
 
 %% EDDY'S CODE
@@ -228,31 +271,7 @@ end
 %     
 % end
 % 
-% function [outputnodes, infogain] = axisSplitFunc(inputnode, boundary) 
-% idx = inputnode(:,1) > boundary;
-% outputnodes{1} = inputnode(idx == 1, :);
-% outputnodes{2} = inputnode(idx == 0, :);
-% 
-% ent1B = length(inputnode((inputnode(:,3) == 1) == 1,:))/length(inputnode(:,1)) * log(length(inputnode((inputnode(:,3) == 1) == 1,:))/length(inputnode(:,1)));
-% ent2B = length(inputnode((inputnode(:,3) == 2) == 1,:))/length(inputnode(:,1)) * log(length(inputnode((inputnode(:,3) == 2) == 1,:))/length(inputnode(:,1)));
-% ent3B = length(inputnode((inputnode(:,3) == 3) == 1,:))/length(inputnode(:,1)) * log(length(inputnode((inputnode(:,3) == 3) == 1,:))/length(inputnode(:,1)));
-% entB = -ent1B -ent2B -ent3B;
-% 
-% for j = 1:2
-%     for i = 1:3
-%         if ~isempty(outputnodes{j}((outputnodes{j}(:,3) == i) == 1,:))
-%             entA{j}(i) = length(outputnodes{j}((outputnodes{j}(:,3) == i) == 1,:))/length(outputnodes{j}(:,1)) * log(length(outputnodes{j}((outputnodes{j}(:,3) == i) == 1,:))/length(outputnodes{j}(:,1)));
-%         end
-%     end
-% end
-% entA1 = -sum(entA{1});
-% entA2 = -sum(entA{2});
-% 
-% entATotal = length(outputnodes{1}(:,1))/length(inputnode(:,1))*entA1 + length(outputnodes{2}(:,1))/length(inputnode(:,1))*entA2;
-% 
-% infogain = entB - entATotal;
-% end
-% 
+
 % function [outputnodes, infogain] = lineSplitFunc(inputnode, linSplitThreshold)
 % 
 % idx = sign(inputnode(:,2) - linSplitThreshold(1,1)*inputnode(:,1) - linSplitThreshold(1,2)) < 0; % WHAT IS THIS ?
@@ -281,21 +300,4 @@ end
 % 
 % %% Information gain
 % infogain = entBefore - entAfter
-% 
-% %% BACK UP PREVIOUS CODE
-% % ent1B = length(inputnode((inputnode(:,3) == 1) == 1,:))/length(inputnode(:,1)) * log(length(inputnode((inputnode(:,3) == 1) == 1,:))/length(inputnode(:,1)));
-% % ent2B = length(inputnode((inputnode(:,3) == 2) == 1,:))/length(inputnode(:,1)) * log(length(inputnode((inputnode(:,3) == 2) == 1,:))/length(inputnode(:,1)));
-% % ent3B = length(inputnode((inputnode(:,3) == 3) == 1,:))/length(inputnode(:,1)) * log(length(inputnode((inputnode(:,3) == 3) == 1,:))/length(inputnode(:,1)));
-% % entB2 = -ent1B -ent2B -ent3B;
-% % 
-% % for j = 1:2
-% %     for i = 1:3
-% %         if ~isempty(outputnodes{j}((outputnodes{j}(:,3) == i) == 1,:))
-% %             entA{j}(i) = length(outputnodes{j}((outputnodes{j}(:,3) == i) == 1,:))/length(outputnodes{j}(:,1)) * log(length(outputnodes{j}((outputnodes{j}(:,3) == i) == 1,:))/length(outputnodes{j}(:,1)));
-% %         end
-% %     end
-% % end
-% % entA1 = -sum(entA{1});
-% % entA2 = -sum(entA{2});
-% % entATotal = length(outputnodes{1}(:,1))/length(inputnode(:,1))*entA1 + length(outputnodes{2}(:,1))/length(inputnode(:,1))*entA2;
 % end
