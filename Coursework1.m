@@ -22,7 +22,7 @@ rootNode = bags{1};
 param.X = [-1, 1];
 param.Grad = [-3, 3];
 param.XInt = [-0.5, 0.5];
-[children, infoGain] = optimalNodeSplit(param, rootNode)
+[children, infoGain] = optimalNodeSplit(param, rootNode);
 visNodes(children, replacement, infoGain);
 
 % %% Recursive test
@@ -176,7 +176,6 @@ function [childrenBest, infoGainBest] = linearNodeSplit(minGrad, maxGrad, minXIn
         end
         %n = n + 1;
     end
-    
 end
 
 function [childrenBest, infoGainBest] = optimalNodeSplit(param, rootNode) % compute the optimal split node between axis and linear
