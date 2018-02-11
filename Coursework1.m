@@ -16,33 +16,30 @@ infoGain = []; %initialise infoGain
 %visNodes(bags, replacement, infoGain);
 
 %% Split Function
-rootNode = bags{1};
 %[children, infoGain] = linearNodeSplit(-3, 3, -0.5, 0.5, rootNode);
 %[children, infoGain] = axisNodeSplit(-1, 1, rootNode);
 param.X = [-1, 1];
 param.Grad = [-3, 3];
 param.XInt = [-0.5, 0.5];
+
+%% Recursive test
+% Branch 0 -> 1 & 2
+rootNode = bags{1};
 [children, infoGain] = optimalNodeSplit(param, rootNode);
+clear rootNode
 visNodes(children, replacement, infoGain);
 
-% %% Recursive test
-% % Branch 0 -> 1 & 2
-% rootNode = bags{1};
-% [children, infoGain] = lineNodeSplit(-1,1,-1,1,rootNode);
-% clear rootNode
-% visNodes(children, replacement, infoGain);
+% Branch 2 -> 21 & 22
+rootNode = children{2};
+[john, infoGain] = optimalNodeSplit(param, rootNode);
+clear rootNode
+visNodes(john, replacement, infoGain);
 
-% % Branch 2 -> 21 & 22
-% rootNode = children{2};
-% [john, infoGain] = lineNodeSplit(-1,1,-1,1,rootNode);
-% clear rootNode
-% visNodes(john, replacement, infoGain);
-% 
-% % Branch 21 -> 211 & 212
-% rootNode = john{1};
-% [bob, infoGain] = lineNodeSplit(-1,1,-1,1,rootNode);
-% clear rootNode
-% visNodes(bob, replacement, infoGain);
+% Branch 21 -> 211 & 212
+rootNode = john{1};
+[bob, infoGain] = optimalNodeSplit(param, rootNode);
+clear rootNode
+visNodes(bob, replacement, infoGain);
 
 %% Plotting
 % figure
@@ -179,6 +176,7 @@ function [childrenBest, infoGainBest] = linearNodeSplit(minGrad, maxGrad, minXIn
 end
 
 function [childrenBest, infoGainBest] = optimalNodeSplit(param, rootNode) % compute the optimal split node between axis and linear
+    
     X = param.X;
     Grad = param.Grad;
     XInt = param.XInt;
@@ -188,11 +186,21 @@ function [childrenBest, infoGainBest] = optimalNodeSplit(param, rootNode) % comp
     
     [maxInfo idxInfo] = max([axisInfo(1,3), linearInfo(1,3)]) %if idxInfo return 1 => Axis, 2 => linear
     if idxInfo == 1
-        childrenBest = axisCh;
-        infoGainBest = axisInfo;
+        if isempty(linearInfo)
+            childrenBest = rootNode;
+            infoGainBest = 0;
+        else
+            childrenBest = axisCh;
+            infoGainBest = axisInfo;
+        end
     elseif idxInfo == 2
-        childrenBest = linearCh;
-        infoGainBest = linearInfo;
+        if isempty(linearInfo)
+            childrenBest = rootNode;
+            infoGainBest = 0;
+        else
+            childrenBest = linearCh;
+            infoGainBest = linearInfo;
+        end
     end
 end
     
