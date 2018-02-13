@@ -21,6 +21,7 @@ infoGain = []; %initialise infoGain
 param.X = [-1, 1];
 param.Grad = [-3, 3];
 param.XInt = [-0.5, 0.5];
+param.rho = 3;
 
 %% Recursive test
 % Branch 0 -> 1 & 2
@@ -79,6 +80,10 @@ end
 
 function visNodes(inputs, replacement, infoGain)
 
+% if ~iscell(inputs)
+%     inputs{1} = inputs;
+%     inputs{2} =[];
+% end
 % Plot the position of the toy present in each bag
 figure
 for i = 1:length(inputs)
@@ -138,34 +143,42 @@ end
 
 end
 
-function [childrenBest, infoGainBest] = axisNodeSplit(minX, maxX, rootNode) % Compute the best 'x=...' split node for the bag
+function [childrenBest, infoGainBest] = axisNodeSplit(minX, maxX, rootNode, rho) % Compute the best 'x=...' split node for the bag
     infoGainBest = [0,0,0];
+    childrenBest = [];
+    randomSamp = randperm((maxX-minX)/0.1,rho);
     % Axis Split Function for x=i
-    for x = minX:0.1:maxX
-        linSplitThreshold = ['X', x];
+    for i = 1:rho
+        linSplitThreshold = ['X', randomSamp(i)*0.1];
         [children, infoGain] = childrenAndInfo(rootNode, linSplitThreshold);
         if infoGain > infoGainBest(3)
-            infoGainBest = [NaN, x, infoGain];
+            infoGainBest = [NaN, randomSamp(i)*0.1, infoGain];
             childrenBest = children;
         end
+    end
+    if isempty(childrenBest) 
+        childrenBest = rootNode;
     end
     clear children
     clear infoGain
     clear linSplitThreshold
 end
 
-function [childrenBest, infoGainBest] = linearNodeSplit(minGrad, maxGrad, minXInt, maxXInt, rootNode) % Compute the best "y=mx+p" split node for the bag
+function [childrenBest, infoGainBest] = linearNodeSplit(minGrad, maxGrad, minXInt, maxXInt, rootNode, rho) % Compute the best "y=mx+p" split node for the bag
     
     %n = 1;
     infoGainBest = [0,0,0];
+    childrenBest = [];
+    randomSampGrad = randperm((maxGrad-minGrad)/0.1,rho);
+    randomSampInt = randperm((maxXInt-minXInt)/0.1,rho);
     %Linear Split Function y = m*x+p
-    for m = minGrad:0.1:maxGrad
+    for m = 1:rho
         %m = 1;
-        for p = minXInt:0.1:maxXInt
-            linSplitThreshold = [m, p];
+        for p = 1:rho
+            linSplitThreshold = [randomSampGrad(m)*0.1, randomSampInt(p)*0.1];
             [children, infoGain] = childrenAndInfo(rootNode, linSplitThreshold);
             if infoGain > infoGainBest(3)
-                 infoGainBest = [m,p,infoGain];
+                 infoGainBest = [randomSampGrad(m)*0.1, randomSampInt(p)*0.1,infoGain];
                  childrenBest = children;
             end
             % visNodes(children, replacement, infoGain);
@@ -173,34 +186,28 @@ function [childrenBest, infoGainBest] = linearNodeSplit(minGrad, maxGrad, minXIn
         end
         %n = n + 1;
     end
+    if isempty(childrenBest) 
+        childrenBest = rootNode;
+    end
 end
 
 function [childrenBest, infoGainBest] = optimalNodeSplit(param, rootNode) % compute the optimal split node between axis and linear
     
+    rho = param.rho;
     X = param.X;
     Grad = param.Grad;
     XInt = param.XInt;
     
-    [axisCh, axisInfo] = axisNodeSplit(X(1), X(2), rootNode);
-    [linearCh, linearInfo] = linearNodeSplit(Grad(1), Grad(2), XInt(1), XInt(2), rootNode);
+    [axisCh, axisInfo] = axisNodeSplit(X(1), X(2), rootNode, rho);
+    [linearCh, linearInfo] = linearNodeSplit(Grad(1), Grad(2), XInt(1), XInt(2), rootNode, rho);
     
     [maxInfo idxInfo] = max([axisInfo(1,3), linearInfo(1,3)]) %if idxInfo return 1 => Axis, 2 => linear
     if idxInfo == 1
-        if isempty(linearInfo)
-            childrenBest = rootNode;
-            infoGainBest = 0;
-        else
             childrenBest = axisCh;
             infoGainBest = axisInfo;
-        end
     elseif idxInfo == 2
-        if isempty(linearInfo)
-            childrenBest = rootNode;
-            infoGainBest = 0;
-        else
             childrenBest = linearCh;
             infoGainBest = linearInfo;
-        end
     end
 end
     
@@ -307,4 +314,40 @@ end %compute the info gain
 % 
 % %% Information gain
 % infogain = entBefore - entAfter
+% end
+
+% function visNodes(inputs, replacement, infoGain)
+% 
+% % Plot the position of the toy present in each bag
+% figure
+% for i = 1:length(inputs)
+%     subplot(2,2,i)
+%     for j = 1:length(inputs{i})
+%         if inputs{i}(j,3) == 1
+%             plot(inputs{i}(j,1),inputs{i}(j,2),'or')
+%             hold on
+%         elseif inputs{i}(j,3) == 2
+%             plot(inputs{i}(j,1),inputs{i}(j,2),'+b')
+%             hold on
+%         elseif inputs{i}(j,3) == 3
+%             plot(inputs{i}(j,1),inputs{i}(j,2),'*g')
+%             hold on
+%         end
+%         if ~isempty(infoGain)
+%             if replacement == 0
+%                 title({['Bag ' num2str(i) ' without replacement,'];['info gain = ' num2str(infoGain(1,3))]})
+%             elseif replacement == 1
+%                 title({['Bag ' num2str(i) ' with replacement,'];['info gain = ' num2str(infoGain(1,3))]})
+%             end
+%         else
+%             if replacement == 0
+%                 title(['Bag ' num2str(i) ' without replacement'])
+%             elseif replacement == 1
+%                 title(['Bag ' num2str(i) ' with replacement'])
+%             end
+%         end
+%             xlabel('x co-ordinate')
+%             ylabel('y co-ordinate')
+%     end
+%     grid on
 % end
