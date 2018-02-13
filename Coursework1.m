@@ -16,11 +16,6 @@ infoGain = []; %initialise infoGain
 %visNodes(bags, replacement, infoGain);
 
 %% Split Function
-%[children, infoGain] = linearNodeSplit(-3, 3, -0.5, 0.5, rootNode);
-%[children, infoGain] = axisNodeSplit(-1, 1, rootNode);
-param.X = [-1, 1];
-param.Grad = [-3, 3];
-param.XInt = [-0.5, 0.5];
 param.rho = 3;
 
 %% Recursive test
@@ -42,6 +37,7 @@ for j = 1:numlevels
         else
             childrenNewF = childrenNew;
         end
+        pause
     end
 
     children = childrenNewF;
@@ -173,7 +169,7 @@ end
 function [childrenBest, infoGainBest] = axisNodeSplit(minX, maxX, rootNode, rho) % Compute the best 'x=...' split node for the bag
     infoGainBest = [0,0,0];
     childrenBest = [];
-    randomSamp = randperm((maxX-minX)/0.1,rho);
+    randomSamp = randperm(round((maxX-minX)/0.1),rho);
     % Axis Split Function for x=i
     for i = 1:rho
         linSplitThreshold = ['X', randomSamp(i)*0.1];
@@ -196,8 +192,8 @@ function [childrenBest, infoGainBest] = linearNodeSplit(minGrad, maxGrad, minXIn
     %n = 1;
     infoGainBest = [0,0,0];
     childrenBest = [];
-    randomSampGrad = randperm((maxGrad-minGrad)/0.1,rho);
-    randomSampInt = randperm((maxXInt-minXInt)/0.1,rho);
+    randomSampGrad = randperm(round((maxGrad-minGrad)/0.1),rho);
+    randomSampInt = randperm(round((maxXInt-minXInt)/0.1),rho);
     %Linear Split Function y = m*x+p
     for m = 1:rho
         %m = 1;
@@ -221,9 +217,9 @@ end
 function [childrenBest, infoGainBest] = optimalNodeSplit(param, rootNode) % compute the optimal split node between axis and linear
     
     rho = param.rho;
-    X = param.X;
-    Grad = param.Grad;
-    XInt = param.XInt;
+    X = [min(rootNode(:,1)), max(rootNode(:,1))];
+    Grad = [-3, 3];
+    XInt = [min(rootNode(:,1)), max(rootNode(:,1))];
     
     [axisCh, axisInfo] = axisNodeSplit(X(1), X(2), rootNode, rho);
     [linearCh, linearInfo] = linearNodeSplit(Grad(1), Grad(2), XInt(1), XInt(2), rootNode, rho);
