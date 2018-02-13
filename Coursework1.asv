@@ -28,22 +28,11 @@ param.rho = 3;
 rootNode = bags{1};
 [children, infoGain] = optimalNodeSplit(param, rootNode);
 clear rootNode
-%visNodes(children, replacement, infoGain);
-childrenNewF = {};
-numlevels = 3;
+visNodes(children, replacement, infoGain);
 
-%for j = 1:numlevels   
-    for i = 1:length(children)
-        rootNode = children{i};
-        [childrenNew, infoGain] = optimalNodeSplit(param, rootNode);
-        clear rootNode
-        visNodes(childrenNew, replacement, infoGain);
-        childrenNewF = {childrenNewF, childrenNew};
-    end
-% 
-%     children = childrenNewF;
-% 
-% end
+for i = i:length(children)
+    
+end
 
 % % Branch 2 -> 21 & 22
 % rootNode = children{2};
