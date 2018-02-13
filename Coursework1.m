@@ -28,23 +28,25 @@ param.rho = 3;
 rootNode = bags{1};
 [children, infoGain] = optimalNodeSplit(param, rootNode);
 clear rootNode
-<<<<<<< HEAD
-%visNodes(children, replacement, infoGain);
-childrenNewF = {};
+visNodes2(children, replacement, infoGain);
 numlevels = 3;
 
-%for j = 1:numlevels   
+for j = 1:numlevels   
     for i = 1:length(children)
         rootNode = children{i};
         [childrenNew, infoGain] = optimalNodeSplit(param, rootNode);
         clear rootNode
-        visNodes(childrenNew, replacement, infoGain);
-        childrenNewF = {childrenNewF, childrenNew};
+        visNodes2(childrenNew, replacement, infoGain);
+        if exist('childrenNewF', 'var')
+            childrenNewF = [childrenNewF, childrenNew];
+        else
+            childrenNewF = childrenNew;
+        end
     end
-% 
-%     children = childrenNewF;
-% 
-% end
+
+    children = childrenNewF;
+
+end
 
 % % Branch 2 -> 21 & 22
 % rootNode = children{2};
@@ -73,21 +75,6 @@ numlevels = 3;
 %     end
 % end
 % grid on
-=======
-visNodes2(children, replacement, infoGain);
-
-% Branch 2 -> 21 & 22
-rootNode = children{2};
-[john, infoGain] = optimalNodeSplit(param, rootNode);
-clear rootNode
-visNodes2(john, replacement, infoGain);
-
-% Branch 21 -> 211 & 212
-rootNode = john{1};
-[bob, infoGain] = optimalNodeSplit(param, rootNode);
-clear rootNode
-visNodes2(bob, replacement, infoGain);
->>>>>>> 290ce71539c6b78328d20e96fec0b53263c94d16
 
 function [bags] = bagging(n, s, data_train, replacement)
     
@@ -109,7 +96,7 @@ function [bags] = bagging(n, s, data_train, replacement)
     end
 end
 
-function visNodes(inputs, replacement, infoGain)
+function visNodes2(inputs, replacement, infoGain)
 
 if ~iscell(inputs)
     inputscell{1}(:,:) = inputs;
@@ -117,69 +104,6 @@ if ~iscell(inputs)
     clear children
     inputs = inputscell;
 end
-
-% Plot the position of the toy present in each bag
-figure
-for i = 1:length(inputs)
-    subplot(2,2,i)
-    for j = 1:length(inputs{i})
-        if inputs{i}(j,3) == 1
-            plot(inputs{i}(j,1),inputs{i}(j,2),'or')
-            hold on
-        elseif inputs{i}(j,3) == 2
-            plot(inputs{i}(j,1),inputs{i}(j,2),'+b')
-            hold on
-        elseif inputs{i}(j,3) == 3
-            plot(inputs{i}(j,1),inputs{i}(j,2),'*g')
-            hold on
-        end
-        if ~isempty(infoGain)
-            if replacement == 0
-                title({['Bag ' num2str(i) ' without replacement,'];['info gain = ' num2str(infoGain(1,3))]})
-            elseif replacement == 1
-                title({['Bag ' num2str(i) ' with replacement,'];['info gain = ' num2str(infoGain(1,3))]})
-            end
-        else
-            if replacement == 0
-                title(['Bag ' num2str(i) ' without replacement'])
-            elseif replacement == 1
-                title(['Bag ' num2str(i) ' with replacement'])
-            end
-        end
-            xlabel('x co-ordinate')
-            ylabel('y co-ordinate')
-    end
-    grid on
-end
-
-% Plot the histogram of the toy class repartition in each bag
-figure
-for i = 1:length(inputs)
-    subplot(2,2,i)
-    if ~isempty(inputs{i})
-        histogram(inputs{i}(:,3))
-    end
-    xlabel('Category')
-    ylabel('# of Occurences')
-    if ~isempty(infoGain)
-        if replacement == 0
-            title({['Bag ' num2str(i) ' without replacement,'];['info gain = ' num2str(infoGain(1,3))]})
-        elseif replacement == 1
-            title({['Bag ' num2str(i) ' with replacement,'];['info gain = ' num2str(infoGain(1,3))]})
-        end
-    else
-        if replacement == 0
-            title(['Bag ' num2str(i) ' without replacement'])
-        elseif replacement == 1
-            title(['Bag ' num2str(i) ' with replacement'])
-        end
-    end
-    grid on
-end
-
-end
-
-function visNodes2(inputs, replacement, infoGain)
 
 % Plot the position of the toy present in each bag
 figure()
@@ -230,7 +154,9 @@ end
 %figure
 for i = 1:length(inputs)
     subplot(2,2,i+2)
-    histogram(inputs{i}(:,3))
+    if ~isempty(inputs{i})
+        histogram(inputs{i}(:,3))
+    end
     xlabel('Category')
     ylabel('# of Occurences')
     if ~isempty(infoGain)
