@@ -42,23 +42,23 @@ param.split = 'IG';     % Currently support 'information gain' only
 trees = growTrees(data_train,param);
 
 
-%%%%%%%%%%%%%%%%%%%%%%
-% Evaluate/Test Random Forest
-
-% grab the few data points and evaluate them one by one by the leant RF
-test_point = [-.5 -.7; .4 .3; -.7 .4; .5 -.5];
-for n=1:4
-    leaves = testTrees([test_point(n,:) 0],trees);
-    % average the class distributions of leaf nodes of all trees
-    p_rf = trees(1).prob(leaves,:);
-    p_rf_sum = sum(p_rf)/length(trees);
-end
-
-
-% Test on the dense 2D grid data, and visualise the results ... 
-
-% Change the RF parameter values and evaluate ... 
-
+% %%%%%%%%%%%%%%%%%%%%%%
+% % Evaluate/Test Random Forest
+% 
+% % grab the few data points and evaluate them one by one by the leant RF
+% test_point = [-.5 -.7; .4 .3; -.7 .4; .5 -.5];
+% for n=1:4
+%     leaves = testTrees([test_point(n,:) 0],trees);
+%     % average the class distributions of leaf nodes of all trees
+%     p_rf = trees(1).prob(leaves,:);
+%     p_rf_sum = sum(p_rf)/length(trees);
+% end
+% 
+% 
+% % Test on the dense 2D grid data, and visualise the results ... 
+% 
+% % Change the RF parameter values and evaluate ... 
+% 
 
 
 

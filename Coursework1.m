@@ -28,35 +28,19 @@ param.rho = 3;
 rootNode = bags{1};
 [children, infoGain] = optimalNodeSplit(param, rootNode);
 clear rootNode
-visNodes(children, replacement, infoGain);
+visNodes2(children, replacement, infoGain);
 
 % Branch 2 -> 21 & 22
 rootNode = children{2};
 [john, infoGain] = optimalNodeSplit(param, rootNode);
 clear rootNode
-visNodes(john, replacement, infoGain);
+visNodes2(john, replacement, infoGain);
 
 % Branch 21 -> 211 & 212
 rootNode = john{1};
 [bob, infoGain] = optimalNodeSplit(param, rootNode);
 clear rootNode
-visNodes(bob, replacement, infoGain);
-
-%% Plotting
-% figure
-% for i = 1:length(data_train)
-%     if data_train(i,3) == 1
-%         plot(data_train(i,1),data_train(i,2),'or')
-%         hold on
-%     elseif data_train(i,3) == 2
-%         plot(data_train(i,1),data_train(i,2),'+b')
-%         hold on
-%     elseif data_train(i,3) == 3
-%         plot(data_train(i,1),data_train(i,2),'*g')
-%         hold on
-%     end
-% end
-% grid on
+visNodes2(bob, replacement, infoGain);
 
 function [bags] = bagging(n, s, data_train, replacement)
     
@@ -142,6 +126,71 @@ for i = 1:length(inputs)
 end
 
 end
+
+function visNodes2(inputs, replacement, infoGain)
+
+% Plot the position of the toy present in each bag
+figure()
+
+if infoGain(1,1) == 'X'
+   threshold_y = -1:0.1:1;
+   threshold_x = infoGain(1,2)*ones(1,length(threshold_y));
+else
+   threshold_x = -1:0.1:1; 
+   threshold_y = infoGain(1,1).*threshold_x+infoGain(1,2);
+end
+
+for i = 1:length(inputs)
+    subplot(2,2,1)
+    for j = 1:length(inputs{i})
+        if inputs{i}(j,3) == 1
+            plot(inputs{i}(j,1),inputs{i}(j,2),'or')
+            hold on
+        elseif inputs{i}(j,3) == 2
+            plot(inputs{i}(j,1),inputs{i}(j,2),'+b')
+            hold on
+        elseif inputs{i}(j,3) == 3
+            plot(inputs{i}(j,1),inputs{i}(j,2),'*g')
+            hold on
+        end
+    end
+    if ~isempty(infoGain)
+        if replacement == 0
+            title({['Parent and threshold without replacement,'];['info gain = ' num2str(infoGain(1,3))]})
+        elseif replacement == 1
+            title({['Parent and threshold with replacement,'];['info gain = ' num2str(infoGain(1,3))]})
+        end
+    else
+        if replacement == 0
+            title(['Parent and threshold without replacement'])
+        elseif replacement == 1
+            title(['Parent and threshold with replacement'])
+        end
+    end
+    xlabel('x co-ordinate')
+    ylabel('y co-ordinate')
+    plot(threshold_x,threshold_y)
+    axis([-1 1 -1 1])
+    grid on
+end
+
+% Plot the histogram of the toy class repartition in each bag
+%figure
+for i = 1:length(inputs)
+    subplot(2,2,i+2)
+    histogram(inputs{i}(:,3))
+    xlabel('Category')
+    ylabel('# of Occurences')
+    if ~isempty(infoGain)
+            title({['Child ' num2str(i) ','];['info gain = ' num2str(infoGain(1,3))]})
+    else
+            title(['Child ' num2str(i) '.'])
+    end
+    grid on
+end
+
+end
+
 
 function [childrenBest, infoGainBest] = axisNodeSplit(minX, maxX, rootNode, rho) % Compute the best 'x=...' split node for the bag
     infoGainBest = [0,0,0];
