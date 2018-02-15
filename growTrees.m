@@ -7,7 +7,7 @@ function tree = growtrees(data,param)
 %      / \ / \                trees.prob      - class distribution of this node
 %     4  5 6  7               trees.leaf_idx  - leaf node index (empty if it is not a leaf node) 
 
-disp('Training Random Forest...');
+disp('Training Random Forest...'); 
 
 [N,D] = size(data);
 frac = 1 - 1/exp(1); % Bootstrap sampling fraction: 1 - 1/e (63.2%)
