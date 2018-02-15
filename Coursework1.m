@@ -20,29 +20,41 @@ param.rho = 3;
 param.numlevels = 3;
 
 %% Recursive test
-% Branch 0 -> 1 & 2
-rootNode = bags{1};
-[children, infoGain] = optimalNodeSplit(param, rootNode);
-clear rootNode
-visNodes2(children, replacement, infoGain);
 
+%for each of our bags !!!! DO WE WANT TO CHANGE Rho and NumLevels FOR EACH
+%BAG? !!!!
+for ii = 1:n
 
-for j = 1:param.numlevels   
-    
-    for i = 1:length(children)
-        rootNode = children{i};
-        [childrenNew, infoGain] = optimalNodeSplit(param, rootNode);
-        clear rootNode
-        visNodes2(childrenNew, replacement, infoGain);
-        if exist('childrenNewF', 'var')
-            childrenNewF = [childrenNewF, childrenNew];
-        else
-            childrenNewF = childrenNew;
+    %Split the root node into the initial children
+    rootNode = bags{i};
+    [children, infoGain] = optimalNodeSplit(param, rootNode);
+    clear rootNode
+    visNodes2(children, replacement, infoGain);
+
+    %number of levels in the tree
+    for j = 1:param.numlevels   
+
+        %for each child we decide on an optimum split function
+        for i = 1:length(children)
+            rootNode = children{i};
+            [childrenNew, infoGain] = optimalNodeSplit(param, rootNode);
+            clear rootNode
+            visNodes2(childrenNew, replacement, infoGain);
+            %create a new generation of children and concaconate the new
+            %children onto this cell array of new children
+            if exist('childrenNewF', 'var')
+                childrenNewF = [childrenNewF, childrenNew];
+            else
+                childrenNewF = childrenNew;
+            end
+            pause
         end
-        pause
-    end
 
-    children = childrenNewF;
+        %redefine our new generation of children as our current children for
+        %the next layer of the tree
+        children = childrenNewF;
+
+    end
 
 end
 
@@ -96,74 +108,75 @@ end
 
 function visNodes2(inputs, replacement, infoGain)
 
-if ~iscell(inputs)
-    inputscell{1}(:,:) = inputs;
-    inputscell{2} =[];
-    clear children
-    inputs = inputscell;
-end
-
-% Plot the position of the toy present in each bag
-figure()
-
-if infoGain(1,1) == 'X'
-   threshold_y = -1:0.1:1;
-   threshold_x = infoGain(1,2)*ones(1,length(threshold_y));
-else
-   threshold_x = -1:0.1:1; 
-   threshold_y = infoGain(1,1).*threshold_x+infoGain(1,2);
-end
-
-for i = 1:length(inputs)
-    subplot(2,2,1)
-    for j = 1:length(inputs{i})
-        if inputs{i}(j,3) == 1
-            plot(inputs{i}(j,1),inputs{i}(j,2),'or')
-            hold on
-        elseif inputs{i}(j,3) == 2
-            plot(inputs{i}(j,1),inputs{i}(j,2),'+b')
-            hold on
-        elseif inputs{i}(j,3) == 3
-            plot(inputs{i}(j,1),inputs{i}(j,2),'*g')
-            hold on
-        end
+    %error debugging, ensuring the input cell is a structure if one of the children in empty
+    if ~iscell(inputs)
+        inputscell{1}(:,:) = inputs;
+        inputscell{2} =[];
+        clear children
+        inputs = inputscell;
     end
-    if ~isempty(infoGain)
-        if replacement == 0
-            title({['Parent and threshold without replacement,'];['info gain = ' num2str(infoGain(1,3))]})
-        elseif replacement == 1
-            title({['Parent and threshold with replacement,'];['info gain = ' num2str(infoGain(1,3))]})
-        end
+
+    % Plot the position of the toy present in each bag
+    figure()
+
+    if infoGain(1,1) == 'X'
+       threshold_y = -1:0.1:1;
+       threshold_x = infoGain(1,2)*ones(1,length(threshold_y));
     else
-        if replacement == 0
-            title(['Parent and threshold without replacement'])
-        elseif replacement == 1
-            title(['Parent and threshold with replacement'])
-        end
+       threshold_x = -1:0.1:1; 
+       threshold_y = infoGain(1,1).*threshold_x+infoGain(1,2);
     end
-    xlabel('x co-ordinate')
-    ylabel('y co-ordinate')
-    plot(threshold_x,threshold_y)
-    axis([-1 1 -1 1])
-    grid on
-end
 
-% Plot the histogram of the toy class repartition in each bag
-%figure
-for i = 1:length(inputs)
-    subplot(2,2,i+2)
-    if ~isempty(inputs{i}) %if there are no points in the child, don't plot histogram or errors
-        histogram(inputs{i}(:,3))
+    for i = 1:length(inputs)
+        subplot(2,2,1)
+        for j = 1:length(inputs{i})
+            if inputs{i}(j,3) == 1
+                plot(inputs{i}(j,1),inputs{i}(j,2),'or')
+                hold on
+            elseif inputs{i}(j,3) == 2
+                plot(inputs{i}(j,1),inputs{i}(j,2),'+b')
+                hold on
+            elseif inputs{i}(j,3) == 3
+                plot(inputs{i}(j,1),inputs{i}(j,2),'*g')
+                hold on
+            end
+        end
+        if ~isempty(infoGain)
+            if replacement == 0
+                title({['Parent and threshold without replacement,'];['info gain = ' num2str(infoGain(1,3))]})
+            elseif replacement == 1
+                title({['Parent and threshold with replacement,'];['info gain = ' num2str(infoGain(1,3))]})
+            end
+        else
+            if replacement == 0
+                title(['Parent and threshold without replacement'])
+            elseif replacement == 1
+                title(['Parent and threshold with replacement'])
+            end
+        end
+        xlabel('x co-ordinate')
+        ylabel('y co-ordinate')
+        plot(threshold_x,threshold_y)
+        axis([-1 1 -1 1])
+        grid on
     end
-    xlabel('Category')
-    ylabel('# of Occurences')
-    if ~isempty(infoGain)
-            title({['Child ' num2str(i) ','];['info gain = ' num2str(infoGain(1,3))]})
-    else
-            title(['Child ' num2str(i) '.'])
+
+    % Plot the histogram of the toy class repartition in each bag
+    %figure
+    for i = 1:length(inputs)
+        subplot(2,2,i+2)
+        if ~isempty(inputs{i}) %if there are no points in the child, don't plot histogram or errors
+            histogram(inputs{i}(:,3))
+        end
+        xlabel('Category')
+        ylabel('# of Occurences')
+        if ~isempty(infoGain)
+                title({['Child ' num2str(i) ','];['info gain = ' num2str(infoGain(1,3))]})
+        else
+                title(['Child ' num2str(i) '.'])
+        end
+        grid on
     end
-    grid on
-end
 
 end
 
@@ -226,7 +239,6 @@ function [childrenBest, infoGainBest] = optimalNodeSplit(param, rootNode) % comp
     
     rho = param.rho;
     X = [min(rootNode(:,1)), max(rootNode(:,1))];
-%    Grad = [-3, 3];
     YInt = [min(rootNode(:,2)), max(rootNode(:,2))];
     
     [axisCh, axisInfo] = axisNodeSplit(X(1), X(2), rootNode, rho);
