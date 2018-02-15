@@ -26,7 +26,7 @@ param.numlevels = 3;
 for ii = 1:n
 
     %Split the root node into the initial children
-    rootNode = bags{i};
+    rootNode = bags{ii};
     [children, infoGain] = optimalNodeSplit(param, rootNode);
     clear rootNode
     visNodes2(children, replacement, infoGain);
