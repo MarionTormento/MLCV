@@ -195,8 +195,7 @@ function [childrenBest, infoGainBest] = linearNodeSplit(minYInt, maxYInt, rootNo
     infoGainBest = [0,0,0];
     childrenBest = [];
     randomSampYInt = randperm(round((maxYInt-minYInt)/0.1),rho);
-    %given an y intercept, calculate good max and min gradients
-    if rootNode(rootNode(:,2) == min(rootNode(:,2)),1) < 0
+    if rootNode(rootNode(:,2) == min(rootNode(:,2)),1) < 0 %given an y intercept, calculate valuable max and min gradients
         maxGrad = (randomSampYInt - min(rootNode(:,2)))./(-rootNode(rootNode(:,2) == min(rootNode(:,2)),1));
         minGrad = (randomSampYInt - max(rootNode(:,2)))./(-rootNode(rootNode(:,2) == max(rootNode(:,2)),1));
     else
@@ -208,6 +207,7 @@ function [childrenBest, infoGainBest] = linearNodeSplit(minYInt, maxYInt, rootNo
         %for each yint, calc 3 random grads between that points man and min
         %grad
         randomSampGrad(m,:) = minGrad/0.1 + randperm(round((abs(maxGrad(m))+abs(minGrad(m)))/0.1),rho);
+        %m = 1;
         for p = 1:rho
             linSplitThreshold = [randomSampGrad(m,p)*0.1, randomSampYInt(p)*0.1];
             [children, infoGain] = childrenAndInfo(rootNode, linSplitThreshold);
