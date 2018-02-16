@@ -49,7 +49,13 @@ for k = 1:n
             visNodes(childrenNew, replacement, infoGain);
 % ADD SECURITY IF ONLY ONE CHILDREN
             % Complete the tree
-            tree{k}{j,2*i-1} = childrenNew{1};    
+            try
+            tree{k}{j,2*i-1} = childrenNew{1};  
+            catch
+                infoGain
+                size(childrenNew)
+                zzz
+            end
             tree{k}{j,2*i} = childrenNew{2};
             % Collect a next children array for next branch
             childrenNext{2*i-1} = childrenNew{1};
@@ -176,11 +182,12 @@ function [childrenBest, infoGainBest] = axisNodeSplit(minX, maxX, rootNode, rho)
         if infoGain > infoGainBest(3)
             infoGainBest = [NaN, randomSamp(i)*0.1, infoGain];
             childrenBest = children;
+        elseif i == rho && sum(infoGainBest) == 0
+            infoGainBest = [NaN, randomSamp(i)*0.1, infoGain];
+            childrenBest = children;         
         end
     end
-    if isempty(childrenBest) 
-        childrenBest = rootNode;
-    end
+
     clear children
     clear infoGain
     clear linSplitThreshold
@@ -211,11 +218,11 @@ function [childrenBest, infoGainBest] = linearNodeSplit(minYInt, maxYInt, rootNo
             if infoGain > infoGainBest(3)
                  infoGainBest = [randomSampGrad(m,p)*0.1, randomSampYInt(p)*0.1,infoGain];
                  childrenBest = children;
+            elseif p == rho && sum(infoGainBest) == 0
+                 infoGainBest = [randomSampGrad(m,p)*0.1, randomSampYInt(p)*0.1,infoGain];
+                 childrenBest = children;
             end
-        end
-    end
-    if isempty(childrenBest) 
-        childrenBest = rootNode;
+         end
     end
 end
 
