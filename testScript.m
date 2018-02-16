@@ -209,11 +209,11 @@ function [childrenBest, infoGainBest] = axisNodeSplit(minX, maxX, rootNode, rho)
     infoGainBest.x2 = 0;
     infoGainBest.Gain = 0;
     childrenBest = [];
-    randomSamp = randperm(round((maxX-minX)/0.01),rho);
+    randomSamp = randperm(round((maxX-minX)/0.001),rho);
     % Axis Split Function for x=i
     linSplitThreshold.x1 = 'X';
     for i = 1:rho
-        threshold = minX + 0.01*randomSamp(i);
+        threshold = minX + 0.001*randomSamp(i);
         linSplitThreshold.x2 = threshold;
         [children, infoGain] = childrenAndInfo(rootNode, linSplitThreshold);
         if infoGain > infoGainBest.Gain

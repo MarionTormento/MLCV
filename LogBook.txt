@@ -1,23 +1,13 @@
-10/02/2018 15:30 Jean Michel Marre
+16/02/2018 19:30 Jean Michel Marre
 Hello my king,
-I modified a bit all of the functions. The new process is now 
 
-[children, infoGain] = optimalNodeSplit(param, rootNode)
-	axisNodeSplit
-		for x=[-1 1]
-			childrenAndInfo
-				compute the outputnodes
-				computeInfo : compute the info gain
-		return best info gain and best children for axis 'x=...'
-	linearNodeSplit
-		for m=[]
-			for p =[]
-				childrenAndInfo
-					samesame
-		return best info gain and best children for linear
-	best Infogain => children and infoGain
-	
-The functions briefly describe in the code.
-Not sure my way is the best way to go... especially the last part of the optimalNodeSplit is not pretty !
+1) Few things to finish on the testscript 
+- correct the minX maxX etc for linear, something doesnt make sense when you look at the linear curve we get
+- force the linearSplit when deltaX too small and we risk blocking the thing
+- why the tree{2..4}(4,:) has more than 8 columns? Something is not clearing correctly somewhere
 
-Cheers
+2) Copy everything in coursework and clean the % not needed anymore
+
+3) better the visual with a mention of which tree, which levels etc
+
+4) celebrate
