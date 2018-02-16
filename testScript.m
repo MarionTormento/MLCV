@@ -34,6 +34,7 @@ for k = 1:n
     [children, infoGain] = optimalNodeSplit(param, rootNode);
     clear rootNode
     visNodes(children, replacement, infoGain);
+    clear infoGain
     tree{k}{2,1} = children{1};
     tree{k}{2,2} = children{2};
     pause
@@ -68,9 +69,8 @@ for k = 1:n
         %the next layer of the tree
         children = childrenNext;
         clear ChildrenNext
-
     end
-
+    clear children
 end
 
 
@@ -343,7 +343,7 @@ end %compute the info gai
 
 function bin = leafTest(rootNode)
     for i = 1:3
-        bin(i,1) = isempty(rootNode((rootNode(:,3) == i) == 1,:))
+        bin(i,1) = isempty(rootNode((rootNode(:,3) == i) == 1,:));
     end
     bin = sum(bin);
 end
