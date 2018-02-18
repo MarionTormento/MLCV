@@ -96,7 +96,7 @@ end
 
 function visBags(inputs, replacement, infoGain)
 % Plot the position of the toy present in each bag
-figure(1)
+figure
 for i = 1:length(inputs)
     subplot(2,2,i)
     for j = 1:size(inputs{i},1)
@@ -141,14 +141,14 @@ function visNodes(inputs, replacement, infoGain)
     end
 
     % Plot the position of the toy present in each bag
-    figure(2)
+    figure()
 
     if infoGain.x1 == 'X'
        threshold_y = -1:0.1:1;
        threshold_x = infoGain.x2*ones(1,length(threshold_y));
-    elseif infoGain.x1 == 'Y'
+    elseif infoGainBest.x1 = 'Y';
        threshold_x = -1:0.1:1;
-       threshold_y = infoGain.x2*ones(1,length(threshold_x));
+       threshold_y = infoGain.y2*ones(1,length(threshold_x));
     else
        threshold_x = -1:0.1:1; 
        threshold_y = infoGain.x1.*threshold_x+infoGain.x2;
@@ -187,14 +187,13 @@ function visNodes(inputs, replacement, infoGain)
         axis([-1 1 -1 1])
         grid on
     end
-    hold off
-    
+
     % Plot the histogram of the toy class repartition in each bag
     %figure
     for i = 1:length(inputs)
         subplot(2,2,i+2)
         if ~isempty(inputs{i}) %if there are no points in the child, don't plot histogram or errors
-            histogram(inputs{i}(:,3), 0.5:1:3.5)
+            histogram(inputs{i}(:,3))
         end
         xlabel('Category')
         ylabel('# of Occurences')
@@ -204,14 +203,12 @@ function visNodes(inputs, replacement, infoGain)
                 title(['Child ' num2str(i) '.'])
         end
         grid on
-        hold off
     end
 
 end
 
 function [childrenBest, infoGainBest] = axisNodeSplit(minX, maxX, minY, maxY, rootNode, rho) % Compute the best 'x=...' split node for the bag
-    
-    infoGainBest.x1 = 'X';
+
     infoGainBest.x2 = 0;
     infoGainBest.Gain = 0;
     childrenBest = [];
@@ -220,6 +217,7 @@ function [childrenBest, infoGainBest] = axisNodeSplit(minX, maxX, minY, maxY, ro
     % Axis Split Function for x=i
     linSplitThreshold.x1 = 'X';
     for i = 1:rho
+        infoGainBest.x1 = 'X';
         threshold = minX + 0.001*randomSampX(i);
         linSplitThreshold.x2 = threshold;
         [children, infoGain] = childrenAndInfo(rootNode, linSplitThreshold);
@@ -234,11 +232,11 @@ function [childrenBest, infoGainBest] = axisNodeSplit(minX, maxX, minY, maxY, ro
     linSplitThreshold.x1 = 'Y';
     randomSampY = randperm(round((maxY-minY)/0.001),rho);
     for i = 1:rho
+        infoGainBest.x1 = 'Y';
         threshold = minY + 0.001*randomSampY(i);
         linSplitThreshold.x2 = threshold;
         [children, infoGain] = childrenAndInfo(rootNode, linSplitThreshold);
         if infoGain > infoGainBest.Gain
-            infoGainBest.x1 = 'Y';
             infoGainBest.x2 = threshold;
             infoGainBest.Gain = infoGain;
             childrenBest = children;       
@@ -256,12 +254,12 @@ function [childrenBest, infoGainBest] = linearNodeSplit(minYInt, maxYInt, rootNo
     infoGainBest.x2 = 0;
     infoGainBest.Gain = 0;
     childrenBest = [];
-    randomSampYInt = randperm(round((maxYInt-minYInt)/0.01),rho);
+    randomSampYInt = randperm(round((maxYInt-minYInt)/0.1),rho);
     %given an y intercept, calculate good max and min gradients
     if rootNode(rootNode(:,2) == min(rootNode(:,2)),1) < 0
         maxGrad = (randomSampYInt - min(rootNode(:,2)))./(-rootNode(rootNode(:,2) == min(rootNode(:,2)),1));
         minGrad = (randomSampYInt - max(rootNode(:,2)))./(-rootNode(rootNode(:,2) == max(rootNode(:,2)),1));
-    else 
+    else
         minGrad = (randomSampYInt - min(rootNode(:,2)))./(-rootNode(rootNode(:,2) == min(rootNode(:,2)),1));
         maxGrad = (randomSampYInt - max(rootNode(:,2)))./(-rootNode(rootNode(:,2) == max(rootNode(:,2)),1));
     end
@@ -314,7 +312,7 @@ p = linSplitThreshold.x2;
 if m == 'X' % Axis aligned x = p
     index = (inputnode(:,1) - p)>0 ;
 elseif m == 'Y' %axis aligned y = p
-    index = (inputnode(:,2) - p)>0 ; 
+    index = (inputnote(:,2) - p)>0 ; 
 else % Axis aligned y = p and linear function y = m*x+p
     index = (inputnode(:,2) - p - m*inputnode(:,1))>0 ;
 end

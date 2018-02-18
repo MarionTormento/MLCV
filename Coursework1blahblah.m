@@ -1,11 +1,12 @@
 clear all
 close all
+clc
 
 [data_train, data_test] = getData('Toy_Spiral');
 
 % Set the random forest parameters for instance, 
-param.num = 10;         % Number of trees
-param.depth = 5;        % trees depth
+param.num = 4;         % Number of trees
+param.depth = 4;        % trees depth
 param.splitNum = 3;     % Number of split functions to try
 param.split = 'IG';     % Currently support 'information gain' only
 
