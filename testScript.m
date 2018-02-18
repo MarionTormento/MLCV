@@ -16,8 +16,8 @@ infoGain = []; %initialise infoGain
 visBags(bags, replacement, infoGain);
 
 %% Split Function
-param.rho = 3;
-param.numlevels = 4;
+param.rho = 6;
+param.numlevels = 6;
 
 %% Recursive test
 
@@ -33,23 +33,26 @@ for k = 1:n
     tree{k}{1,1} = rootNode;
     [children, infoGain] = optimalNodeSplit(param, rootNode);
     clear rootNode
-    visNodes(children, replacement, infoGain);
+    visNodes(children, replacement, infoGain, k, 1);
     clear infoGain
     tree{k}{2,1} = children{1};
     tree{k}{2,2} = children{2};
-    pause
+    %pause
     
     %number of levels in the tree
-    for j = 3:param.numlevels   %starting from level 2 as we already found children of the bag = level 1
+    for j = 2:(param.numlevels-1)  %starting from level 2 as we already found children of the bag = level 1
 
         %for each child we decide on an optimum split function
         for i = 1:length(children)
 %%% SECURITY IS CLASS FULL %%%%%%
+            if isempty(children{i})
+                continue
+            end
             rootNode = children{i};
             isLeaf = leafTest(rootNode); 
-            if isLeaf < 2
+            if isLeaf < 2 && (length(rootNode) > 5)
                 [childrenNew, infoGain] = optimalNodeSplit(param, rootNode);
-                visNodes(childrenNew, replacement, infoGain);
+                visNodes(childrenNew, replacement, infoGain, k, j);
                 % Complete the tree
                 tree{k}{j,2*i-1} = childrenNew{1};  
                 tree{k}{j,2*i} = childrenNew{2};
@@ -60,7 +63,7 @@ for k = 1:n
                 clear rootNode
                 clear childrenNew
                 clear infoGain
-                pause         
+                %pause         
             end
         end
         
@@ -130,7 +133,7 @@ for i = 1:length(inputs)
 end
 end
 
-function visNodes(inputs, replacement, infoGain)
+function visNodes(inputs, replacement, infoGain, k, jj)
 
     %error debugging, ensuring the input cell is a structure if one of the children in empty
     if ~iscell(inputs)
@@ -187,6 +190,12 @@ function visNodes(inputs, replacement, infoGain)
         axis([-1 1 -1 1])
         grid on
     end
+    if ~isempty(infoGain)
+            text(2,0.5,{['Tree Number = ' num2str(k)],['Tree Level = rootnode + ' num2str(jj)],...
+                ['Best info gain = ' num2str(infoGain.Gain)]})
+    else
+            text(2,0.5,{['Tree Number = ' num2str(k)],['Tree Level = rootnode + ' num2str(jj)]})
+    end
     hold off
     
     % Plot the histogram of the toy class repartition in each bag
@@ -198,11 +207,7 @@ function visNodes(inputs, replacement, infoGain)
         end
         xlabel('Category')
         ylabel('# of Occurences')
-        if ~isempty(infoGain)
-                title({['Child ' num2str(i) ','];['info gain = ' num2str(infoGain.Gain)]})
-        else
-                title(['Child ' num2str(i) '.'])
-        end
+        title(['Child ' num2str(i) ','])
         grid on
         hold off
     end
@@ -279,9 +284,6 @@ function [childrenBest, infoGainBest] = linearNodeSplit(minYInt, maxYInt, rootNo
                  infoGainBest.x2 = randomSampYInt(p)*0.1;
                  infoGainBest.Gain = infoGain;
                  childrenBest = children;
-%             elseif p == rho && sum(infoGainBest) == 0
-%                  infoGainBest = [randomSampGrad(m,p)*0.1, randomSampYInt(p)*0.1,infoGain];
-%                  childrenBest = children;
             end
          end
     end
@@ -362,9 +364,10 @@ clear entAfter
 clear entBefore
 end %compute the info gai
 
-function bin = leafTest(rootNode)
+function binCount = leafTest(rootNode)
+    size(rootNode)
     for i = 1:3
         bin(i,1) = isempty(rootNode((rootNode(:,3) == i) == 1,:));
     end
-    bin = sum(bin);
+    binCount = sum(bin);
 end
