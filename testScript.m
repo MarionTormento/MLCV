@@ -16,8 +16,8 @@ infoGain = []; %initialise infoGain
 visBags(bags, replacement, infoGain);
 
 %% Split Function
-param.rho = 6;
-param.numlevels = 6;
+param.rho = 3;
+param.numlevels = 4;
 
 %% Recursive test
 
@@ -41,7 +41,6 @@ for k = 1:n
     
     %number of levels in the tree
     for j = 2:(param.numlevels-1)  %starting from level 2 as we already found children of the bag = level 1
-
         %for each child we decide on an optimum split function
         for i = 1:length(children)
 %%% SECURITY IS CLASS FULL %%%%%%
@@ -365,7 +364,6 @@ clear entBefore
 end %compute the info gai
 
 function binCount = leafTest(rootNode)
-    size(rootNode)
     for i = 1:3
         bin(i,1) = isempty(rootNode((rootNode(:,3) == i) == 1,:));
     end
