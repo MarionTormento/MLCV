@@ -13,3 +13,36 @@ Hello my king,
 4) celebrate
 
 RUN THE CODE, IT'S GODLIKE. THANK ME LATER :)
+
+TO DO LIST:
+
+1) Store the split functions which are associated with each split node, in teh split nodes. This will allow us to
+   test and classify new data points with our tree
+
+2) Store the classification associated with each leave in the leave node. e.g. if all the training points in a
+   leaf node are labelled 2. The test point which ends in that node will also have a label 2. It could be that
+   we have a posterior for each leaf node P(c|leafnum) for each class. e.g. P(1|leaf4) = 1/3
+                                                                            P(2|leaf4) = 1/2
+                                                                            P(3|leaf4) = 1/6
+
+   When we test data, we pass each data point down all trees simultaneously, in each tree it'll have a posterior
+   probability of belonging to a given class. We can then find the average posterior (either by summation or 
+   product) or take the majority vote. From this we classify the test point (see slide 54 in "MLCV_rf").
+
+3) We misinterpreted the idea of randomness factor rho.
+
+	What this means (from reading through the slide show (slides 46-39 in "MLCV_rf", again I may be wrong but
+        we can discuss this further in person), is that from the data set which each split node is given, it only
+        trains on a proportion of this data, where the proportion is given by:
+
+         proportion of data for training = rho/(number of input data points).
+
+       IF rho = number of input data point
+		all the input data points will be used (as we are doing now)  ---> High tree correlation hence
+                no point in having multiple trees in your forest.
+       ELSEIF rho = 1
+		only one of the data points passed to each split node will the trained on  ---> Very low tree
+                tree correlation, the trees in the forest are essentially training on different datasets.
+       ELSE
+               somewhere in between we must find a good balance.
+       END
