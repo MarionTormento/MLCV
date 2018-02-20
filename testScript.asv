@@ -42,10 +42,8 @@ for k = 1:n
     for j = 3:param.numlevels 
         %for each child we decide on an optimum split function
         %idx = length(children)
-        for i = 1:(2^(j-2))
+        for i = 1:length(children)
             if isempty(children{i})
-                childrenNext{2*i-1} = [];
-                childrenNext{2*i} = [];
                 continue
             end
             rootNode = children{i};
@@ -54,29 +52,23 @@ for k = 1:n
             for ii = 1:length(childrenNew)
                 isLeaf = leafTest(childrenNew{ii}, infoGain); 
                 if isLeaf
-                    prob1 = sum(childrenNew{ii}(:,3) == 1)/(sum(childrenNew{ii}(:,3) == 1)+sum(childrenNew{ii}(:,3) == 2)+sum(childrenNew{ii}(:,3) == 3));
-                    prob2 = sum(childrenNew{ii}(:,3) == 2)/(sum(childrenNew{ii}(:,3) == 1)+sum(childrenNew{ii}(:,3) == 2)+sum(childrenNew{ii}(:,3) == 3));
-                    prob3 = sum(childrenNew{ii}(:,3) == 3)/(sum(childrenNew{ii}(:,3) == 1)+sum(childrenNew{ii}(:,3) == 2)+sum(childrenNew{ii}(:,3) == 3));
+                    prob1 = sum(childrenNew{ii}(:,3) == 1)/length(childrenNew{ii});
+                    prob2 = sum(childrenNew{ii}(:,3) == 2)/length(childrenNew{ii});
+                    prob3 = sum(childrenNew{ii}(:,3) == 3)/length(childrenNew{ii});
                     leaf{leafCount} = [prob1, prob2, prob3];
                     leafCount = leafCount + 1;
-                    if ii == 1
-                        childrenNext{2*i-1} = [];
-                    elseif ii == 2
-                        childrenNext{2*i} = []; 
-                    end
-                end
-                if ~(isLeaf)
-                    tree{1,k}{j,2*i-1} = childrenNew{1};  
-                    tree{1,k}{j,2*i} = childrenNew{2};
-                    % Collect a next children array for next branch
-                    if ii == 1
-                        childrenNext{2*i-1} = childrenNew{1};
-                    elseif ii == 2
-                        childrenNext{2*i} = childrenNew{2};
-                    end
+                           childrenNext{2*i-1} = childrenNew{1};
+                    childrenNext{2*i} = childrenNew{2}; 
                 end
             end
             % Complete the tree
+            if ~(isLeaf)
+                tree{1,k}{j,2*i-1} = childrenNew{1};  
+                tree{1,k}{j,2*i} = childrenNew{2};
+                % Collect a next children array for next branch
+                childrenNext{2*i-1} = childrenNew{1};
+                childrenNext{2*i} = childrenNew{2}; 
+            end
 
             clear rootNode
             clear childrenNew
