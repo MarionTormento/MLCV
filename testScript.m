@@ -17,33 +17,30 @@ visBags(bags, replacement, infoGain);
 
 %% Split Function
 param.rho = 3;
-param.numlevels = 4;
+param.numlevels = 6;
 
 %% Recursive test
 
-%for each of our bags !!!! DO WE WANT TO CHANGE Rho and NumLevels FOR EACH
-%BAG? !!!! 
-% M answer : I don't think so,num levels and rho should always remain the same for now,
-% maybe we change later on.
-
 for k = 1:n
+    
+    %initialize
+    tree{1,k} = cell(param.numlevels, 2^(param.numlevels-1));
     
     %Split the root node into the initial children
     rootNode = bags{k};
-    tree{k}{1,1} = rootNode;
+    tree{1,k}{1,1} = rootNode;
     [children, infoGain] = optimalNodeSplit(param, rootNode);
     clear rootNode
     visNodes(children, replacement, infoGain, k, 1);
     clear infoGain
-    tree{k}{2,1} = children{1};
-    tree{k}{2,2} = children{2};
-    %pause
+    tree{1,k}{2,1} = children{1};
+    tree{1,k}{2,2} = children{2};
     
     %number of levels in the tree
-    for j = 3:(param.numlevels)  %starting from level 2 as we already found children of the bag = level 1
+    for j = 3:param.numlevels 
         %for each child we decide on an optimum split function
-        for i = 1:length(children)
-%%% SECURITY IS CLASS FULL %%%%%%
+        idx = length(children)
+        for i = 1:idx
             if isempty(children{i})
                 continue
             end
@@ -53,8 +50,8 @@ for k = 1:n
                 [childrenNew, infoGain] = optimalNodeSplit(param, rootNode);
                 visNodes(childrenNew, replacement, infoGain, k, j);
                 % Complete the tree
-                tree{k}{j,2*i-1} = childrenNew{1};  
-                tree{k}{j,2*i} = childrenNew{2};
+                tree{1,k}{j,2*i-1} = childrenNew{1};  
+                tree{1,k}{j,2*i} = childrenNew{2};
                 % Collect a next children array for next branch
                 childrenNext{2*i-1} = childrenNew{1};
                 childrenNext{2*i} = childrenNew{2};  
@@ -62,7 +59,7 @@ for k = 1:n
                 clear rootNode
                 clear childrenNew
                 clear infoGain
-                pause         
+               % pause         
             end
         end
         
@@ -256,18 +253,18 @@ end
 
 function [childrenBest, infoGainBest] = linearNodeSplit(minYInt, maxYInt, rootNode, rho) % Compute the best "y=mx+p" split node for the bag
     
-    infoGainBest.x1 = 'X';
+    infoGainBest.x1 = 0;
     infoGainBest.x2 = 0;
     infoGainBest.Gain = 0;
     childrenBest = [];
-    randomSampYInt = randperm(round((maxYInt-minYInt)/0.01),rho);
+    randomSampYInt = randperm(round((abs(maxYInt - minYInt))/0.01),rho);
     %given an y intercept, calculate good max and min gradients
     if rootNode(rootNode(:,2) == min(rootNode(:,2)),1) < 0
-        maxGrad = (randomSampYInt - min(rootNode(:,2)))./(-rootNode(rootNode(:,2) == min(rootNode(:,2)),1));
-        minGrad = (randomSampYInt - max(rootNode(:,2)))./(-rootNode(rootNode(:,2) == max(rootNode(:,2)),1));
+        maxGrad = (randomSampYInt - min(rootNode(:,2))/0.01)*0.01./(-rootNode(rootNode(:,2) == min(rootNode(:,2)),1));
+        minGrad = (randomSampYInt - max(rootNode(:,2))/0.01)*0.01./(-rootNode(rootNode(:,2) == max(rootNode(:,2)),1));
     else 
-        minGrad = (randomSampYInt - min(rootNode(:,2)))./(-rootNode(rootNode(:,2) == min(rootNode(:,2)),1));
-        maxGrad = (randomSampYInt - max(rootNode(:,2)))./(-rootNode(rootNode(:,2) == max(rootNode(:,2)),1));
+        minGrad = (randomSampYInt - min(rootNode(:,2))/0.01)*0.01./(-rootNode(rootNode(:,2) == min(rootNode(:,2)),1));
+        maxGrad = (randomSampYInt - max(rootNode(:,2))/0.01)*0.01./(-rootNode(rootNode(:,2) == max(rootNode(:,2)),1));
     end
     %Linear Split Function y = m*x+p
     for m = 1:rho

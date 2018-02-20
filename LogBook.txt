@@ -2,22 +2,12 @@
 Hello my king,
 
 1) Few things to finish on the testscript 
-- correct the minX maxX etc for linear, something doesnt make sense when you look at the linear curve we get
-- force the linearSplit when deltaX too small and we risk blocking the thing
 - why the tree{2..4}(4,:) has more than 8 columns? Something is not clearing correctly somewhere
-
-2) Copy everything in coursework and clean the % not needed anymore
-
-3) better the visual with a mention of which tree, which levels etc
-
-4) celebrate
-
-RUN THE CODE, IT'S GODLIKE. THANK ME LATER :)
 
 TO DO LIST:
 
 1) Store the split functions which are associated with each split node, in teh split nodes. This will allow us to
-   test and classify new data points with our tree
+   test and classify new data points with our tree => use the tree structure, when the tree structure is working
 
 2) Store the classification associated with each leave in the leave node. e.g. if all the training points in a
    leaf node are labelled 2. The test point which ends in that node will also have a label 2. It could be that
@@ -28,6 +18,8 @@ TO DO LIST:
    When we test data, we pass each data point down all trees simultaneously, in each tree it'll have a posterior
    probability of belonging to a given class. We can then find the average posterior (either by summation or 
    product) or take the majority vote. From this we classify the test point (see slide 54 in "MLCV_rf").
+	=> use the sum test in the end
+	=> [X/Y/L/leaf threshold/prob]
 
 3) We misinterpreted the idea of randomness factor rho.
 
