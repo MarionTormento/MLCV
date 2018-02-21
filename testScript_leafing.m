@@ -52,17 +52,6 @@ for k = 1:n
             end
             %If it's the final layer, don't bother splitting nodes or 
             %making children, just make a leaf and continue
-            if j == param.numlevels
-                %Calculate the probabilites for each classification
-                prob1 = sum(children{i}(:,3) == 1)/(sum(children{i}(:,3) == 1)+sum(children{i}(:,3) == 2)+sum(children{i}(:,3) == 3));
-                prob2 = sum(children{i}(:,3) == 2)/(sum(children{i}(:,3) == 1)+sum(children{i}(:,3) == 2)+sum(children{i}(:,3) == 3));
-                prob3 = sum(children{i}(:,3) == 3)/(sum(children{i}(:,3) == 1)+sum(children{i}(:,3) == 2)+sum(children{i}(:,3) == 3));
-                %Create the leaf and tag it with its tree num,
-                %layer num etc.
-                leaf{leafCount} = [k, j, i, prob1, prob2, prob3];
-                leafCount = leafCount + 1;
-                %continue
-            end
             rootNode = children{i};
             %Test if the root will have previously been deemed a leaf node
             isRootLeaf = leafTest(rootNode);
@@ -87,15 +76,26 @@ for k = 1:n
                     prob3 = sum(childrenNew{ii}(:,3) == 3)/(sum(childrenNew{ii}(:,3) == 1)+sum(childrenNew{ii}(:,3) == 2)+sum(childrenNew{ii}(:,3) == 3));
                     % Create the leaf and tag it with its tree num,
                     % layer num etc.
-                    leaf{leafCount} = [k, j, 2*i, prob1, prob2, prob3];
+                    leaf{leafCount} = [k, j, 2*i-(2-ii), prob1, prob2, prob3];
                     leafCount = leafCount + 1;
+                    tree{1,k}{j,2*i-(2-ii)} = childrenNew{ii};
                     childrenNext{2*i-(2-ii)} = childrenNew{ii}; 
                 %Elseif child is not leaf, create its new children
                 elseif ~(isChildLeaf)
                    tree{1,k}{j,2*i-(2-ii)} = childrenNew{ii};
                    childrenNext{2*i-(2-ii)} = childrenNew{ii};
                 end
-            end       
+                if j == param.numlevels
+                    %Calculate the probabilites for each classification
+                    prob1 = sum(childrenNew{ii}(:,3) == 1)/(sum(childrenNew{ii}(:,3) == 1)+sum(childrenNew{ii}(:,3) == 2)+sum(childrenNew{ii}(:,3) == 3));
+                    prob2 = sum(childrenNew{ii}(:,3) == 2)/(sum(childrenNew{ii}(:,3) == 1)+sum(childrenNew{ii}(:,3) == 2)+sum(childrenNew{ii}(:,3) == 3));
+                    prob3 = sum(childrenNew{ii}(:,3) == 3)/(sum(childrenNew{ii}(:,3) == 1)+sum(childrenNew{ii}(:,3) == 2)+sum(childrenNew{ii}(:,3) == 3));
+                    %Create the leaf and tag it with its tree num,
+                    %layer num etc.
+                    leaf{leafCount} = [k, j, 2*i-(2-ii), prob1, prob2, prob3];
+                    leafCount = leafCount + 1;
+                end
+            end
             % Complete the tree
 
             clear rootNode
