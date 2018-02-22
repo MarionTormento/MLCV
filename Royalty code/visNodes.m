@@ -1,4 +1,4 @@
-function visNodes(inputs, replacement, infoGain, k, jj)
+function visNodes(inputs, infoGain, k, jj)
 
     %error debugging, ensuring the input cell is a structure if one of the children in empty
     if ~iscell(inputs)
@@ -36,19 +36,7 @@ function visNodes(inputs, replacement, infoGain, k, jj)
                 hold on
             end
         end
-        if ~isempty(infoGain)
-            if replacement == 0
-                title({['Parent and threshold without replacement,'];['info gain = ' num2str(infoGain.Gain)]})
-            elseif replacement == 1
-                title({['Parent and threshold with replacement,'];['info gain = ' num2str(infoGain.Gain)]})
-            end
-        else
-            if replacement == 0
-                title(['Parent and threshold without replacement'])
-            elseif replacement == 1
-                title(['Parent and threshold with replacement'])
-            end
-        end
+        title({['Parent and split function']})
         xlabel('x co-ordinate')
         ylabel('y co-ordinate')
         plot(threshold_x,threshold_y)

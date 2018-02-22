@@ -1,18 +1,12 @@
-22/02/2018 Marion question
-- reexplain how the gradient things works  ------ Your king has made his work clearer and commented it -----
+22/02/2018
+
+- reexplain how the gradient things in Linear Split node works  
 - why try catch in axisNodeSplit ?   ----- We were planning on doing this for when randomPerm doesn't work because
                                            K is less than N or some shit like that, think we fixed it though -----
 
-22/02/2018 Your Royal Highness, Edward VII.
 
-- I did the commenting etc described above in testScript_leafy.m is that good or no?
-
-TO DO LIST:
-
-1) Store the split functions which are associated with each split node, in teh split nodes. This will allow us to
-   test and classify new data points with our tree => use the tree structure, when the tree structure is working
-
-Color map ?
+- Store the split functions which are associated with each split node, in teh split nodes => Done in the testScript_SliptFct
+files, please let me know how you love it 
 
 2) Store the classification associated with each leave in the leave node. e.g. if all the training points in a
    leaf node are labelled 2. The test point which ends in that node will also have a label 2. It could be that

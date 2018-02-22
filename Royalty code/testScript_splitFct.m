@@ -5,16 +5,16 @@ close all
 
 %% Bagging
 
-n = 4; %number of bags, n
-s = size(data_train,1)*(1 - 1/exp(1)); %size of bags s
-replacement = 1; % 0 for no replacement and 1 for replacement
+param.n = 4; %number of bags, n
+param.s = size(data_train,1)*(1 - 1/exp(1)); %size of bags s
+param.replacement = 1; % 0 for no replacement and 1 for replacement
 leafCount = 1;
 
 infoGain = []; %initialise infoGain
 
 % bagging and visualise bags, Choose a bag for root node.
-[bags] = bagging(n, s, data_train, replacement);
-visBags(bags, replacement, infoGain);
+[bags] = bagging(param, data_train);
+visBags(bags, param.replacement, infoGain);
 
 %% Split Function
 param.numfunct = 3;
@@ -23,7 +23,7 @@ param.rho = 0.8;
 
 %% Recursive test
 
-for k = 1:n
+for k = 1:param.n
     
     %initialize
     tree{1,k} = cell(param.numlevels, 2^(param.numlevels-1));
@@ -35,7 +35,7 @@ for k = 1:n
     [children, infoGain] = optimalNodeSplit(param, rootNode);
     splitFct{1,k}{1,1} = infoGain;
     clear rootNode
-    visNodes(children, replacement, infoGain, k, 1);
+    visNodes(children, infoGain, k, 1);
     clear infoGain
     tree{1,k}{2,1} = children{1};
     tree{1,k}{2,2} = children{2};
@@ -65,7 +65,7 @@ for k = 1:n
             %Elseif the root is not a leaf, perform split function
             [childrenNew, infoGain] = optimalNodeSplit(param, rootNode);
             splitFct{1,k}{j-1,i} = infoGain;
-            visNodes(childrenNew, replacement, infoGain, k, j);
+            visNodes(childrenNew, infoGain, k, j);
             for m = 1:length(childrenNew)
                 % For each childNew, check if it is a leaf
                 isChildLeaf = leafTest(childrenNew{m}); 

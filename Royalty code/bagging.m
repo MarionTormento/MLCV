@@ -1,4 +1,7 @@
-function [bags] = bagging(n, s, data_train, replacement)
+function [bags] = bagging(param, data_train)
+    replacement = param.replacement;
+    n = param.n;
+    s = param.s;
     
     if replacement == 1
         %with replacement
