@@ -1,6 +1,11 @@
 22/02/2018 Marion question
-- reexplain how the gradient things works
-- why try catch in axisNodeSplit ?
+- reexplain how the gradient things works  ------ Your king has made his work clearer and commented it -----
+- why try catch in axisNodeSplit ?   ----- We were planning on doing this for when randomPerm doesn't work because
+                                           K is less than N or some shit like that, think we fixed it though -----
+
+22/02/2018 Your Royal Highness, Edward VII.
+
+- I did the commenting etc described above in testScript_leafy.m is that good or no?
 
 TO DO LIST:
 
