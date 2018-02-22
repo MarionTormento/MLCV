@@ -37,18 +37,20 @@ for k = 1:n
     clear infoGain
     tree{1,k}{2,1} = children{1};
     tree{1,k}{2,2} = children{2};
-
+    parent = children;
+    clear children
+    
     %number of levels in the tree
     for j = 3:param.numlevels 
         %for each child we decide on an optimum split function
         idx = 2^(j-2);
         for i = 1:idx
-            if isempty(children{i})
-                childrenNext{2*i-1} = cell(0);
-                childrenNext{2*i} = cell(0);
+            if isempty(parent{i})
+                children{2*i-1} = cell(0);
+                children{2*i} = cell(0);
                 continue
             end
-            rootNode = children{i};
+            rootNode = parent{i};
             [childrenNew, infoGain] = optimalNodeSplit(param, rootNode);
             visNodes(childrenNew, replacement, infoGain, k, j);
             for ii = 1:length(childrenNew)
@@ -60,9 +62,9 @@ for k = 1:n
                     leaf{leafCount} = [prob1, prob2, prob3];
                     leafCount = leafCount + 1;
                     if ii == 1
-                        childrenNext{2*i-1} = cell(0);
+                        children{2*i-1} = cell(0);
                     elseif ii == 2
-                        childrenNext{2*i} = cell(0); 
+                        children{2*i} = cell(0); 
                     end
                 end
                 if ~(isLeaf)
@@ -70,9 +72,9 @@ for k = 1:n
                     tree{1,k}{j,2*i} = childrenNew{2};
                     % Collect a next children array for next branch
                     if ii == 1
-                        childrenNext{2*i-1} = childrenNew{1};
+                        children{2*i-1} = childrenNew{1};
                     elseif ii == 2
-                        childrenNext{2*i} = childrenNew{2};
+                        children{2*i} = childrenNew{2};
                     end
                 end
             end
@@ -84,11 +86,11 @@ for k = 1:n
            % pause               
         end
         
-        clear children
+        clear parent
         %redefine our new generation of children as our current children for
         %the next layer of the tree
-        children = childrenNext;
-        clear ChildrenNext
+        parent = children;
+        clear children
     end
-    clear children
+    clear parent
 end

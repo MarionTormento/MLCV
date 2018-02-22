@@ -27,11 +27,13 @@ for k = 1:n
     
     %initialize
     tree{1,k} = cell(param.numlevels, 2^(param.numlevels-1));
+    splitFct{1,k} = cell(param.numlevels-1,2^(param.numlevels-2));
     
     %Split the root node into the initial children
     rootNode = bags{k};
     tree{1,k}{1,1} = rootNode;
     [children, infoGain] = optimalNodeSplit(param, rootNode);
+    splitFct{1,k}{1,1} = infoGain;
     clear rootNode
     visNodes(children, replacement, infoGain, k, 1);
     clear infoGain
@@ -57,10 +59,12 @@ for k = 1:n
             if isRootLeaf
                 children{2*i-1} = cell(0);
                 children{2*i} = cell(0);
+                splitFct{1,k}{j-1,i} = 'Leaf'
                 continue
             end
             %Elseif the root is not a leaf, perform split function
             [childrenNew, infoGain] = optimalNodeSplit(param, rootNode);
+            splitFct{1,k}{j-1,i} = infoGain;
             visNodes(childrenNew, replacement, infoGain, k, j);
             for m = 1:length(childrenNew)
                 % For each childNew, check if it is a leaf
