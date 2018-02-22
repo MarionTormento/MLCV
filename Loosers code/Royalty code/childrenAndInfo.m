@@ -4,11 +4,11 @@ m = linSplitThreshold.x1;
 p = linSplitThreshold.x2;
 
 if m == 'X' % Axis aligned x = p
-    index = (inputnode(:,1) - p) > 0 ;
+    index = (inputnode(:,1) - p)>0 ;
 elseif m == 'Y' %axis aligned y = p
-    index = (inputnode(:,2) - p) > 0 ; 
+    index = (inputnode(:,2) - p)>0 ; 
 else % Axis aligned y = p and linear function y = m*x+p
-    index = (inputnode(:,2) - p - m*inputnode(:,1)) > 0 ;
+    index = (inputnode(:,2) - p - m*inputnode(:,1))>0 ;
 end
 outputnodes{1} = inputnode(index == 0,:);
 outputnodes{2} = inputnode(index == 1,:);

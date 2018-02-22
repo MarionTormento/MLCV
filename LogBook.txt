@@ -1,13 +1,13 @@
-16/02/2018 19:30 Jean Michel Marre
-Hello my king,
-
-1) Few things to finish on the testscript 
-- why the tree{2..4}(4,:) has more than 8 columns? Something is not clearing correctly somewhere
+22/02/2018 Marion question
+- reexplain how the gradient things works
+- why try catch in axisNodeSplit ?
 
 TO DO LIST:
 
 1) Store the split functions which are associated with each split node, in teh split nodes. This will allow us to
    test and classify new data points with our tree => use the tree structure, when the tree structure is working
+
+Color map ?
 
 2) Store the classification associated with each leave in the leave node. e.g. if all the training points in a
    leaf node are labelled 2. The test point which ends in that node will also have a label 2. It could be that

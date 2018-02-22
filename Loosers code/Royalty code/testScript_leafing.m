@@ -48,8 +48,8 @@ for k = 1:n
             % If the child is empty set its children to empty and
             % continue
             if isempty(parent{i})
-                childrenNext{2*i-1} = cell(0);
-                childrenNext{2*i} = cell(0);
+                childrenNext{2*i-1} = [];
+                childrenNext{2*i} = [];
                 continue
             end
             %If it's the final layer, don't bother splitting nodes or 
@@ -59,8 +59,8 @@ for k = 1:n
             isRootLeaf = leafTest(rootNode);
             %If the root is already a leaf make its children empty and continue
             if isRootLeaf
-                childrenNext{2*i-1} = cell(0);
-                childrenNext{2*i} = cell(0);
+                childrenNext{2*i-1} = [];
+                childrenNext{2*i} = [];
                 continue
             end
             %Elseif the root is not a leaf, perform split function

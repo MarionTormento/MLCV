@@ -3,6 +3,9 @@ function [childrenBest, infoGainBest] = optimalNodeSplit(param, rootNode) % comp
     
     rho = round(length(rootNode)*param.rho);
     numfunct = param.numfunct;
+    
+%     id = randperm(length(rootNode),rho);
+%     data = rootNode(id,:);
         
     X = [min(rootNode(:,1)), max(rootNode(:,1))];
     YInt = [min(rootNode(:,2)), max(rootNode(:,2))];
