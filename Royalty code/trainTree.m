@@ -87,6 +87,7 @@ function [leaf, splitFct] = trainTree(bags, param)
             %the next layer of the tree
             parent = children;
             clear Children
+            disp('...')
         end
         clear parent
     end

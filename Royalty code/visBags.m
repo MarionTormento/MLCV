@@ -1,4 +1,4 @@
-function visBags(inputs, replacement, infoGain)
+function visBags(inputs, replacement)
 % Plot the position of the toy present in each bag
 figure(1)
 for i = 1:length(inputs)
@@ -14,21 +14,13 @@ for i = 1:length(inputs)
             plot(inputs{i}(j,1),inputs{i}(j,2),'*g')
             hold on
         end
-        if ~isempty(infoGain)
-            if replacement == 0
-                title({['Bag ' num2str(i) ' without replacement,'];['info gain = ' num2str(infoGain(1,3))]})
-            elseif replacement == 1
-                title({['Bag ' num2str(i) ' with replacement,'];['info gain = ' num2str(infoGain(1,3))]})
-            end
-        else
-            if replacement == 0
-                title(['Bag ' num2str(i) ' without replacement'])
-            elseif replacement == 1
-                title(['Bag ' num2str(i) ' with replacement'])
-            end
+        if replacement == 0
+            title(['Bag ' num2str(i) ' without replacement'])
+        elseif replacement == 1
+            title(['Bag ' num2str(i) ' with replacement'])
         end
-            xlabel('x co-ordinate')
-            ylabel('y co-ordinate')
+        xlabel('x co-ordinate')
+        ylabel('y co-ordinate')
     end
     grid on
 end

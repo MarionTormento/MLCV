@@ -1,5 +1,6 @@
 function [bags] = bagging(n, s, data_train, replacement)
     
+
     if replacement == 1
         %with replacement
         for i = 1:n
