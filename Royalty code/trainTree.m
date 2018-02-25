@@ -14,13 +14,26 @@ function [leaf, splitFct] = trainTree(bags, param)
         tree{1,k}{1,1} = rootNode;
         [children, infoGain] = optimalNodeSplit(param, rootNode);
         splitFct{1,k}{1,1} = infoGain;
+        for m = 1:length(children)
+            isThisLeaf = leafTest(children{m});
+            if isThisLeaf
+                        %Calculate the probabilites for each classification
+                        prob1 = sum(children{m}(:,3) == 1)/size(children{m},1);
+                        prob2 = sum(children{m}(:,3) == 2)/size(children{m},1);
+                        prob3 = sum(children{m}(:,3) == 3)/size(children{m},1);
+                        % Create the leaf and tag it with its tree num,
+                        % layer num etc.
+                        leaf(leafCount,:) = [k, 2, m, prob1, prob2, prob3];
+                        leafCount = leafCount + 1; 
+            end
+        end
         clear rootNode
         visNodes(children, infoGain, k, 1);
         clear infoGain
         tree{1,k}{2,1} = children{1};
         tree{1,k}{2,2} = children{2};
         parent = children;
-        clear children;
+        clear children
 
         %number of levels in the tree
         for j = 3:param.numlevels
@@ -39,7 +52,7 @@ function [leaf, splitFct] = trainTree(bags, param)
                 if isRootLeaf
                     children{2*i-1} = cell(0);
                     children{2*i} = cell(0);
-                    splitFct{1,k}{j-1,i} = 'Leaf';
+                    splitFct{1,k}{j-1,i}.x1 = 'Leaf';
                     continue
                 end
                 %Elseif the root is not a leaf, perform split function
@@ -58,7 +71,8 @@ function [leaf, splitFct] = trainTree(bags, param)
                         prob3 = sum(childrenNew{m}(:,3) == 3)/size(childrenNew{m},1);
                         % Create the leaf and tag it with its tree num,
                         % layer num etc.
-                        leaf{leafCount} = [k, j, 2*i-(2-m), prob1, prob2, prob3];
+                        leaf(leafCount,:) = [k, j, 2*i-(2-m), prob1, prob2, prob3];
+                        %leaf(leafCount,:) = [k, j, i, prob1, prob2, prob3];
                         leafCount = leafCount + 1;
                         tree{1,k}{j,2*i-(2-m)} = childrenNew{m};
                         children{2*i-(2-m)} = childrenNew{m}; 
@@ -73,8 +87,10 @@ function [leaf, splitFct] = trainTree(bags, param)
                         prob2 = sum(childrenNew{m}(:,3) == 2)/(sum(childrenNew{m}(:,3) == 1)+sum(childrenNew{m}(:,3) == 2)+sum(childrenNew{m}(:,3) == 3));
                         prob3 = sum(childrenNew{m}(:,3) == 3)/(sum(childrenNew{m}(:,3) == 1)+sum(childrenNew{m}(:,3) == 2)+sum(childrenNew{m}(:,3) == 3));
                         %Create the leaf and tag it with its tree num,
-                        leaf{leafCount} = [k, j, 2*i-(2-m), prob1, prob2, prob3];
+                        leaf(leafCount,:) = [k, j, 2*i-(2-m), prob1, prob2, prob3];
+                        %leaf(leafCount,:) = [k, j, i, prob1, prob2, prob3];
                         leafCount = leafCount + 1;
+                        splitFct{1,k}{j,2*i-(2-m)}.x1 = 'Leaf';
                     end
                 end
                 clear rootNode
