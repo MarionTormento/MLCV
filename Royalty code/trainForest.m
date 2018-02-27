@@ -1,4 +1,4 @@
-function [leaf, splitFct] = trainTree(bags, param)
+function [leaf, splitFct] = trainForest(bags, param)
 
     leafCount = 1;
     infoGain = []; %initialise infoGain

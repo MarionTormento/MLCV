@@ -2,7 +2,7 @@ function visBags(inputs, replacement)
 % Plot the position of the toy present in each bag
 figure(1)
 for i = 1:length(inputs)
-    subplot(2,2,i)
+    subplot(2,length(inputs)/2,i)
     for j = 1:size(inputs{i},1)
         if inputs{i}(j,3) == 1
             plot(inputs{i}(j,1),inputs{i}(j,2),'or')
