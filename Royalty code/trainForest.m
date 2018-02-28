@@ -28,7 +28,7 @@ function [leaf, splitFct] = trainForest(bags, param)
             end
         end
         clear rootNode
-        visNodes(children, infoGain, k, 1);
+        %visNodes(children, infoGain, k, 1);
         clear infoGain
         tree{1,k}{2,1} = children{1};
         tree{1,k}{2,2} = children{2};
@@ -58,7 +58,7 @@ function [leaf, splitFct] = trainForest(bags, param)
                 %Elseif the root is not a leaf, perform split function
                 [childrenNew, infoGain] = optimalNodeSplit(param, rootNode);
                 splitFct{1,k}{j-1,i} = infoGain;
-                visNodes(childrenNew, infoGain, k, j);
+                %visNodes(childrenNew, infoGain, k, j);
                 for m = 1:length(childrenNew)
                     % For each childNew, check if it is a leaf
                     isChildLeaf = leafTest(childrenNew{m}); 

@@ -62,21 +62,17 @@ function [classPred] = testForest(param, data_test, leaves, nodes, displayClassD
         end
 
     end
-
+    
     if displayMap == 1    
-        figure()
-        for ii = 1:length(classPred)   
-            if classPred(ii) == 1
-                plot(data_test(ii,1),data_test(ii,2),'or')
-                hold on
-            elseif classPred(ii) == 2
-                plot(data_test(ii,1),data_test(ii,2),'ob')
-                hold on
-            else
-                plot(data_test(ii,1),data_test(ii,2),'og')
-                hold on
-            end
-        end
+        figure
+        plot(data_test(classPred(:) == 1,1),data_test(classPred(:) == 1,2),'or')
+        hold on
+        plot(data_test(classPred(:) == 2,1),data_test(classPred(:) == 2,2),'ob')
+        hold on
+        plot(data_test(classPred(:) == 3,1),data_test(classPred(:) == 3,2),'og')
+        title({['Number of Trees' num2str(param.n)],['Number of levels' num2str(param.numlevels)],...
+                ['Number of Split Functions' num2str(param.numfunct)], ...
+                ['Training Time' num2str(param.trainingtime)]})
     end
 
 end
