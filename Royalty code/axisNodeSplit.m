@@ -7,7 +7,7 @@ function [childrenBest, infoGainBest] = axisNodeSplit(minX, maxX, minY, maxY, ro
     childrenBest = [];
     
     try
-        randomSampX = randperm(round((maxX-minX)/0.01),numfunct);
+        randomSampX = randperm(round((maxX-minX)/0.0001),numfunct);
     catch
         gvffvd
     end
@@ -15,7 +15,7 @@ function [childrenBest, infoGainBest] = axisNodeSplit(minX, maxX, minY, maxY, ro
     % Axis Split Function for x=i
     linSplitThreshold.x1 = 'X';
     for i = 1:numfunct
-        threshold = minX + 0.01*randomSampX(i);
+        threshold = minX + 0.0001*randomSampX(i);
         linSplitThreshold.x2 = threshold;
         [children, infoGain] = childrenAndInfo(rootNode, linSplitThreshold);
         if infoGain > infoGainBest.Gain
@@ -27,9 +27,9 @@ function [childrenBest, infoGainBest] = axisNodeSplit(minX, maxX, minY, maxY, ro
     
     % Axis Split Function for y=i
     linSplitThreshold.x1 = 'Y';
-    randomSampY = randperm(round((maxY-minY)/0.01),numfunct);
+    randomSampY = randperm(round((maxY-minY)/0.0001),numfunct);
     for i = 1:numfunct
-        threshold = minY + 0.01*randomSampY(i);
+        threshold = minY + 0.0001*randomSampY(i);
         linSplitThreshold.x2 = threshold;
         [children, infoGain] = childrenAndInfo(rootNode, linSplitThreshold);
         if infoGain > infoGainBest.Gain
