@@ -9,13 +9,13 @@ param.replacement = 1; % 0 for no replacement and 1 for replacement
 
 %% Training Tree
 AccTot = [];
-% for n = 4:8
-     param.n = 16;
+for n = 8
+     param.n = n;
      [bags] = bagging(param, data_train);
-%     for numlevels = 4:6
-         param.numlevels = 6;
-%         for numfunct = 4:6
-             param.numfunct = 6;
+    for numlevels = 6
+         param.numlevels = numlevels;
+        for numfunct = 7
+             param.numfunct = numfunct;
             disp('Your Lord and Saviour is training the tree...')
             tic
 
@@ -27,20 +27,20 @@ AccTot = [];
             Acc(1,1) = param.n;
             Acc(1,2) = param.numlevels;
             Acc(1,3) = param.numfunct;
-%             Acc(1,4) = accuracy(param, data_train, leaves, nodes);
+            Acc(1,4) = accuracy(param, data_train, leaves, nodes);
             AccTot = [AccTot; Acc];
             clear Acc
             
             % Test Tree
-            % points = [-.5 -.7; .4 .3; -.7 .4; .5 -.5];
-            % [classPred] = testForest(param, points, leaves, nodes, 1, 0);
+             points = [-.5 -.7; .4 .3; -.7 .4; .5 -.5];
+             [classPred] = testForest(param, points, leaves, nodes, 1, 0);
             
             [classPred] = testForest(param, data_test, leaves, nodes, 0, 1);
             pause(0.25)
 % CALCUL D'ACCURACY CLASIQUE A CODER
         %clear leaves
         %clear nodes
-%         end
-%     end
-%     clear bags
-% end
+        end
+    end
+    clear bags
+end
