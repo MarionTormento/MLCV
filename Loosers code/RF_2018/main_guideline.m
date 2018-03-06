@@ -59,10 +59,17 @@ init;
 % 
 % % Change the RF parameter values and evaluate ... 
 % 
+<<<<<<< HEAD:Loosers code/RF_2018/main_guideline.m
 % 
 % 
 % 
 
+=======
+
+
+
+%%
+>>>>>>> 5cb5a612a18e034f2e95d7ffa0aef349abdeff69:Loosers code/RF_2018/RF_2018/main_guideline.m
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % experiment with Caltech101 dataset for image categorisation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
