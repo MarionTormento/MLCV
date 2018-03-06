@@ -15,33 +15,33 @@ init;
 [data_train, data_test] = getData('Toy_Spiral'); % {'Toy_Gaussian', 'Toy_Spiral', 'Toy_Circle', 'Caltech'}
 
 
-%%%%%%%%%%%%%
-% check the training and testing data
-    % data_train(:,1:2) : [num_data x dim] Training 2D vectors
-    % data_train(:,3) : [num_data x 1] Labels of training data, {1,2,3}
-    
-plot_toydata(data_train);
-
-    % data_test(:,1:2) : [num_data x dim] Testing 2D vectors, 2D points in the
-    % uniform dense grid within the range of [-1.5, 1.5]
-    % data_train(:,3) : N/A
-    
-scatter(data_test(:,1),data_test(:,2),'.b');
-
-
-% Set the random forest parameters for instance, 
-param.num = 10;         % Number of trees
-param.depth = 5;        % trees depth
-param.splitNum = 3;     % Number of split functions to try
-param.split = 'IG';     % Currently support 'information gain' only
-
-%%%%%%%%%%%%%%%%%%%%%%
-% Train Random Forest
-
-% Grow all trees
-trees = growTrees(data_train,param);
-
-
+% %%%%%%%%%%%%%
+% % check the training and testing data
+%     % data_train(:,1:2) : [num_data x dim] Training 2D vectors
+%     % data_train(:,3) : [num_data x 1] Labels of training data, {1,2,3}
+%     
+% plot_toydata(data_train);
+% 
+%     % data_test(:,1:2) : [num_data x dim] Testing 2D vectors, 2D points in the
+%     % uniform dense grid within the range of [-1.5, 1.5]
+%     % data_train(:,3) : N/A
+%     
+% scatter(data_test(:,1),data_test(:,2),'.b');
+% 
+% 
+% % Set the random forest parameters for instance, 
+% param.num = 10;         % Number of trees
+% param.depth = 5;        % trees depth
+% param.splitNum = 3;     % Number of split functions to try
+% param.split = 'IG';     % Currently support 'information gain' only
+% 
+% %%%%%%%%%%%%%%%%%%%%%%
+% % Train Random Forest
+% 
+% % Grow all trees
+% trees = growTrees(data_train,param);
+% 
+% 
 % %%%%%%%%%%%%%%%%%%%%%%
 % % Evaluate/Test Random Forest
 % 
@@ -59,9 +59,9 @@ trees = growTrees(data_train,param);
 % 
 % % Change the RF parameter values and evaluate ... 
 % 
-
-
-
+% 
+% 
+% 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % experiment with Caltech101 dataset for image categorisation
