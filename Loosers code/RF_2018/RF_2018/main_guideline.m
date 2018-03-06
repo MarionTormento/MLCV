@@ -62,7 +62,7 @@ trees = growTrees(data_train,param);
 
 
 
-
+%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % experiment with Caltech101 dataset for image categorisation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
