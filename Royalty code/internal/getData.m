@@ -124,8 +124,7 @@ switch MODE
         
         % K-means clustering
         numBins = 256; % for instance,
-        [centres, assignments] = vl_kmeans(desc_sel,numBins);
-        H = histogram(assignments,numBins);
+        
         
         % write your own codes here
         % ...
