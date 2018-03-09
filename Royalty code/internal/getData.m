@@ -1,4 +1,4 @@
-function [ data_train, data_query ] = getData( MODE )
+function [data_train, data_query ] = getData( MODE )
 % Generate training and testing data
 
 % Data Options:
@@ -98,11 +98,11 @@ switch MODE
             imgIdx_tr = imgIdx{c}(1:imgSel(1));
             imgIdx_te = imgIdx{c}(imgSel(1)+1:sum(imgSel));
             
-            for i = 1:length(imgIdx_tr)
-                I = imread(fullfile(subFolderName,imgList(imgIdx_tr(i)).name));
+            for labels = 1:length(imgIdx_tr)
+                I = imread(fullfile(subFolderName,imgList(imgIdx_tr(labels)).name));
                 
                 % Visualise
-                if i < 6 & showImg
+                if labels < 6 & showImg
                     subaxis(length(classList),5,cnt,'SpacingVert',0,'MR',0);
                     imshow(I);
                     cnt = cnt+1;
@@ -114,7 +114,7 @@ switch MODE
                 end
                 
                 % For details of image description, see http://www.vlfeat.org/matlab/vl_phow.html
-                [~, desc_tr{c,i}] = vl_phow(single(I),'Sizes',PHOW_Sizes,'Step',PHOW_Step); %  extracts PHOW features (multi-scaled Dense SIFT)
+                [~, desc_tr{c,labels}] = vl_phow(single(I),'Sizes',PHOW_Sizes,'Step',PHOW_Step); %  extracts PHOW features (multi-scaled Dense SIFT)
             end
         end
         
@@ -124,12 +124,30 @@ switch MODE
         
         % K-means clustering
         numBins = 256; % for instance,
+        [centres, assignments] = vl_kmeans(desc_sel,numBins);
+        H_tr = histogram(assignments,numBins);
+        indexCat = zeros(15,length(desc_tr),10);
         
+        figure()
+        for labels = 1:10
+            for i = 1:15
+                for j = 1:length(desc_tr{labels,i})
+                    [indexNN, Dist] = knnsearch(centres(:,:)', desc_tr{labels,i}(:,j)');
+                    indexCat(i, j, labels) = indexNN;
+                end
+              
+%                 subplot(10,15,(labels-1)*10+i)
+%                 histogram(indexCat(i,:,labels),256)
+%                 xlim([0 256])
+            end
+        end
         
-        % write your own codes here
-        % ...
-            
-       
+        for i = 1:size(indexCat,1)
+            for j = 1:size(indexCat,3)
+                histogram(indexCat(i, :, j),256);
+            end
+        end
+        
         disp('Encoding Images...')
         % Vector Quantisation
         
@@ -154,35 +172,29 @@ switch MODE
             subFolderName = fullfile(folderName,classList{c});
             imgList = dir(fullfile(subFolderName,'*.jpg'));
             imgIdx_te = imgIdx{c}(imgSel(1)+1:sum(imgSel));
-            
-            for i = 1:length(imgIdx_te)
-                I = imread(fullfile(subFolderName,imgList(imgIdx_te(i)).name));
-                
+            for labels = 1:length(imgIdx_te)
+                I = imread(fullfile(subFolderName,imgList(imgIdx_te(labels)).name));
                 % Visualise
-                if i < 6 & showImg
+                if labels < 6 & showImg
                     subaxis(length(classList),5,cnt,'SpacingVert',0,'MR',0);
                     imshow(I);
                     cnt = cnt+1;
                     drawnow;
                 end
-                
                 if size(I,3) == 3
                     I = rgb2gray(I);
                 end
-                [~, desc_te{c,i}] = vl_phow(single(I),'Sizes',PHOW_Sizes,'Step',PHOW_Step);
-            
+                [~, desc_te{c,labels}] = vl_phow(single(I),'Sizes',PHOW_Sizes,'Step',PHOW_Step);         
             end
         end
         suptitle('Testing image samples');
-                if showImg
+        if showImg
             figure('Units','normalized','Position',[.5 .1 .4 .9]);
-        suptitle('Testing image representations: 256-D histograms');
+            suptitle('Testing image representations: 256-D histograms');
         end
 
         % Quantisation
-        
-        % write your own codes here
-        % ...
+        numBins_te = 256;
         
         
     otherwise % Dense point for 2D toy data

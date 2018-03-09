@@ -12,9 +12,9 @@ AccTot = [];
 for n = 8
      param.n = n;
      [bags] = bagging(param, data_train);
-    for numlevels = 8
+    for numlevels = 7
          param.numlevels = numlevels;
-        for numfunct = 10
+        for numfunct = 100
             param.numfunct = numfunct;
             disp('Your Lord and Saviour is training the tree...')
             tic
