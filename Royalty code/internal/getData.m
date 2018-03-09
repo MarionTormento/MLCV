@@ -128,23 +128,13 @@ switch MODE
         H_tr = histogram(assignments,numBins);
         indexCat = zeros(15,length(desc_tr),10);
         
-        figure()
         for labels = 1:10
             for i = 1:15
                 for j = 1:length(desc_tr{labels,i})
                     [indexNN, Dist] = knnsearch(centres(:,:)', desc_tr{labels,i}(:,j)');
-                    indexCat(i, j, labels) = indexNN;
+                    indexCat_tr(i, j, labels) = indexNN;
                 end
-              
-%                 subplot(10,15,(labels-1)*10+i)
-%                 histogram(indexCat(i,:,labels),256)
-%                 xlim([0 256])
-            end
-        end
-        
-        for i = 1:size(indexCat,1)
-            for j = 1:size(indexCat,3)
-                histogram(indexCat(i, :, j),256);
+                histogram(indexCat_tr(i, :, j),256);
             end
         end
         
@@ -195,7 +185,15 @@ switch MODE
 
         % Quantisation
         numBins_te = 256;
-        
+        for labels = 1:10
+            for i = 1:15
+                for j = 1:length(desc_tr{labels,i})
+                    [indexNN, Dist] = knnsearch(centres(:,:)', desc_te{labels,i}(:,j)');
+                    indexCat_te(i, j, labels) = indexNN;
+                end
+                histogram(indexCat_te(i, :, j),256);
+            end
+        end
         
     otherwise % Dense point for 2D toy data
         xrange = [-1.5 1.5];
