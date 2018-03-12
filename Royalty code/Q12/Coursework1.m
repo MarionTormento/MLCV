@@ -9,18 +9,13 @@ param.replacement = 1; % 0 for no replacement and 1 for replacement
 
 %% Training Tree
 AccTot = [];
-for n = 4:8
+for n = 8
      param.n = n; %nb of bags
      [bags] = bagging(param, data_train);
-<<<<<<< HEAD
-    for numlevels = 4:8
+    for numlevels = 8
          param.numlevels = numlevels;
-        for numfunct = 3:10
-=======
-    for numlevels = 7
-         param.numlevels = numlevels;
-        for numfunct = 100
->>>>>>> bf8f911fff1042420fc72bcd59f4a585c204cf3e
+        for numfunct = 10
+            
             param.numfunct = numfunct;
             disp('Your Lord and Saviour is training the tree...')
             tic
@@ -30,6 +25,7 @@ for n = 4:8
             param.trainingtime = t;
             formatSpec = '... and on the %2.2f second, the Lord said "Let there be a Randomised Forest Tree"';
             fprintf(formatSpec,t)
+            
             Acc(1,1) = param.n;
             Acc(1,2) = param.numlevels;
             Acc(1,3) = param.numfunct;
@@ -38,13 +34,11 @@ for n = 4:8
             clear Acc
             
             % Test Tree
-             points = [-.5 -.7; .4 .3; -.7 .4; .5 -.5];
-             [classPred] = testForest(param, points, leaves, nodes, 0, 0);
-            
+                    
             [classPred] = testForest(param, data_test, leaves, nodes, 0, 0);
             %pause(0.25)
-        clear leaves
-        clear nodes
+        %clear leaves
+        %clear nodes
         end
     end
     clear bags

@@ -1,20 +1,30 @@
 
-function [childrenBest, infoGainBest] = axisNodeSplit3(minX, maxX, minY, maxY, param, rootNode, numfunct,randomDim) % Compute the best 'x=...' split node for the bag
+function [childrenBest, infoGainBest] = axisNodeSplit3(param, rootNode, numfunct) % Compute the best 'x=...' split node for the bag
 
 infoGainBest.x1 = 'X';
 infoGainBest.x2 = 0;
 infoGainBest.Gain = 0;
 childrenBest = [];
-
-try
-    randomSampX = randperm(round((maxX-minX)/0.01),numfunct);
-catch
-    gvffvd
-end
+diff = 0;
 
 % Axis Split Function for x=i
 linSplitThreshold.x1 = 'X';
 for i = 1:numfunct
+    while diff == 0
+        randomDim = randi(param.dimensions,[1,2]);
+        minX = min(rootNode(:,randomDim(1,1)));
+        maxX = max(rootNode(:,randomDim(1,1)));
+        minY = min(rootNode(:,randomDim(1,2)));
+        maxY = max(rootNode(:,randomDim(1,2)));
+        if minX ~= maxX
+            diff = 1;
+        end
+    end
+    try
+        randomSampX = randperm(round((maxX-minX)/0.01),numfunct);
+    catch
+        gvffvd
+    end
     threshold = minX + 0.01*randomSampX(i);
     linSplitThreshold.x2 = threshold;
     [children, infoGain] = childrenAndInfo3(param, rootNode, linSplitThreshold,randomDim);
@@ -22,18 +32,31 @@ for i = 1:numfunct
     if infoGain > infoGainBest.Gain
         infoGainBest.x2 = threshold;
         infoGainBest.Gain = infoGain;
+        infoGainBest.dim = randomDim;
         childrenBest = children;
     end
 end
 
 % Axis Split Function for y=i
 linSplitThreshold.x1 = 'Y';
-try
-    randomSampY = randperm(round((maxY-minY)/0.01),numfunct);
-catch
-    dlf
-end
+diff = 0;
+
 for i = 1:numfunct
+    while diff == 0
+        randomDim = randi(param.dimensions,[1,2]);
+        minX = min(rootNode(:,randomDim(1,1)));
+        maxX = max(rootNode(:,randomDim(1,1)));
+        minY = min(rootNode(:,randomDim(1,2)));
+        maxY = max(rootNode(:,randomDim(1,2)));
+        if minY ~= maxY
+            diff = 1;
+        end
+    end
+    try
+        randomSampY = randperm(round((maxY-minY)/0.01),numfunct);
+    catch
+        gvffvd
+    end
     threshold = minY + 0.01*randomSampY(i);
     linSplitThreshold.x2 = threshold;
     [children, infoGain] = childrenAndInfo3(param, rootNode, linSplitThreshold,randomDim);
@@ -41,6 +64,7 @@ for i = 1:numfunct
         infoGainBest.x1 = 'Y';
         infoGainBest.x2 = threshold;
         infoGainBest.Gain = infoGain;
+        infoGainBest.dim = randomDim;
         childrenBest = children;
     end
 end
