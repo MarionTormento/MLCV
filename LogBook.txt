@@ -1,13 +1,11 @@
-02/03/2018 Erection rising quality code
-My dearest,
-You'll find our cleaned and reviewed version of the code.
-I've cleaned through the coursework1.m and testTree.m
-I've cleaned and rewrote trainTree.m in Copytraintree.m. 
-Normally i didnt alter you traintree.m so try mine, compare and if you like it suppress your, rename mine and live on.
-When you see the plot it looks less pretty so maybe there is a mistake ... lmk
+12/03/2018 a bit smaller Erection rising quality code
 
-In addition i've created an accuracy function that returns the accuracy of the tree compared to the train data so that
-we can see thanks to the graph and thanks to numbers how well we perform
+My dearest,
+You'll find our cleaned and reviewed version of the code as usual.
+Q3_old is the version of Q32 we did together, Q3_random is the version you wanted me to do. 
+In each you will find a Accuracy_notrandom and Accuracy_randomfull respectively where you can 
+compare each accuracy and realise that your intuition was right because his highness is so bright.
+Let's meet tomorrow for Q33
 
 Much Love
-the bus lady 
+the cooking lady 
