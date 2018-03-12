@@ -18,7 +18,7 @@ for n = 8
             param.numfunct = numfunct;
             disp('Your Lord and Saviour is training the tree...')
             tic
-
+            
             [leaves, nodes] = CopytrainForest(bags, param);
             t = toc;
             param.trainingtime = t;
@@ -32,8 +32,8 @@ for n = 8
             clear Acc
             
             % Test Tree
-             points = [-.5 -.7; .4 .3; -.7 .4; .5 -.5];
-             [classPred] = testForest(param, points, leaves, nodes, 1, 0);
+            points = [-.5 -.7; .4 .3; -.7 .4; .5 -.5];
+            [classPred] = testForest(param, points, leaves, nodes, 1, 0);
             
             [classPred] = testForest(param, data_test, leaves, nodes, 0, 1);
             pause(0.25)
