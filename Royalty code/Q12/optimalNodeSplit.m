@@ -9,12 +9,6 @@ function [childrenBest, infoGainBest] = optimalNodeSplit(param, rootNode) % comp
     [axisCh, axisInfo] = axisNodeSplit(X(1), X(2), YInt(1), YInt(2), rootNode, numfunct);
     [linearCh, linearInfo] = linearNodeSplit(YInt(1), YInt(2), rootNode, numfunct);
     
-    if axisInfo.infoGain == 0 && linearInfo.infoGain == 0
-        size(axisCh)
-        size(linearCh)
-        size(rootNode)
-    end
-    
     [maxInfo idxInfo] = max([axisInfo.Gain, linearInfo.Gain]); %if idxInfo return 1 => Axis, 2 => linear
     if idxInfo == 1 
             childrenBest = axisCh;
