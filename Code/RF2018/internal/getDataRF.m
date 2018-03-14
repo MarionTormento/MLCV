@@ -140,14 +140,12 @@ switch MODE
             for j=1:size(desc_tr,2)
                 image = single(desc_tr{i,j})';
                 predictedLeaf = testCodebook(param, image, leaves, nodes);
-                Bow_tr((i-1)*15+j,:) = [predictedLeaf, i];
+                data_train((i-1)*15+j,:) = [predictedLeaf, i];
+                clear predictedLeaf
+                clear image
             end
         end
-        
-        %       data_train = Bow_tr;
-        
-        
-        
+                
         % Clear unused varibles to save memory
         clearvars desc_tr desc_sel
 end
@@ -187,7 +185,15 @@ switch MODE
         end
         
         % Quantisation
-        
+        for i=1:size(desc_te,1)
+            for j=1:size(desc_te,2)
+                image = single(desc_te{i,j})';
+                predictedLeaf = testCodebook(param, image, leaves, nodes);
+                data_query((i-1)*15+j,:) = [predictedLeaf, i];
+                clear image
+                clear predictedLeaf
+            end
+        end
         
     otherwise % Densegt point for 2D toy data
         xrange = [-1.5 1.5];

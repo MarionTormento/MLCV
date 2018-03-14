@@ -1,7 +1,9 @@
 clear all
-%close all
+close all
+clc
 
-[data_train, data_test] = getData('Toy_Spiral');
+load data_train_256.mat
+load data_test_256.mat
 
 %% Setting the parameter of the tree
 param.s = size(data_train,1)*(1 - 1/exp(1)); %size of bags s
@@ -9,36 +11,38 @@ param.replacement = 1; % 0 for no replacement and 1 for replacement
 
 %% Training Tree
 AccTot = [];
-for n = 8
-     param.n = n; %nb of bags
-     [bags] = bagging(param, data_train);
+param.dimensions = size(data_train,2)-1;
+
+for n = 25
+    param.n = n; %nb of bags
+    [bags] = bagging(param, data_train);
     for numlevels = 8
-         param.numlevels = numlevels;
-        for numfunct = 10
-            
-            param.numfunct = numfunct;
+        param.numlevels = numlevels;
+        for numfunct = 15
+            param.numfunct= numfunct;
             disp('Your Lord and Saviour is training the tree...')
             tic
-
-            [leaves, nodes] = trainForest(bags, param);
+            
+            [leaves, nodes] = trainForest3(bags, param);
             t = toc;
             param.trainingtime = t;
             formatSpec = '... and on the %2.2f second, the Lord said "Let there be a Randomised Forest Tree"';
             fprintf(formatSpec,t)
             
+            % Test Tree
+            
+            [classPred] = testForest3(param, data_test, leaves, nodes, 0, 0);
             Acc(1,1) = param.n;
             Acc(1,2) = param.numlevels;
             Acc(1,3) = param.numfunct;
-            Acc(1,4) = accuracy(param, data_train, leaves, nodes);
+            Acc(1,4) = accuracy(param, data_test, classPred);
             AccTot = [AccTot; Acc];
             clear Acc
             
-            % Test Tree
-                    
-            [classPred] = testForest(param, data_test, leaves, nodes, 0, 0);
-            %pause(0.25)
-        %clear leaves
-        %clear nodes
+            [Conf, order] = confusionmat(data_test(:,param.dimensions+1),classPred(:,1));
+            Conf = 100/15.*Conf;
+            clear leaves
+            clear nodes
         end
     end
     clear bags
