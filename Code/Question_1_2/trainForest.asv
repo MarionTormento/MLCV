@@ -1,27 +1,25 @@
-function [leaf, splitFct] = trainForest3(bags, param)
-    
-    %initialise tree structure
+function [leaf, splitFct] = trainForest(bags, param)
+
     leaf = [];
 
-    %for each tree
     for k = 1:param.n
-        
-        %initialize the stucture storing the split function parameters
+        %initialize
         splitFct{1,k} = cell(param.numlevels,2^(param.numlevels-1));
         
         %Split the root node into the initial children
-        rootNode = bags{k};
-        %Find optimal split function which maximises the information gain
-        [children, infoGain] = optimalNodeSplit3(param, rootNode);
-        splitFct{1,k}{1,1} = infoGain;
+        rootNode = bags{k};        
+        %make an optimal split based on maximising information gain
+        [children, infoGain] = optimalNodeSplit(param, rootNode);
+        %Store the split function parameters
+        splitFct{1,k}{1,1} = infoGain; % split function from the bag to the 1st layer for bag K
         
-        %Prepare next generation and clear some variables
+        %prepare next generation and clear variables
         parent = children;
         clear rootNode
         clear infoGain
         clear children
         
-        %Populating the rest of the tree
+        %Populating the tree
         for j = 2:param.numlevels
             % For each parent of the layer
             for i = 1:length(parent)
@@ -36,11 +34,11 @@ function [leaf, splitFct] = trainForest3(bags, param)
                 end
                 
                 %If the root is already a leaf make its children empty and continue
-                isRootLeaf = leafTest3(param, rootNode);
+                isRootLeaf = leafTest(rootNode);
                 if isRootLeaf
                     children{2*i-1} = cell(0);
                     children{2*i} = cell(0);
-                    leaf = leafProb3(param, rootNode, leaf, i, j, k);
+                    leaf = leafProb(rootNode, leaf, i, j, k);
                     splitFct{1,k}{j,i}.x1 = 'Leaf';
                     continue
                 end
@@ -48,16 +46,17 @@ function [leaf, splitFct] = trainForest3(bags, param)
                 %If we are on the last layer, we don't even try to split
                 % the parent and set every splitFct to "Leaf"
                 if j == param.numlevels
-                    leaf = leafProb3(param, rootNode, leaf, i, j, k);
+                    leaf = leafProb(rootNode, leaf, i, j, k);
                     splitFct{1,k}{j,i}.x1 = 'Leaf';
                     continue
                 end
                 
-                %Therefore, the root is not a leaf or empty, perform split function
-                [childrenNew, infoGain] = optimalNodeSplit3(param, rootNode);
+                %Elseif the root is not a leaf or empty, perform split function
+                [childrenNew, infoGain] = optimalNodeSplit(param, rootNode);
                 splitFct{1,k}{j,i} = infoGain;
                 children{2*i-1} = childrenNew{1};
                 children{2*i} = childrenNew{2};
+
                 clear rootNode
                 clear childrenNew
                 clear infoGain

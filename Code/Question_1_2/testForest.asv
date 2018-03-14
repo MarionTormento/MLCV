@@ -47,13 +47,12 @@ for idx = 1:length(data_test)
     end
     
     %Calculate the normalised class probability distribution across all
-    %trees for this data point and find its most likely class label.
+    %trees for this data point and find its most likely class
     meanTestProb = sum(testProb,1)/size(testProb,1);
     [maxProb, idMax] = max(meanTestProb);
     classPred(idx,1) = idMax;
     classPred(idx,2:4) = meanTestProb;
     
-    %Plotting
     if displayClassDistr == 1
         figure()
         subplot(2,1,1)

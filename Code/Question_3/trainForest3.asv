@@ -56,6 +56,8 @@ function [leaf, splitFct] = trainForest3(bags, param)
                 %Therefore, the root is not a leaf or empty, perform split function
                 [childrenNew, infoGain] = optimalNodeSplit3(param, rootNode);
                 splitFct{1,k}{j,i} = infoGain;
+
+                
                 children{2*i-1} = childrenNew{1};
                 children{2*i} = childrenNew{2};
                 clear rootNode

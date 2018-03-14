@@ -1,7 +1,5 @@
 function [bags] = bagging(param, data_train)
-    
-    % choose whether bagging is made with or without replacement and set
-    % the desired number of bags and bag size
+        
     replacement = param.replacement;
     n = param.n;
     s = param.s;

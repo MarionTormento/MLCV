@@ -24,9 +24,7 @@ for n = 8
         % Optional loop for a parameter sweep of rho
         for numfunct = 10
             param.numfunct = numfunct;
-            
             tic
-            %Train forest using bags and defined parameters
             [leaves, nodes] = trainForest(bags, param);
             param.trainingtime = toc;
             
@@ -35,7 +33,8 @@ for n = 8
             AccTot = [AccTot; Acc];
             clear Acc
             
-            % Test Tree for the 2D grid or for the sample points.
+            % Test Tree  and output the predicted image categories for the
+            % test images
             [classPred] = testForest(param, data_test, leaves, nodes, 0, 0);
             clear leaves
             clear nodes
