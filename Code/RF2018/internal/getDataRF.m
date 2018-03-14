@@ -120,8 +120,8 @@ switch MODE
         
         disp('Building visual codebook...')
         % Build visual vocabulary (codebook) for 'Bag-of-Words method'
-        for i = 1:10
-            for j = 1:15
+        for i = 1:length(classList)
+            for j = 1:imgSel(1)
                 labels = i.*ones(1,size(desc_tr{i,j},2));
                 tree_tr{i,j} = [desc_tr{i,j}; labels];
             end
@@ -130,14 +130,15 @@ switch MODE
         desc_sel = desc_sel';
         
         % build RF
+        tic
         param.n = 5;
         param.numlevels = 10;
         param.numfunct = 5;
         
         [leaves nodes] = buildCodebook(desc_sel, param);
         
-        for i=1:size(desc_tr,1)
-            for j=1:size(desc_tr,2)
+        for i=1:length(classList)
+            for j=1:imgSel(1)
                 image = single(desc_tr{i,j})';
                 predictedLeaf = testCodebook(param, image, leaves, nodes);
                 data_train((i-1)*15+j,:) = [predictedLeaf, i];
@@ -145,6 +146,9 @@ switch MODE
                 clear image
             end
         end
+        
+        fname = ['data_train_' num2str(param.n) '_' num2str(param.numlevels) '_' num2str(param.numfunct)];
+        save(fname, 'data_train');
                 
         % Clear unused varibles to save memory
         clearvars desc_tr desc_sel
@@ -185,8 +189,8 @@ switch MODE
         end
         
         % Quantisation
-        for i=1:size(desc_te,1)
-            for j=1:size(desc_te,2)
+        for i=1:length(classList)
+            for j=1:imgSel(1)
                 image = single(desc_te{i,j})';
                 predictedLeaf = testCodebook(param, image, leaves, nodes);
                 data_query((i-1)*15+j,:) = [predictedLeaf, i];
@@ -194,6 +198,9 @@ switch MODE
                 clear predictedLeaf
             end
         end
+        
+        fname = ['data_test_' num2str(param.n) '_' num2str(param.numlevels) '_' num2str(param.numfunct)];
+        save(fname, 'data_query');
         
     otherwise % Densegt point for 2D toy data
         xrange = [-1.5 1.5];

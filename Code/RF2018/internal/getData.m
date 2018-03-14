@@ -121,26 +121,33 @@ switch MODE
         disp('Building visual codebook...')
         % Build visual vocabulary (codebook) for 'Bag-of-Words method'
         desc_sel = single(vl_colsubset(cat(2,desc_tr{:}), 10e4)); % Randomly select 100k SIFT descriptors for clustering
-
+        
         
         % K-means clustering
-        numBins = 320; % for instance,
-        Centroids = kmeans(desc_sel,numBins); % Generate 256 codewords
-       
+        tic
+        numBins = 256; % for instance,
+        Centroids = vl_kmeans(desc_sel,numBins); % Generate 256 codewords
+        t=toc
+        formatSpec = ' %2.2f second, to get the centroids';
+            fprintf(formatSpec,t)
         disp('Encoding Images...')
         % Vector Quantisation
-        Centroids = Centroids';
-        
-        for i=1:size(desc_tr,1)
-            for j=1:size(desc_tr,2)
+        tic
+
+        Centroids = Centroids';       
+        for i=1:length(classList)
+            for j=1:imgSel(1)
                 image = desc_tr{i,j}';
                 idx = knnsearch(Centroids, image);
-                Bow_tr((i-1)*15+j,:) = [hist(idx, numBins), i];
+                data_train((i-1)*15+j,:) = [hist(idx, numBins), i];
             end
         end
         
-        data_train = Bow_tr;
-        
+        fname = ['data_train_' num2str(numBins)];
+        save(fname, 'data_train');
+        t = toc
+        formatSpec = ' %2.2f second, to get the train_data"';
+        fprintf(formatSpec,t)
         % Clear unused varibles to save memory
         clearvars desc_tr desc_sel
 end
@@ -148,8 +155,8 @@ end
 switch MODE
     case 'Caltech'
         if showImg
-        figure('Units','normalized','Position',[.05 .1 .4 .9]);
-        suptitle('Testing image samples');
+            figure('Units','normalized','Position',[.05 .1 .4 .9]);
+            suptitle('Testing image samples');
         end
         disp('Processing testing images...');
         cnt = 1;
@@ -170,7 +177,7 @@ switch MODE
                 if size(I,3) == 3
                     I = rgb2gray(I);
                 end
-                [~, desc_te{c,labels}] = vl_phow(single(I),'Sizes',PHOW_Sizes,'Step',PHOW_Step);         
+                [~, desc_te{c,labels}] = vl_phow(single(I),'Sizes',PHOW_Sizes,'Step',PHOW_Step);
             end
         end
         suptitle('Testing image samples');
@@ -178,19 +185,23 @@ switch MODE
             figure('Units','normalized','Position',[.5 .1 .4 .9]);
             suptitle('Testing image representations: 256-D histograms');
         end
-
-        % Quantisation
         
-        for i=1:size(desc_te,1)
-            for j=1:size(desc_te,2)
+        % Quantisation
+tic
+        for i=1:length(classList)
+            for j=1:imgSel(1)
                 image = desc_te{i,j}';
                 idx = knnsearch(Centroids, image);
-                Bow_te((i-1)*15+j,:) = [hist(idx, numBins), i];
+                data_query((i-1)*15+j,:) = [hist(idx, numBins), i];
             end
         end
         
-        data_query = Bow_te;
-                
+        fname = ['data_test_' num2str(numBins)];
+        save(fname, 'data_query');
+        t=toc
+         formatSpec = ' %2.2f second, to get the test_data"';
+        fprintf(formatSpec,t)       
+        
     otherwise % Densegt point for 2D toy data
         xrange = [-1.5 1.5];
         yrange = [-1.5 1.5];
