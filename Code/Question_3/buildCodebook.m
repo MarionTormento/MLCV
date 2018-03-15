@@ -1,3 +1,4 @@
+% build Codebook for question 3-3 using the random forest
 function [leaves nodes] = buildCodebook(desc_sel, param);
 
 %% Setting the parameter of the tree
@@ -9,14 +10,11 @@ param.dimensions = size(desc_sel,2)-1;
 
 [bags] = bagging(param, desc_sel);
 
-disp('Your Lord and Saviour is training the tree...')
 tic
 
 [leaves, nodes] = trainForest3(bags, param);
 t = toc;
 param.trainingtime = t;
-formatSpec = '... and on the %2.2f second, the Lord said "Let there be a Randomised Forest Tree"';
-fprintf(formatSpec,t)
 
 clear bags
 end

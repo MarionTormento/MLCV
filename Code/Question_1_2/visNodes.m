@@ -1,5 +1,4 @@
 function visNodes(inputs, infoGain, k, jj)
-
     %error debugging, ensuring the input cell is a structure if one of the children in empty
     if ~iscell(inputs)
         inputscell{1}(:,:) = inputs;

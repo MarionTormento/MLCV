@@ -1,3 +1,4 @@
+% test the RF and compute the predicted class
 function [classPred] = testForest(param, data_test, leaves, nodes, displayClassDistr, displayMap)
 
 %initialise output

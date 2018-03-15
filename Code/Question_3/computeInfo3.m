@@ -1,4 +1,4 @@
-
+% Compute the information gain
 function info = computeInfo3(param, inputnode, outputnodes)
 %% Entropy before
 for i=1:10
@@ -30,4 +30,4 @@ clear prob
 info = entBefore - entAfter;
 clear entAfter
 clear entBefore
-end %compute the info gai
+end 

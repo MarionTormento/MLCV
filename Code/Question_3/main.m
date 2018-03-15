@@ -2,9 +2,14 @@ clear all
 close all
 clc
 
-% Load training and testing data saved from the getData_RF.m function
-load data_train_256.mat
-load data_test_256.mat
+% Load training and querying data saved from the getData.m or getData_RF.m function
+%% FOR Q31/32
+load data_train_320.mat
+load data_test_320.mat
+
+%% FOR Q33
+% load data_train_5_10_5.mat
+% load data_test_5_10_5.mat
 
 %% Setting the parameter of the tree
 param.s = size(data_train,1)*(1 - 1/exp(1)); %size of bags s
@@ -17,12 +22,12 @@ AccTot = [];
 param.dimensions = size(data_train,2)-1;
 
 % Optional parameter sweep loops
-for n = 25
+for n = [10 15 30 50]
     param.n = n;
     [bags] = bagging(param, data_train);
-    for numlevels = 8
+    for numlevels =[7 8 9]
         param.numlevels = numlevels;
-        for numfunct = 15
+        for numfunct = [5 10]
             param.numfunct= numfunct;
             
             %Train the forest using the bags and parameters defined
@@ -30,11 +35,14 @@ for n = 25
             [leaves, nodes] = trainForest3(bags, param);
             param.trainingtime = toc;
             
-            % Test the trees and evaluate the accuracy of the classification of
-            % the test images.
+            % query the trees and evaluate the accuracy of the classification of
+            % the query images.
+            tic
             [classPred] = testForest3(param, data_test, leaves, nodes, 0, 0);
             Acc = [param.n, param.numlevels, param.numfunct,accuracy(param, data_test, classPred)];
             AccTot = [AccTot; Acc];
+            param.testingtime = toc;
+
             clear Acc
             
             % Calculate the confussion matrix for the image categories

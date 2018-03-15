@@ -129,12 +129,13 @@ switch MODE
         Centroids = vl_kmeans(desc_sel,numBins); % Generate 256 codewords
         t=toc
         formatSpec = ' %2.2f second, to get the centroids';
-            fprintf(formatSpec,t)
+        fprintf(formatSpec,t)
         disp('Encoding Images...')
+        
         % Vector Quantisation
         tic
-
-        Centroids = Centroids';       
+        
+        Centroids = Centroids';
         for i=1:length(classList)
             for j=1:imgSel(1)
                 image = desc_tr{i,j}';
@@ -148,7 +149,7 @@ switch MODE
         t = toc
         formatSpec = ' %2.2f second, to get the train_data"';
         fprintf(formatSpec,t)
-        % Clear unused varibles to save memory
+        % Clear unused variables to save memory
         clearvars desc_tr desc_sel
 end
 
@@ -187,7 +188,7 @@ switch MODE
         end
         
         % Quantisation
-tic
+        tic
         for i=1:length(classList)
             for j=1:imgSel(1)
                 image = desc_te{i,j}';
@@ -199,10 +200,10 @@ tic
         fname = ['data_test_' num2str(numBins)];
         save(fname, 'data_query');
         t=toc
-         formatSpec = ' %2.2f second, to get the test_data"';
-        fprintf(formatSpec,t)       
+        formatSpec = ' %2.2f second, to get the test_data"';
+        fprintf(formatSpec,t)
         
-    otherwise % Densegt point for 2D toy data
+    otherwise % Dense point for 2D toy data
         xrange = [-1.5 1.5];
         yrange = [-1.5 1.5];
         inc = 0.02;

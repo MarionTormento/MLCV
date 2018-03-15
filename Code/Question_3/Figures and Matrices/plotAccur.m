@@ -1,26 +1,44 @@
-load('Accuracy_randomfull.mat')
-k=1;
+clear all
+close all
 
-for i=[5 10 15]
-    Fct{k} = []
-    for j = 1:length(AccTot)
-        if AccTot(j,3) == i;
-            Fct{k} = [Fct{k}; AccTot(j,:)];
-        end
+load accuracy_5_10_5_2.mat
+
+figure
+for i = 1:4
+    subplot(2,2,i)
+    idx = AccTot(:,1) == 10+(i-1)*5;
+    colormap = varycolor(sum(idx));
+    for ii = 1:sum(idx)
+        idy = AccTot(:,3) == ii*5;
+        plot(AccTot(idx&idy,2),AccTot(idx&idy,4), 'color', colormap(ii,:), 'marker', 'o', 'linestyle', '-')
+        hold on
     end
-    k = k+1;
+    title([num2str((i-1)*5+10) ' Trees'])
+    xlabel('Number of layers')
+    ylabel('Accuracy %')
+    grid on
+    axis([7 9 45 70])
 end
+    legend('\rho = 5','\rho = 10')
+clear all
+close all
 
-hFig = figure();
-set(gcf, 'Color', 'White')
-axh = axes('Parent', hFig);
-hold(axh, 'all');
-h1 = scatter3(Fct{1}(:,1),Fct{1}(:,2),Fct{1}(:,4));
-h2 = scatter3(Fct{2}(:,1),Fct{2}(:,2),Fct{2}(:,4));
-h3 = scatter3(Fct{3}(:,1),Fct{3}(:,2),Fct{3}(:,4));
-view(axh, -33, 22);
-grid(axh, 'on');
-legend(axh, [h1, h2, h3], {"NumSplit = 5","NumSplit = 10","NumSplit = 15"});
-xlabel('Number of trees');
-ylabel('Number of layers');
-zlabel('Accuracy (%)');
+load Accuracy_randomfull2.mat
+
+figure
+for i = 1:4
+    subplot(2,2,i)
+    idx = AccTot(:,1) == 10+(i-1)*5;
+    colormap = varycolor(sum(idx));
+    for ii = 1:sum(idx)
+        idy = AccTot(:,3) == ii*5;
+        plot(AccTot(idx&idy,2),AccTot(idx&idy,4), 'color', colormap(ii,:), 'marker', 'o', 'linestyle', '-')
+        hold on
+    end
+    title([num2str((i-1)*5+10) ' Trees'])
+    xlabel('Number of layers')
+    ylabel('Accuracy %')
+    grid on
+    axis([7 9 45 70])
+end
+    legend('\rho = 5','\rho = 10','\rho = 15')

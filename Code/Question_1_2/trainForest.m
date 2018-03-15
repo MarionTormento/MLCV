@@ -1,3 +1,4 @@
+% train the RF
 function [leaf, splitFct] = trainForest(bags, param)
 
     leaf = [];

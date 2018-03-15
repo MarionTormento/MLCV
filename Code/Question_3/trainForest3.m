@@ -1,3 +1,4 @@
+% train the RF
 function [leaf, splitFct] = trainForest3(bags, param)
     
     %initialise tree structure

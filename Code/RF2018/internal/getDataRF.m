@@ -149,7 +149,7 @@ switch MODE
         
         fname = ['data_train_' num2str(param.n) '_' num2str(param.numlevels) '_' num2str(param.numfunct)];
         save(fname, 'data_train');
-                
+        
         % Clear unused varibles to save memory
         clearvars desc_tr desc_sel
 end
@@ -202,7 +202,7 @@ switch MODE
         fname = ['data_test_' num2str(param.n) '_' num2str(param.numlevels) '_' num2str(param.numfunct)];
         save(fname, 'data_query');
         
-    otherwise % Densegt point for 2D toy data
+    otherwise % Dense point for 2D toy data
         xrange = [-1.5 1.5];
         yrange = [-1.5 1.5];
         inc = 0.02;

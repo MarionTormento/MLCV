@@ -1,3 +1,4 @@
+% test to know if the node is a leaf
 function binCount = leafTest3(param, rootNode)
     for i = 1:10
         bin(i,1) = isempty(rootNode((rootNode(:,param.dimensions+1) == i) == 1,:));

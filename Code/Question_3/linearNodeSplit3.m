@@ -1,3 +1,4 @@
+% Split node for an linear split weak learner 'y=mx+p'
 function [childrenBest, infoGainBest] = linearNodeSplit3(param, rootNode, numfunct) % Compute the best "y=mx+p" split node for the bag
 
 infoGainBest.x1 = 0;
@@ -16,17 +17,11 @@ for m = 1:numfunct
             diff = 1;
         end
     end
-    %     try
     randomSampYInt = randperm(round(abs(maxYInt - minYInt)/0.00001),numfunct);
-    %     catch
-    %         fnvjfn
-    %     end
     
     %given a y intercept, calculate the gradients of the lines to the min
     %and max data points. These gradients are calculated for the 3
     %(numfunct) y intercepts which we try
-    %     Grad1 = (randomSampYInt - min(rootNode(:,randomDim(1,2)))/0.00001)*0.00001./(-rootNode(rootNode(:,randomDim(1,2)) == min(rootNode(:,randomDim(1,2))),1));
-    %     Grad2 = (randomSampYInt - max(rootNode(:,randomDim(1,2)))/0.00001)*0.00001./(-rootNode(rootNode(:,randomDim(1,2)) == max(rootNode(:,randomDim(1,2))),1));
     [minVal minIdx] = min(rootNode(:,randomDim(1,2)));
     [maxVal maxIdx] = max(rootNode(:,randomDim(1,2)));
     if rootNode(minIdx,randomDim(1,1)) == 0;

@@ -1,3 +1,4 @@
+% test the RF built with the builtCodebook to obtain the training and test data for Q3-3
 function [histCountID] = testCodebook(param, data_test, leaves, nodes)
 
 histCountID = zeros(1,size(leaves,1));
