@@ -17,7 +17,7 @@ def mouse_click(event):
     print('Y: {}'.format(coords[1]))
     
 root = tk.Tk()
-img = Image.open('C:/Users/eddym/Documents/GitHub/MLCV1/Coursework 2/Code/Photos/3.2_1.JPG')
+img = Image.open('C:/Users/eddym/Documents/GitHub/MLCV1/Coursework 2/Code/Photos/3.2_1.JPG').convert('LA')
 img = img.resize((600, 600), Image.ANTIALIAS)
 img = ImageTk.PhotoImage(img)
 panel = tk.Label(root, image = img)
