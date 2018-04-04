@@ -4,6 +4,17 @@ from matplotlib import pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 import time
 
+def getImageIntensity(image):
+
+	print('Starting intensity find')
+	t = time.time()
+
+	# Load an color image in grayscale
+	img = cv2.imread('Photos/' + image, 0)
+	width, height = img.shape
+
+	return img
+
 def findIntensity(image, inputSmoothing, plot1, plot2):
 
 	print('Starting intensity find')
@@ -25,19 +36,15 @@ def findIntensity(image, inputSmoothing, plot1, plot2):
 	WSplits = int(width/inputSmoothing)
 
 	# Initialise stuff
-	# descriptor = []
-	# descriptor_mean_inten = []
 	descriptor_mean_inten = np.zeros([WSplits, HSplits])
 
 	for i in range(0,WSplits):
-		# descriptor_mean_inten.append([])
 		for ii in range(0,HSplits):
 			# create a mask
 			mask = np.zeros(img.shape[:2], np.uint8)
 			mask[int((i)*width/WSplits):int((i+1)*width/WSplits), int((ii)*height/HSplits):int((ii+1)*height/HSplits)] = 255
 			masked_img = cv2.bitwise_and(img,img,mask = mask)
 			hist_mask = cv2.calcHist([img],[0],mask,[256],[0,256])
-			# descriptor.append(hist_mask)
 			# Plot each section of the image and its histogram
 			if plot2>0:
 				figure = plt.figure()
@@ -51,7 +58,6 @@ def findIntensity(image, inputSmoothing, plot1, plot2):
 				sumInten += j*hist_mask[j]
 				sumHist += hist_mask[j]
 			meanInten = int(sumInten)/int(sumHist)
-			# descriptor_mean_inten[i].append(int(meanInten))
 			descriptor_mean_inten[i][ii] = int(meanInten)
 
 			del mask, masked_img, hist_mask, sumHist, meanInten, sumInten
@@ -75,8 +81,8 @@ def derivatives(intensity, shift):
 
 	# Find Ix and Iy
 	intensity = np.asarray(intensity)
-	intensityShiftX = np.roll(intensity, 1, axis=1)
-	intensityShiftY = np.roll(intensity, 1, axis=0)
+	intensityShiftX = np.roll(intensity, shift, axis=1)
+	intensityShiftY = np.roll(intensity, shift, axis=0)
 
 	Ix = np.subtract(intensityShiftX, intensity) / shift
 	Iy = np.subtract(intensityShiftY, intensity) / shift
@@ -114,7 +120,7 @@ def cornerness_funct(Ix, Iy, alpha):
 	Iyy = Iy ** 2
 	Ixy = Ix * Iy
 
-	cornerness = Ixx*Iyy - Ixy**2 - alpha*(Ixx + Iyy)**2
+	cornerness = (Ixx**2)*(Iyy**2) - Ixy**2 - alpha*(Ixx + Iyy)**2
 
 	elapsed = time.time() - t
 	print('Time to find cornerness = % 1.0fs' % elapsed)
@@ -142,32 +148,37 @@ HD = (['3.2_1.jpg', '3.2_2.jpg', '3.2_3.jpg',  '4.0_1.jpg', '4.0_2.jpg',
 
 # for i in range(0,1):
 
-	# Find the intensity of the image. Returns list of lists of hold each section of the images average intensity
-	# mean_intensity, WSplits, HSplits = findIntensity(FD[i], 100, 0, 0)
-	#print(mean_intensity)
-	# Ix, Iy = derivatives(mean_intensity, 1)
+# 	# ---------------------------------------------------------
 
-	# Create function which calculates and plots the derivatives Ix and Iy
+# 	# TRY THIS ONE IT'S SUPER SLOW BUT MAYBE BETTER RESULTS?
+# 	# intensity, WSplits, HSplits = findIntensity(FD[i], 50, 0, 0)
 
-	# Create function which calculates and plots the square of the derivatives Ix^2
-	# Iy^2 and IxIy
+# 	# TRY THIS ONE IT'S MUCH FASTER BUT WORSE?
+# 	intensity = getImageIntensity(FD[i])
 	
-	# Create a function which applies a gaussian filter to these images above
+# 	# ---------------------------------------------------------
+
+# 	Ix, Iy = derivatives(intensity, 150)
 	
-	# Create a cornerness function (see slide 48 of mlcv_featuredetection)
+# 	# Create a function which applies a gaussian filter to these images above
+	
+# 	cornerness = cornerness_funct(Ix, Iy, 0.05)
+	
 
 for i in range(0,1):
 
-	mean_intensity, WSplits, HSplits = findIntensity(HD[i], 50, 0, 0)
-# 	print(mean_intensity)
+	# ---------------------------------------------------------
 
-	Ix, Iy = derivatives(mean_intensity, 1)
+	# TRY THIS ONE IT'S SUPER SLOW BUT MAYBE BETTER RESULTS?
+	# intensity, WSplits, HSplits = findIntensity(HD[i], 50, 0, 0)
 
-	cornerness = cornerness_funct(Ix, Iy, 0.07)
+	# TRY THIS ONE IT'S MUCH FASTER BUT WORSE?
+	intensity = getImageIntensity(HD[i])
+	
+	# ---------------------------------------------------------
 
-	# Create function which calculates and plots the square of teh derivatives Ix^2
-	# Iy^2 and IxIy
+	Ix, Iy = derivatives(intensity, 15)
 	
 	# Create a function which applies a gaussian filter to these images above
 	
-	# Create a cornerness function (see slide 48 of mlcv_featuredetection)
+	cornerness = cornerness_funct(Ix, Iy, 0.05)
