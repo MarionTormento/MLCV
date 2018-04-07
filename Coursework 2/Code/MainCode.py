@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
-from scipy.ndimage.filters import gaussian_filter
+from scipy import ndimage
 import time
 
 def getImageIntensity(image):
@@ -111,16 +111,24 @@ def derivatives(intensity, shift):
 
 	return Ix, Iy
 
-def cornerness_funct(Ix, Iy, alpha):
+def gaussian_window(Ix, Iy, sigma):
+
+	GIxx = ndimage.gaussian_filter(Ix**2, sigma)
+	GIyy = ndimage.gaussian_filter(Iy**2, sigma)
+	GIxy = ndimage.gaussian_filter(Ix*Iy, sigma)
+
+	return GIxx, GIyy, GIxy
+
+def cornerness_funct(GIxx, GIyy, GIxy, alpha):
 
 	print('Starting Cornerness')
 	t = time.time()
 
-	Ixx = Ix ** 2
-	Iyy = Iy ** 2
-	Ixy = Ix * Iy
+	# Ixx = Ix ** 2
+	# Iyy = Iy ** 2
+	# Ixy = Ix * Iy
 
-	cornerness = (Ixx**2)*(Iyy**2) - Ixy**2 - alpha*(Ixx + Iyy)**2
+	cornerness = (GIxx)*(GIyy) - GIxy**2 - alpha*(GIxx + GIyy)
 
 	elapsed = time.time() - t
 	print('Time to find cornerness = % 1.0fs' % elapsed)
@@ -146,39 +154,26 @@ FD = (['FD1.jpg', 'FD2.jpg', 'FD3.jpg', 'FD4.jpg', 'FD5.jpg', 'FD6.jpg',
 HD = (['3.2_1.jpg', '3.2_2.jpg', '3.2_3.jpg',  '4.0_1.jpg', '4.0_2.jpg',
       '4.0_3.jpg', '5.0_1.jpg', '5.0_2.jpg', '5.0_3.jpg'])
 
-# for i in range(0,1):
-
-# 	# ---------------------------------------------------------
-
-# 	# TRY THIS ONE IT'S SUPER SLOW BUT MAYBE BETTER RESULTS?
-# 	# intensity, WSplits, HSplits = findIntensity(FD[i], 50, 0, 0)
-
-# 	# TRY THIS ONE IT'S MUCH FASTER BUT WORSE?
-# 	intensity = getImageIntensity(FD[i])
-	
-# 	# ---------------------------------------------------------
-
-# 	Ix, Iy = derivatives(intensity, 150)
-	
-# 	# Create a function which applies a gaussian filter to these images above
-	
-# 	cornerness = cornerness_funct(Ix, Iy, 0.05)
-	
-
 for i in range(0,1):
 
-	# ---------------------------------------------------------
-
-	# TRY THIS ONE IT'S SUPER SLOW BUT MAYBE BETTER RESULTS?
-	# intensity, WSplits, HSplits = findIntensity(HD[i], 50, 0, 0)
-
-	# TRY THIS ONE IT'S MUCH FASTER BUT WORSE?
-	intensity = getImageIntensity(HD[i])
-	
-	# ---------------------------------------------------------
+	intensity = getImageIntensity(FD[i])
 
 	Ix, Iy = derivatives(intensity, 15)
 	
-	# Create a function which applies a gaussian filter to these images above
+	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, 3)
 	
-	cornerness = cornerness_funct(Ix, Iy, 0.05)
+	cornerness = cornerness_funct(GIxx, GIyy, GIxy, 0.06)
+	
+	# sorted = np.sort(cornerness, axis = None)
+	plt.hist(cornerness)
+	plt.show()
+
+# for i in range(0,1):
+
+# 	intensity = getImageIntensity(HD[i])
+
+# 	Ix, Iy = derivatives(intensity, 15)
+	
+# 	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, 3)
+	
+# 	cornerness = cornerness_funct(GIxx, GIyy, GIxy, 0.05)
