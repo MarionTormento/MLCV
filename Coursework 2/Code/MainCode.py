@@ -90,15 +90,17 @@ def cornerness_funct(image, GIxx, GIyy, GIxy, alpha):
 	
 	# Based on each pixels value of R, determine if it is a corner or an edge
 	# or neither. 
-	thresholdCorner = np.percentile(R, 95)
+	thresholdCorner = np.percentile(R, 97)
 	cornerPoints = np.where(R > thresholdCorner)
 	# Find local maxima for the corners
 	maxCornerPointsX, maxCornerPointsY = local_maxima(R, cornerPoints, 8)
+	CornerPoints = (np.asarray(maxCornerPointsX), np.asarray(maxCornerPointsY))
 
-	thresholdEdge = np.percentile(R, 5)
+	thresholdEdge = np.percentile(R, 3)
 	edgePoints = np.where(R < thresholdEdge)
 	# Find local minima for the edges
 	maxEdgePointsX, maxEdgePointsY = local_maxima(R, edgePoints, 8)
+	EdgePoints = (np.asarray(maxEdgePointsX), np.asarray(maxEdgePointsY))
 	
 	# Plot
 	plt.figure()
@@ -108,7 +110,7 @@ def cornerness_funct(image, GIxx, GIyy, GIxy, alpha):
 	plt.scatter(maxEdgePointsX, maxEdgePointsY, color='g', marker='+')
 	plt.show()
 
-	return R
+	return R, CornerPoints, EdgePoints
 
 def local_maxima(R, Points, NN):
 
@@ -154,6 +156,30 @@ def local_maxima(R, Points, NN):
 
 	return localMaxPointsX, localMaxPointsY
 
+def descripter_funct(Ix, Iy, CornerPoints):
+
+	# Finds simple descriptors based on the intensity derivative in the square region around
+	# interest points. From CW2 Q1.2: "...descriptor (simple colour and/or gradient orientation histogram)" -
+	# so think this is the right thing to do.
+	# We then have to "Implement a method that performs nearest neighbour matching of descriptors."
+	# LUCKILY you are the queen of KNN :) :) So for one image we make a M-D space where M is the number of
+	# Ix and Iy intensities we have in the region around the interest points. For the rest of the images we
+	# then need to KNN to these clusters in the M-D space. I think that as this doesn't consider orientation,
+	# zoom etc. it will suck. Which is why we then need to go on to do a SIFT descriptor (Q1.3). Thoughts? 
+
+	# Set
+	boxX = np.ones((4,4))
+	boxY = np.ones((4,4))
+	for i in range(0,1): #len(CornerPoints[0])):
+		boxX[:][:] = Ix[CornerPoints[0][i]-2:CornerPoints[0][i]+2][:,CornerPoints[1][i]-2:CornerPoints[1][i]+2]
+		boxY[:][:] = Iy[CornerPoints[0][i]-2:CornerPoints[0][i]+2][:,CornerPoints[1][i]-2:CornerPoints[1][i]+2]
+		print(boxX)
+		print(boxY)
+		box = np.concatenate((boxX,boxY))
+		print(box)
+
+		del boxX
+		del boxY
 # ------------------------- Main Script --------------------------------
 
 # import images
@@ -165,7 +191,7 @@ HD = (['3.2_1.jpg', '3.2_2.jpg', '3.2_3.jpg',  '4.0_1.jpg', '4.0_2.jpg',
 
 Test_images = (['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg'])
 
-for i in range(len(Test_images)):
+for i in range(0,1):
 
 	intensity, shift = getImageIntensity(Test_images[i])
 
@@ -173,5 +199,7 @@ for i in range(len(Test_images)):
 	
 	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, 1, shift)
 	
-	R = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05)
+	R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05)
+
+	descripter_funct(Ix, Iy, CornerPoints)
 
