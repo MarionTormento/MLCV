@@ -66,7 +66,6 @@ def derivatives(intensity, shift):
 
 	return Ix, Iy
 
-
 def gaussian_window(Ix, Iy, sigma, shift):
 
 	# INPUTS: Derivatives of image intensity in the x and y directions
@@ -84,11 +83,7 @@ def gaussian_window(Ix, Iy, sigma, shift):
 		n.append(m0+i)
 	h1, h2 = np.meshgrid(m,n)
 	gauss = np.exp(-(h1 ** 2 + h2 ** 2)/(2*sigma**2))
-	a, b = gauss.shape
-	sumtot = 0;
-	for i in range(a):
-		for j in range(b):
-			sumtot = sumtot + gauss[i,j]
+	sumtot = np.sum(gauss);
 	gauss = gauss/sumtot
 
 	# Convolution of the Intensity matrix and the gaussian window
@@ -102,9 +97,7 @@ def gaussian_window(Ix, Iy, sigma, shift):
 	# GIyy = ndimage.gaussian_filter(Iy**2, sigma)
 	# GIxy = ndimage.gaussian_filter(Ix*Iy, sigma)
 
-
 	return GIxx, GIyy, GIxy
-
 
 def cornerness_funct(GIxx, GIyy, GIxy, alpha):
 
@@ -134,8 +127,8 @@ def cornerness_funct(GIxx, GIyy, GIxy, alpha):
 	# 			# np.concatenate([cornerPointsY, i], axis=0)
 	# 		del RBox
 
-	thresholdCorner = 0.5*np.amax(R)
-	thresholdEdge = 0.5*np.amin(R)
+	thresholdCorner = 0.001*np.amax(R)
+	thresholdEdge = 0.001*np.amin(R)
 	# Based on each pixels value of R, determine if it is a corner or an edge
 	# or neither. 
 	cornerPoints = np.where(R > thresholdCorner)
@@ -145,14 +138,53 @@ def cornerness_funct(GIxx, GIyy, GIxy, alpha):
 	edgePointsX = edgePoints[1]
 	edgePointsY = edgePoints[0]
 
+	maxX = len(cornerPointsX)
+	u = np.linspace(0, maxX-1, maxX)
+	# u = np.asarray(u)
+
+	maxCornerPointsX = []
+	maxCornerPointsY = []
+	print(maxX)
+	for i in range(0,maxX):
+		p0x = cornerPointsX[i]*np.ones(maxX)
+		p0y = cornerPointsY[i]*np.ones(maxX)
+		distanceX = (cornerPointsX - p0x)**2
+		distanceY = (cornerPointsY - p0y)**2
+		distance = (distanceX + distanceY)**(1/2)
+		distance = np.delete(distance, i, 0)
+
+		Rmax = 0
+		Xmax = 0
+		Ymax = 0
+		for j in range(8):
+			index = np.where(distance == np.amin(distance))
+			# nearestNeighbour = np.concatenate((nearestNeighbour, index[0]), axis=0)
+			distance[index[0]] = 100000
+			Y = cornerPointsY[index[0]]
+			X = cornerPointsX[index[0]]
+			for k in range(len(Y)):
+				if R[Y[k]][X[k]] > Rmax:
+					Rmax = R[Y[k]][X[k]] 
+					Xmax = X[k]
+					Ymax = Y[k]
+			# print(nearestNeighbour)
+			# print(R[cornerPointsY][cornerPointsX])
+			# nearestNeighbour[1].append(R[cornerPointsY][cornerPointsX])
+		
+		maxCornerPointsX.append(Xmax)
+		maxCornerPointsY.append(Ymax)
+
 	# Plot
 	plt.figure()
 	plt.imshow(R, cmap='gray', interpolation='nearest')
-	plt.scatter(cornerPointsX, cornerPointsY, color='r', marker='+')
-	plt.scatter(edgePointsX, edgePointsY, color='g', marker='+')
+	plt.scatter(maxCornerPointsX, maxCornerPointsY, color='r', marker='+')
+	# plt.scatter(edgePointsX, edgePointsY, color='g', marker='+')
 	plt.show()
 
 	return R
+
+def getKey(item):
+	return item[0]
 
 # ------------------------- Main Script --------------------------------
 
@@ -167,14 +199,12 @@ Test_images = (['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img
 
 for i in range(0,1):
 
-	# intensity = getImageIntensity(HD[i])
-	intensity, shift = getImageIntensity('chess.png')
-	print(shift)
+	intensity, shift = getImageIntensity('dice.jpg')
 
 	Ix, Iy = derivatives(intensity, shift)
 	
 	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, 1, shift)
 	
-	R = cornerness_funct(GIxx, GIyy, GIxy, 0.01)
+	R = cornerness_funct(GIxx, GIyy, GIxy, 0.05)
 	# print(np.amax(R))
 	# print(np.amin(R))
