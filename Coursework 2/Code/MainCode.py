@@ -72,16 +72,9 @@ def gaussian_window(Ix, Iy, sigma, shift):
 	# INPUTS: Derivatives of image intensity in the x and y directions
 	# OUTPUTS: Gaussian filtered intensity derivatives.
 
-	# # Apply a gaussian window to the respective components of the 2x2 matrix
-	# # containing the derivatives of the image intensity.
-	# GIxx = ndimage.gaussian_filter(Ix**2, sigma)
-	# GIyy = ndimage.gaussian_filter(Iy**2, sigma)
-	# GIxy = ndimage.gaussian_filter(Ix*Iy, sigma)
-
-	# return GIxx, GIyy, GIxy
-
 	# Method inspired from matlab solution on youtube
-	dim = max(1,6*sigma)
+	# Define the gaussian window sized by the shift
+	dim = max(1, shift) 
 	m0 = -(dim-1)/2
 	m = []
 	n = []
@@ -89,19 +82,26 @@ def gaussian_window(Ix, Iy, sigma, shift):
 		m.append(m0+i)
 	for i in range(0,dim-1):
 		n.append(m0+i)
-
 	h1, h2 = np.meshgrid(m,n)
-	hg = np.exp(-(h1 ** 2 + h2 ** 2)/(2*sigma^2))
-	a, b = hg.shape
+	gauss = np.exp(-(h1 ** 2 + h2 ** 2)/(2*sigma**2))
+	a, b = gauss.shape
 	sumtot = 0;
 	for i in range(a):
 		for j in range(b):
-			sumtot = sumtot + hg[i,j]
-	gauss_win = hg/sumtot
+			sumtot = sumtot + gauss[i,j]
+	gauss = gauss/sumtot
 
-	GIxx = signal.convolve2d(Ix ** 2, gauss_win, 'same')
-	GIyy = signal.convolve2d(Iy ** 2, gauss_win, 'same')
-	GIxy = signal.convolve2d(Ix * Iy, gauss_win, 'same')
+	# Convolution of the Intensity matrix and the gaussian window
+	GIxx = signal.convolve2d(Ix ** 2, gauss, 'same')
+	GIyy = signal.convolve2d(Iy ** 2, gauss, 'same')
+	GIxy = signal.convolve2d(Ix * Iy, gauss, 'same')
+
+	# # Apply a gaussian window to the respective components of the 2x2 matrix
+	# # containing the derivatives of the image intensity.
+	# GIxx = ndimage.gaussian_filter(Ix**2, sigma)
+	# GIyy = ndimage.gaussian_filter(Iy**2, sigma)
+	# GIxy = ndimage.gaussian_filter(Ix*Iy, sigma)
+
 
 	return GIxx, GIyy, GIxy
 
@@ -169,12 +169,12 @@ for i in range(0,1):
 
 	# intensity = getImageIntensity(HD[i])
 	intensity, shift = getImageIntensity('chess.png')
+	print(shift)
 
 	Ix, Iy = derivatives(intensity, shift)
 	
-	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, 6, shift)
+	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, 1, shift)
 	
 	R = cornerness_funct(GIxx, GIyy, GIxy, 0.01)
-	print(np.amax(R))
-	print(np.amin(R))
-	
+	# print(np.amax(R))
+	# print(np.amin(R))
