@@ -2,6 +2,7 @@
 import tkinter as tk
 import cv2
 import numpy as np
+import os
 from matplotlib import pyplot as plt
 from PIL import ImageTk, Image
 
@@ -15,9 +16,10 @@ def mouse_click(event):
     print('coords: {}'.format(coords))
     print('X: {}'.format(coords[0]))
     print('Y: {}'.format(coords[1]))
-    
+
+path = 'Photos/3.2_1.JPG'
 root = tk.Tk()
-img = Image.open('C:/Users/eddym/Documents/GitHub/MLCV1/Coursework 2/Code/Photos/3.2_1.JPG').convert('LA')
+img = Image.open(path).convert('LA')
 img = img.resize((600, 600), Image.ANTIALIAS)
 img = ImageTk.PhotoImage(img)
 panel = tk.Label(root, image = img)

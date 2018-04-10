@@ -43,6 +43,7 @@ def derivatives(intensity, shift):
 	plt.subplot(233), plt.imshow(Ixx, cmap='gray', interpolation='nearest')
 	plt.subplot(234), plt.imshow(Iyy, cmap='gray', interpolation='nearest')
 	plt.subplot(235), plt.imshow(Ixy, cmap='gray', interpolation='nearest')
+	# figure.show()
 
 	del intensity
 
@@ -90,8 +91,8 @@ def cornerness_funct(GIxx, GIyy, GIxy, alpha):
 	# 		del RBox
 
 
-	thresholdCorner = 0.8*np.amax(R)
-	thresholdEdge = 0.8*np.amin(R)
+	thresholdCorner = 0.75*np.amax(R)
+	thresholdEdge = 0.75*np.amin(R)
 	# Based on each pixels value of R, determine if it is a corner or an edge
 	# or neither. 
 	cornerPoints = np.where(R > thresholdCorner)
@@ -123,15 +124,17 @@ Test_images = (['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img
 
 for i in range(0,1):
 
-	intensity = getImageIntensity(HD[i])
-
-	Ix, Iy = derivatives(intensity, 15)
+	# intensity = getImageIntensity(HD[i])
+	intensity = getImageIntensity('dice.jpg')
+	
+	Ix, Iy = derivatives(intensity, 1)
 	
 	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, 3)
 	
 	R = cornerness_funct(GIxx, GIyy, GIxy, 0.05)
-	print(np.amax(R))
-	print(np.amin(R))
+	# print(np.mean(np.absolute(R)))
+	# print(np.amax(R))
+	# print(np.amin(R))
 	
 # for i in range(0,1):
 
