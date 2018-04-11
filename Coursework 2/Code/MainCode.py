@@ -94,7 +94,7 @@ def cornerness_funct(image, GIxx, GIyy, GIxy, alpha):
 	R = (GIxx)*(GIyy) - GIxy**2 - alpha*(GIxx + GIyy)**2
 	
 	# Based on each pixels value of R, determine if it is a corner or an edge
-	# or neither. 
+	# or neither.
 	thresholdCorner = np.percentile(R, 97)
 	cornerPoints = np.where(R > thresholdCorner)
 	# Find local maxima for the corners
@@ -161,7 +161,7 @@ def local_maxima(R, Points, NN):
 
 	return localMaxPointsX, localMaxPointsY
 
-def descripter_funct(Ix, Iy, CornerPoints):
+def descripter_funct(CornerPoints, OriginalImage):
 
 	# Finds simple descriptors based on the intensity derivative in the square region around
 	# interest points. From CW2 Q1.2: "...descriptor (simple colour and/or gradient orientation histogram)" -
@@ -173,60 +173,70 @@ def descripter_funct(Ix, Iy, CornerPoints):
 	# zoom etc. it will suck. Which is why we then need to go on to do a SIFT descriptor (Q1.3). Thoughts? 
 
 	# Set
-	boxX = np.ones((4,4))
-	boxY = np.ones((4,4))
+	box = np.ones((5,5,3))
+	# boxY = np.ones((4,4))
+	img = cv2.imread('Photos/' + OriginalImage)
+	print(img.shape)
+	print(type(img.shape))
+
 	for i in range(0,1): #len(CornerPoints[0])):
-		boxX[:][:] = Ix[CornerPoints[0][i]-2:CornerPoints[0][i]+2][:,CornerPoints[1][i]-2:CornerPoints[1][i]+2]
-		boxY[:][:] = Iy[CornerPoints[0][i]-2:CornerPoints[0][i]+2][:,CornerPoints[1][i]-2:CornerPoints[1][i]+2]
-		print(boxX)
-		print(boxY)
-		box = np.concatenate((boxX,boxY))
-		print(box)
+		print(CornerPoints[0][i]-2)
+		print(CornerPoints[0][i]+3)
+		print(CornerPoints[1][i]-2)
+		print(CornerPoints[1][i]+3)
 
-		del boxX
-		del boxY
+		box[:,:,:] = img[CornerPoints[0][i]-2:CornerPoints[0][i]+3, CornerPoints[1][i]-2:CornerPoints[1][i]+3,:]
+		# boxY[:][:] = Iy[CornerPoints[0][i]-2:CornerPoints[0][i]+2][:,CornerPoints[1][i]-2:CornerPoints[1][i]+2]
+		# box = np.concatenate((boxX,boxY))
+		color = ('b','g','r')
+		for i,col in enumerate(color):
+			histr = cv2.calcHist([box[:,:,i]],[i],None,[256],[0,256])
+			plt.plot(histr,color = col)
+			plt.xlim([0,256])
+		plt.show()
 
-def hog(Ix, Iy, shift):
-	# Compute the magnitude of the gradient
-	gradMagnitude = (Ix**2+Iy**2)**(1/2)
+
+# def hog(Ix, Iy, shift):
+# 	# Compute the magnitude of the gradient
+# 	gradMagnitude = (Ix**2+Iy**2)**(1/2)
 	
-	# Compute the orientation of the gradient
-	endY, endX = Ix.shape
-	gradOrientation = np.zeros((endY,endX))
-	for i in range(endX):
-		for j in range(endY):
-			if Ix[j][i] == 0 and Iy[j][i] != 0:
-				gradOrientation[j][i] = np.pi/2
-			elif Ix[j][i] == 0 and Iy[j][i] == 0:
-				gradOrientation[j][i] = 0
-			else:
-				gradOrientation[j][i] = np.arctan(Iy[j][i]/Ix[j][i])
+# 	# Compute the orientation of the gradient
+# 	endY, endX = Ix.shape
+# 	gradOrientation = np.zeros((endY,endX))
+# 	for i in range(endX):
+# 		for j in range(endY):
+# 			if Ix[j][i] == 0 and Iy[j][i] != 0:
+# 				gradOrientation[j][i] = np.pi/2
+# 			elif Ix[j][i] == 0 and Iy[j][i] == 0:
+# 				gradOrientation[j][i] = 0
+# 			else:
+# 				gradOrientation[j][i] = np.arctan(Iy[j][i]/Ix[j][i])
 
-	# Plotting
-	plt.figure()
-	plt.subplot(121), plt.imshow(gradMagnitude, cmap='gray', interpolation='nearest')
-	plt.title("Gradient Magnitude")
-	plt.subplot(122), plt.imshow(gradOrientation, cmap='gray', interpolation='nearest')
-	plt.title("Gradient Magnitude")
-	plt.show()
+# 	# Plotting
+# 	plt.figure()
+# 	plt.subplot(121), plt.imshow(gradMagnitude, cmap='gray', interpolation='nearest')
+# 	plt.title("Gradient Magnitude")
+# 	plt.subplot(122), plt.imshow(gradOrientation, cmap='gray', interpolation='nearest')
+# 	plt.title("Gradient Magnitude")
+# 	plt.show()
 
-	# Calculate Histogram of Gradients in 8×8 cells
-	# 1 - Extract the 8x8 submatrix of magnitude and orientation
-	# 2 - Compute the 0 bin histogram for the cell (0: 0, 1:20, ..., 9:160)
-	# https://www.learnopencv.com/histogram-of-oriented-gradients/ 
+# 	# Calculate Histogram of Gradients in 8×8 cells
+# 	# 1 - Extract the 8x8 submatrix of magnitude and orientation
+# 	# 2 - Compute the 0 bin histogram for the cell (0: 0, 1:20, ..., 9:160)
+# 	# https://www.learnopencv.com/histogram-of-oriented-gradients/ 
 
-	cellSize = 8
-	cellMagn = np.zeros((cellSize,cellSize))
-	cellOrient = np.zeros((cellSize,cellSize))
-	cellX = int(endX/cellSize)
-	cellY = int(endY/cellSize)
-	histOrientGrad = np.zeros((cellX*cellY,9))
-	for i in range(cellX): 
-		for j in range(cellY):
-			cellMagn = gradMagnitude[cellSize*j:cellSize*(j+1)][cellSize*i:cellSize*(i+1)]			
-			cellOrient = gradOrientation[cellSize*j:cellSize*(j+1)][cellSize*i:cellSize*(i+1)]
-			for ii in range(cellSize):
-				for jj in range(cellSize):
+# 	cellSize = 8
+# 	cellMagn = np.zeros((cellSize,cellSize))
+# 	cellOrient = np.zeros((cellSize,cellSize))
+# 	cellX = int(endX/cellSize)
+# 	cellY = int(endY/cellSize)
+# 	histOrientGrad = np.zeros((cellX*cellY,9))
+# 	for i in range(cellX): 
+# 		for j in range(cellY):
+# 			cellMagn = gradMagnitude[cellSize*j:cellSize*(j+1)][cellSize*i:cellSize*(i+1)]			
+# 			cellOrient = gradOrientation[cellSize*j:cellSize*(j+1)][cellSize*i:cellSize*(i+1)]
+# 			for ii in range(cellSize):
+# 				for jj in range(cellSize):
 					
 
 
@@ -243,15 +253,15 @@ Test_images = (['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img
 
 for i in range(0,1):
 
-	intensity, shift = getImageIntensity('dice.jpg')
+	intensity, shift = getImageIntensity('chess.jpg')
 
 	Ix, Iy = derivatives(intensity, shift)
 	
 	sigma = 1.6*shift
 	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
 	
-	# R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05)
+	R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05)
 
-	# descripter_funct(Ix, Iy, CornerPoints)
-	hog(Ix,Iy, shift)
+	descripter_funct(CornerPoints, 'chess.jpg')
+	# hog(Ix,Iy, shift)
 
