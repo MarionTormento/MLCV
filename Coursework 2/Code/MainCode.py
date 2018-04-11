@@ -47,10 +47,15 @@ def derivatives(intensity, shift):
 	# Plotting
 	figure = plt.figure()
 	plt.subplot(231), plt.imshow(Ix, cmap='gray', interpolation='nearest')
+	plt.title("Ix")
 	plt.subplot(232), plt.imshow(Iy, cmap='gray', interpolation='nearest')
+	plt.title("Iy")
 	plt.subplot(233), plt.imshow(Ixx, cmap='gray', interpolation='nearest')
+	plt.title("Ixx")
 	plt.subplot(234), plt.imshow(Iyy, cmap='gray', interpolation='nearest')
+	plt.title("Iyy")
 	plt.subplot(235), plt.imshow(Ixy, cmap='gray', interpolation='nearest')
+	plt.title("Ixy")
 
 	del intensity
 
@@ -105,9 +110,9 @@ def cornerness_funct(image, GIxx, GIyy, GIxy, alpha):
 	# Plot
 	plt.figure()
 	plt.imshow(intensity, cmap='gray')
-	# plt.imshow(R, cmap='gray', interpolation='nearest')
 	plt.scatter(maxCornerPointsX, maxCornerPointsY, color='r', marker='+')
 	plt.scatter(maxEdgePointsX, maxEdgePointsY, color='g', marker='+')
+	plt.title("Detection of Corners and Edges")
 	plt.show()
 
 	return R, CornerPoints, EdgePoints
@@ -180,6 +185,51 @@ def descripter_funct(Ix, Iy, CornerPoints):
 
 		del boxX
 		del boxY
+
+def hog(Ix, Iy, shift):
+	# Compute the magnitude of the gradient
+	gradMagnitude = (Ix**2+Iy**2)**(1/2)
+	
+	# Compute the orientation of the gradient
+	endY, endX = Ix.shape
+	gradOrientation = np.zeros((endY,endX))
+	for i in range(endX):
+		for j in range(endY):
+			if Ix[j][i] == 0 and Iy[j][i] != 0:
+				gradOrientation[j][i] = np.pi/2
+			elif Ix[j][i] == 0 and Iy[j][i] == 0:
+				gradOrientation[j][i] = 0
+			else:
+				gradOrientation[j][i] = np.arctan(Iy[j][i]/Ix[j][i])
+
+	# Plotting
+	plt.figure()
+	plt.subplot(121), plt.imshow(gradMagnitude, cmap='gray', interpolation='nearest')
+	plt.title("Gradient Magnitude")
+	plt.subplot(122), plt.imshow(gradOrientation, cmap='gray', interpolation='nearest')
+	plt.title("Gradient Magnitude")
+	plt.show()
+
+	# Calculate Histogram of Gradients in 8×8 cells
+	# 1 - Extract the 8x8 submatrix of magnitude and orientation
+	# 2 - Compute the 0 bin histogram for the cell (0: 0, 1:20, ..., 9:160)
+	# https://www.learnopencv.com/histogram-of-oriented-gradients/ 
+
+	cellSize = 8
+	cellMagn = np.zeros((cellSize,cellSize))
+	cellOrient = np.zeros((cellSize,cellSize))
+	cellX = int(endX/cellSize)
+	cellY = int(endY/cellSize)
+	histOrientGrad = np.zeros((cellX*cellY,9))
+	for i in range(cellX): 
+		for j in range(cellY):
+			cellMagn = gradMagnitude[cellSize*j:cellSize*(j+1)][cellSize*i:cellSize*(i+1)]			
+			cellOrient = gradOrientation[cellSize*j:cellSize*(j+1)][cellSize*i:cellSize*(i+1)]
+			for ii in range(cellSize):
+				for jj in range(cellSize):
+					
+
+
 # ------------------------- Main Script --------------------------------
 
 # import images
@@ -193,13 +243,15 @@ Test_images = (['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img
 
 for i in range(0,1):
 
-	intensity, shift = getImageIntensity(Test_images[i])
+	intensity, shift = getImageIntensity('dice.jpg')
 
 	Ix, Iy = derivatives(intensity, shift)
 	
-	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, 1, shift)
+	sigma = 1.6*shift
+	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
 	
-	R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05)
+	# R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05)
 
-	descripter_funct(Ix, Iy, CornerPoints)
+	# descripter_funct(Ix, Iy, CornerPoints)
+	hog(Ix,Iy, shift)
 
