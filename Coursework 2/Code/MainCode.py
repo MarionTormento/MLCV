@@ -10,7 +10,8 @@ def getImageIntensity(image):
 
 	# Load an color image in grayscale
 	img = cv2.imread('Photos/' + image, 0)
-	
+	img = np.asarray(img)
+
 	# Autonomously find the size of the shift window adapted to the image
 	width, height = img.shape
 	shift_w = int(width/50)
@@ -19,7 +20,7 @@ def getImageIntensity(image):
 
 	return img, shift
 
-def derivatives(intensity, shift):
+def derivatives(intensity, shift, plot):
 
 	# Function to calculate the change in intensity in the image in the 
 	# x and y directions across 'shift' number of pixels.
@@ -29,9 +30,6 @@ def derivatives(intensity, shift):
 	# 	PLOT  : The square of the derivatives of the pixels intensity in 
 	# 	the x and y direction (Ixx, Iyy) and the product of Ix and Iy (Ixy)
 	
-	# Find Ix and Iy
-	intensity = np.asarray(intensity)
-
 	# Find the derivatives in x and y direction
 	half_shift = int(shift/2)
 	u = np.linspace(-half_shift, half_shift, shift+1)
@@ -46,21 +44,20 @@ def derivatives(intensity, shift):
 	Ixy = Ix * Iy
 	
 	# Plotting
-	figure = plt.figure()
-	plt.subplot(231), plt.imshow(Ix, cmap='gray', interpolation='nearest')
-	plt.title("Ix")
-	plt.subplot(232), plt.imshow(Iy, cmap='gray', interpolation='nearest')
-	plt.title("Iy")
-	plt.subplot(233), plt.imshow(Ixx, cmap='gray', interpolation='nearest')
-	plt.title("Ixx")
-	plt.subplot(234), plt.imshow(Iyy, cmap='gray', interpolation='nearest')
-	plt.title("Iyy")
-	plt.subplot(235), plt.imshow(Ixy, cmap='gray', interpolation='nearest')
-	plt.title("Ixy")
-	plt.suptitle('Intensity derivatives')
-
-
-	del intensity
+	if plot == 1:
+		plt.figure()
+		plt.subplot(231), plt.imshow(Ix, cmap='gray', interpolation='nearest')
+		plt.title("Ix")
+		plt.subplot(232), plt.imshow(Iy, cmap='gray', interpolation='nearest')
+		plt.title("Iy")
+		plt.subplot(233), plt.imshow(Ixx, cmap='gray', interpolation='nearest')
+		plt.title("Ixx")
+		plt.subplot(234), plt.imshow(Iyy, cmap='gray', interpolation='nearest')
+		plt.title("Iyy")
+		plt.subplot(235), plt.imshow(Ixy, cmap='gray', interpolation='nearest')
+		plt.title("Ixy")
+		plt.suptitle('Intensity derivatives')
+		plt.show()
 
 	return Ix, Iy
 
@@ -89,36 +86,39 @@ def gaussian_window(Ix, Iy, sigma, shift):
 
 	return GIxx, GIyy, GIxy
 
-def cornerness_funct(image, GIxx, GIyy, GIxy, alpha):
+def cornerness_funct(intensity, GIxx, GIyy, GIxy, alpha, plot):
 
 	# Function to calculate the locations of corners and edges in the image
 	
 	# Calculate R
 	R = (GIxx)*(GIyy) - GIxy**2 - alpha*(GIxx + GIyy)**2
-	
+
 	# Based on each pixels value of R, determine if it is a corner or an edge
 	# or neither. 
+	NN = 8
+
+	# Corners
 	thresholdCorner = np.percentile(R, 97)
 	cornerPoints = np.where(R > thresholdCorner)
-	NN = 10
-
 	# Find local maxima for the corners
 	maxCornerPointsX, maxCornerPointsY = local_maxima(R, cornerPoints, NN)
 	CornerPoints = (np.asarray(maxCornerPointsX), np.asarray(maxCornerPointsY))
-
+	
+	# Edges
 	thresholdEdge = np.percentile(R, 3)
 	edgePoints = np.where(R < thresholdEdge)
 	# Find local minima for the edges
 	maxEdgePointsX, maxEdgePointsY = local_maxima(R, edgePoints, NN)
 	EdgePoints = (np.asarray(maxEdgePointsX), np.asarray(maxEdgePointsY))
-	
+
 	# Plot
-	plt.figure()
-	plt.imshow(intensity, cmap='gray')
-	plt.scatter(maxCornerPointsY, maxCornerPointsX, color='r', marker='+')
-	plt.scatter(maxEdgePointsY, maxEdgePointsX, color='g', marker='+')
-	plt.title("Detection of Corners and Edges")
-	plt.show()
+	if plot == 1:
+		plt.figure()
+		plt.imshow(intensity, cmap='gray')
+		plt.scatter(maxCornerPointsY, maxCornerPointsX, color='r', marker='+')
+		plt.scatter(maxEdgePointsY, maxEdgePointsX, color='g', marker='+')
+		plt.title("Detection of Corners and Edges")
+		plt.show()
 
 	return R, CornerPoints, EdgePoints
 
@@ -132,7 +132,7 @@ def local_maxima(R, Points, NN):
 	localMaxPointsX = []
 	localMaxPointsY = []
 
-	for i in range(0, nbPoints):
+	for i in range(nbPoints):
 
 		Point0X = PointsX[i]*np.ones(nbPoints)
 		Point0Y = PointsY[i]*np.ones(nbPoints)
@@ -200,8 +200,7 @@ def descripter_funct(CornerPoints, OriginalImage):
 			plt.xlim([0,256])
 		plt.show()
 
-
-def hog(Ix, Iy, CornerPoints):
+def hog(Ix, Iy, CornerPoints, plot):
 	# Compute the magnitude of the gradient
 	gradMagnitude = (Ix**2+Iy**2)**(1/2)
 	
@@ -220,12 +219,13 @@ def hog(Ix, Iy, CornerPoints):
 					gradOrientation[i][j] = gradOrientation[i][j] + np.pi #makes sure every angle is positive value (rad)
 
 	# Plotting
-	plt.figure()
-	plt.subplot(121), plt.imshow(gradMagnitude, cmap='gray', interpolation='nearest')
-	plt.title("Gradient Magnitude")
-	plt.subplot(122), plt.imshow(gradOrientation, cmap='gray', interpolation='nearest')
-	plt.title("Gradient orientation")
-	plt.show()
+	if plot == 1:
+		plt.figure()
+		plt.subplot(121), plt.imshow(gradMagnitude, cmap='gray', interpolation='nearest')
+		plt.title("Gradient Magnitude")
+		plt.subplot(122), plt.imshow(gradOrientation, cmap='gray', interpolation='nearest')
+		plt.title("Gradient orientation")
+		plt.show()
 
 	# Calculate Histogram of Gradients in 8×8 cells
 	# https://www.learnopencv.com/histogram-of-oriented-gradients/
@@ -242,6 +242,7 @@ def hog(Ix, Iy, CornerPoints):
 	
 	# 1 - Extract the 8x8 submatrix of magnitude and orientation
 	histOrientGrad = np.zeros((len(CornerPoints[0]),9))
+
 	for i in range(len(CornerPoints[0])):
 		boxMagn = gradMagnitude[CornerPoints[0][i]-2:CornerPoints[0][i]+3][:,CornerPoints[1][i]-2:CornerPoints[1][i]+3]
 		boxOrient = gradOrientation[CornerPoints[0][i]-2:CornerPoints[0][i]+3][:,CornerPoints[1][i]-2:CornerPoints[1][i]+3]
@@ -252,24 +253,33 @@ def hog(Ix, Iy, CornerPoints):
 				orient = boxOrient[j][k]
 				idxMin = int(orient/(rad(20)))
 				idxSup = idxMin + 1
-				if idxSup > 8:
+				# print([magn, orient])
+				# print([idxMin, idxSup])
+				if idxSup > 8 and idxMin > 8:
 					idxSup = idxSup-9
+					idxMin = idxMin-9
+				elif idxSup > 8:
+					idxSup = idxSup - 9
+				# print([idxMin, idxSup])
 				percSup = (orient-idxMin*rad(20))/rad(20)
 				percMin = 1-percSup
+				# print([percMin, percSup])
 				histOrientGrad[i][idxMin] = percMin*magn
 				histOrientGrad[i][idxSup] = percSup*magn
 		del boxMagn
 		del boxOrient
 
 	# Plotting
-	plotList = random.sample(range(len(histOrientGrad)), 9)
-	plt.figure()
-	for i in range(9):
-		idx = 330 + i + 1
-		plt.subplot(idx), plt.hist(histOrientGrad[plotList[i]])
-		plt.title(plotList[i])
-	plt.suptitle('Histogram of Gradient for 9 random 8x8 cells')
-	plt.show()
+	if plot == 1:
+		plotList = random.sample(range(len(histOrientGrad)), 9)
+		plt.figure()
+		for i in range(9):
+			idx = 330 + i + 1
+			plt.subplot(idx), plt.bar(range(9), histOrientGrad[plotList[i]])
+			plt.xticks(range(9), ('0', '20', '40', '60', '80', '100', '120', '140', '160'))
+			plt.title(plotList[i])
+		plt.suptitle('Histogram of Gradient for 9 random 8x8 cells')
+		plt.show()
 
 	return histOrientGrad
 
@@ -288,19 +298,24 @@ HD = (['3.2_1.jpg', '3.2_2.jpg', '3.2_3.jpg',  '4.0_1.jpg', '4.0_2.jpg',
 
 Test_images = (['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg'])
 
-Quick = (['chess.png', 'chess.jpg', 'dice.jpg'])
+Quick = (['chess.jpg', 'chess.png', 'dice.jpg'])
+allHOG = []
+for i in range(len(Test_images)):
 
-for i in range(len(Quick)):
-
-	intensity, shift = getImageIntensity(Quick[i])
-
-	Ix, Iy = derivatives(intensity, shift)
+	print("New image")
+	image = Test_images[i]
+	intensity, shift = getImageIntensity(image)
 	
+	print("Computing Intensity derivatives")
+	Ix, Iy = derivatives(intensity, shift, 0)
 	sigma = 1.6*shift
 	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
+
+	print("Identifying corners and edges")
+	R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05, 1)
 	
-	R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05)
-
+	print("Computing histogram of gradient orientation")
 	# descripter_funct(CornerPoints, 'dice.jpg')
-	histOrientGrad[i] = hog(Ix, Iy, CornerPoints)
+	allHOG.append(hog(Ix, Iy, CornerPoints, 1))
 
+print(allHOG)
