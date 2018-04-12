@@ -261,7 +261,6 @@ def hog(Ix, Iy, CornerPoints):
 		del boxMagn
 		del boxOrient
 
-
 	# Plotting
 	plotList = random.sample(range(len(histOrientGrad)), 9)
 	plt.figure()
@@ -271,6 +270,8 @@ def hog(Ix, Iy, CornerPoints):
 		plt.title(plotList[i])
 	plt.suptitle('Histogram of Gradient for 9 random 8x8 cells')
 	plt.show()
+
+	return histOrientGrad
 
 def rad(degree):
 	radian = degree*np.pi/180
@@ -287,9 +288,11 @@ HD = (['3.2_1.jpg', '3.2_2.jpg', '3.2_3.jpg',  '4.0_1.jpg', '4.0_2.jpg',
 
 Test_images = (['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg'])
 
-for i in range(1):
+Quick = (['chess.png', 'chess.jpg', 'dice.jpg'])
 
-	intensity, shift = getImageIntensity('dice.jpg')
+for i in range(len(Quick)):
+
+	intensity, shift = getImageIntensity(Quick[i])
 
 	Ix, Iy = derivatives(intensity, shift)
 	
@@ -298,6 +301,6 @@ for i in range(1):
 	
 	R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05)
 
-	# descripter_funct(CornerPoints, 'chess.jpg')
-	hog(Ix, Iy, CornerPoints)
+	# descripter_funct(CornerPoints, 'dice.jpg')
+	histOrientGrad[i] = hog(Ix, Iy, CornerPoints)
 
