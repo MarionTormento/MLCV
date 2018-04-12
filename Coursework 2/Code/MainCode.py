@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 from scipy import ndimage
 from scipy import signal
 import time
+import random
 
 def getImageIntensity(image):
 
@@ -56,6 +57,8 @@ def derivatives(intensity, shift):
 	plt.title("Iyy")
 	plt.subplot(235), plt.imshow(Ixy, cmap='gray', interpolation='nearest')
 	plt.title("Ixy")
+	plt.suptitle('Intensity derivatives')
+
 
 	del intensity
 
@@ -214,11 +217,17 @@ def hog(Ix, Iy, CornerPoints):
 			else:
 				gradOrientation[i][j] = np.arctan(Iy[i][j]/Ix[i][j])
 				if gradOrientation[i][j] < 0:
-					gradOrientation[i][j] = gradOrientation[i][j] + np.pi
+					gradOrientation[i][j] = gradOrientation[i][j] + np.pi #makes sure every angle is positive value (rad)
 
+	# Plotting
+	plt.figure()
+	plt.subplot(121), plt.imshow(gradMagnitude, cmap='gray', interpolation='nearest')
+	plt.title("Gradient Magnitude")
+	plt.subplot(122), plt.imshow(gradOrientation, cmap='gray', interpolation='nearest')
+	plt.title("Gradient orientation")
+	plt.show()
 
 	# Calculate Histogram of Gradients in 8×8 cells
-	# 2 - Compute the 0 bin histogram for the cell (0: 0, 1:20, ..., 9:160)
 	# https://www.learnopencv.com/histogram-of-oriented-gradients/
 	
 	# 0 - Clean the side corner points
@@ -232,28 +241,11 @@ def hog(Ix, Iy, CornerPoints):
 	CornerPoints = np.delete(CornerPoints, idx[0], 1)
 	
 	# 1 - Extract the 8x8 submatrix of magnitude and orientation
-	# histOrientGrad = np.zeros((len(CornerPoints[0]),9))
-	# i = 9
-	# boxMagn = gradMagnitude[CornerPoints[0][i]-2:CornerPoints[0][i]+3][:,CornerPoints[1][i]-2:CornerPoints[1][i]+3]
-	# boxOrient = gradOrientation[CornerPoints[0][i]-2:CornerPoints[0][i]+3][:,CornerPoints[1][i]-2:CornerPoints[1][i]+3]
-	# j = 0
-	# k = 0
-	# magn = boxMagn[j][k]
-	# orient = boxOrient[j][k]
-	# idxMin = int(orient/(rad(20)))
-	# idxSup = idxMin + 1
-	# if idxSup > 8:
-	# 	idxSup = idxSup-9
-	# percSup = (orient-idxMin*rad(20))/rad(20)
-	# percMin = 1-percSup
-	# histOrientGrad[idxMin][i] = percMin*magn
-	# histOrientGrad[idxSup][i] = percSup*magn
-	# print([i,j,k])
-
 	histOrientGrad = np.zeros((len(CornerPoints[0]),9))
 	for i in range(len(CornerPoints[0])):
 		boxMagn = gradMagnitude[CornerPoints[0][i]-2:CornerPoints[0][i]+3][:,CornerPoints[1][i]-2:CornerPoints[1][i]+3]
 		boxOrient = gradOrientation[CornerPoints[0][i]-2:CornerPoints[0][i]+3][:,CornerPoints[1][i]-2:CornerPoints[1][i]+3]
+		# 2 - Compute the 9 bin histogram for the 8x8 submatrix (0: 0, 1:20, ..., 8:160)
 		for j in range(5):
 			for k in range(5):
 				magn = boxMagn[j][k]
@@ -271,11 +263,13 @@ def hog(Ix, Iy, CornerPoints):
 
 
 	# Plotting
+	plotList = random.sample(range(len(histOrientGrad)), 9)
 	plt.figure()
-	plt.subplot(121), plt.imshow(gradMagnitude, cmap='gray', interpolation='nearest')
-	plt.title("Gradient Magnitude")
-	plt.subplot(122), plt.imshow(gradOrientation, cmap='gray', interpolation='nearest')
-	plt.title("Gradient orientation")
+	for i in range(9):
+		idx = 330 + i + 1
+		plt.subplot(idx), plt.hist(histOrientGrad[plotList[i]])
+		plt.title(plotList[i])
+	plt.suptitle('Histogram of Gradient for 9 random 8x8 cells')
 	plt.show()
 
 def rad(degree):
