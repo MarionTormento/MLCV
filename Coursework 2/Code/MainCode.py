@@ -5,6 +5,7 @@ from scipy import ndimage
 from scipy import signal
 import time
 import random
+from tempfile import TemporaryFile
 
 def getImageIntensity(image):
 
@@ -166,7 +167,7 @@ def local_maxima(R, Points, NN):
 
 	return localMaxPointsX, localMaxPointsY
 
-def descripter_funct(CornerPoints, OriginalImage):
+def descripter_funct(CornerPoints, OriginalImage, plot):
 
 	# Finds simple descriptors based on the intensity derivative in the square region around
 	# interest points. From CW2 Q1.2: "...descriptor (simple colour and/or gradient orientation histogram)" -
@@ -178,27 +179,31 @@ def descripter_funct(CornerPoints, OriginalImage):
 	# zoom etc. it will suck. Which is why we then need to go on to do a SIFT descriptor (Q1.3). Thoughts? 
 
 	# Set
-	box = np.ones((5,5,3))
+	boxSize = 11
+	lengthA = (boxSize-1)//2
+	lengthB = (boxSize+1)//2
+	boxImg = np.ones((boxSize,boxSize))
 	# boxY = np.ones((4,4))
-	img = cv2.imread('Photos/' + OriginalImage)
-	print(img.shape)
-	print(type(img.shape))
+	imgread = cv2.imread('Photos/' + OriginalImage)
+	img = cv2.split(imgread)
+	print(len(img))
 
-	for i in range(0,1): #len(CornerPoints[0])):
-		print(CornerPoints[0][i]-2)
-		print(CornerPoints[0][i]+3)
-		print(CornerPoints[1][i]-2)
-		print(CornerPoints[1][i]+3)
+	for i in range(80,81): #len(CornerPoints[0])):
+		print(CornerPoints[0][i]-lengthA)
+		print(CornerPoints[0][i]+lengthB)
+		print(CornerPoints[1][i]-lengthA)
+		print(CornerPoints[1][i]+lengthB)
 
-		box[:,:,:] = img[CornerPoints[0][i]-2:CornerPoints[0][i]+3, CornerPoints[1][i]-2:CornerPoints[1][i]+3,:]
-		# boxY[:][:] = Iy[CornerPoints[0][i]-2:CornerPoints[0][i]+2][:,CornerPoints[1][i]-2:CornerPoints[1][i]+2]
-		# box = np.concatenate((boxX,boxY))
+		mask = np.zeros(imgread.shape[:2], np.uint8)
+		mask[CornerPoints[0][i]-lengthA:CornerPoints[0][i]+lengthB,CornerPoints[1][i]-lengthA:CornerPoints[1][i]+lengthB] = 255
 		color = ('b','g','r')
-		for i,col in enumerate(color):
-			histr = cv2.calcHist([box[:,:,i]],[i],None,[256],[0,256])
-			plt.plot(histr,color = col)
-			plt.xlim([0,256])
-		plt.show()
+		if plot == 1:
+			plt.figure()
+			for j,col in zip(img, color):
+				histr = cv2.calcHist([j],[0],mask,[256],[0,256])
+				plt.plot(histr,color = col)
+				plt.xlim([0,256])
+			plt.show()
 
 def hog(Ix, Iy, CornerPoints, plot):
 	# Compute the magnitude of the gradient
@@ -253,17 +258,13 @@ def hog(Ix, Iy, CornerPoints, plot):
 				orient = boxOrient[j][k]
 				idxMin = int(orient/(rad(20)))
 				idxSup = idxMin + 1
-				# print([magn, orient])
-				# print([idxMin, idxSup])
 				if idxSup > 8 and idxMin > 8:
 					idxSup = idxSup-9
 					idxMin = idxMin-9
 				elif idxSup > 8:
 					idxSup = idxSup - 9
-				# print([idxMin, idxSup])
 				percSup = (orient-idxMin*rad(20))/rad(20)
 				percMin = 1-percSup
-				# print([percMin, percSup])
 				histOrientGrad[i][idxMin] = percMin*magn
 				histOrientGrad[i][idxSup] = percSup*magn
 		del boxMagn
@@ -287,6 +288,64 @@ def rad(degree):
 	radian = degree*np.pi/180
 	return radian
 
+def knn(hogBase, hogTest):
+	# Function to compute the matching interest point between two images using the HOG as a descriptor
+	# INPUTS: full hog of the base image and test image (we are trying to match test with base)
+	# OUTPUTS: list of nearest neighbour : i-th line is the index of the closest neighbour in Base of the i-th interest point of Test
+	
+	for i in range(len(hogTest[0])):
+		# Store the hog of the descriptor we want to compare
+		hogDesc = hogTest[i]
+		print(hogDesc)
+		hogDesc = hogDesc*ones(hogBase.shape)
+		distance = (hogBase-hogDesc)**2
+		distance = (np.sum(distance, axis=1))**(1/2)
+
+
+
+		return 0 
+
+	# PointsX = Points[0]
+	# PointsY = Points[1]
+	# nbPoints = len(PointsX)
+
+	# localMaxPointsX = []
+	# localMaxPointsY = []
+
+	# for i in range(nbPoints):
+
+	# 	Point0X = PointsX[i]*np.ones(nbPoints)
+	# 	Point0Y = PointsY[i]*np.ones(nbPoints)
+
+	# 	# Compute the distance between each corner point and cornerPoint0
+	# 	distanceX = (PointsX - Point0X)**2
+	# 	distanceY = (PointsY - Point0Y)**2
+	# 	distance = (distanceX + distanceY)**(1/2)
+	# 	distance = np.delete(distance, i, 0)
+
+	# 	# Looking for the maxima among the cornerPoint0 NN nearest neighbour
+	# 	Rmax = 0
+	# 	Xmax = 0
+	# 	Ymax = 0
+
+	# 	for j in range(NN):
+		
+	# 		index = np.where(distance == np.amin(distance))
+	# 		distance[index[0]] = 100000
+	# 		Y = PointsY[index[0]]
+	# 		X = PointsX[index[0]]
+	# 		for k in range(len(Y)):
+	# 			if abs(R[X[k]][Y[k]]) > Rmax:
+	# 				Rmax = abs(R[X[k]][Y[k]]) 
+	# 				Xmax = X[k]
+	# 				Ymax = Y[k]
+
+	# 	# Save the new corner index		
+	# 	localMaxPointsX.append(Xmax)
+	# 	localMaxPointsY.append(Ymax)
+
+	# return localMaxPointsX, localMaxPointsY	
+
 # ------------------------- Main Script --------------------------------
 
 # import images
@@ -299,11 +358,14 @@ HD = (['3.2_1.jpg', '3.2_2.jpg', '3.2_3.jpg',  '4.0_1.jpg', '4.0_2.jpg',
 Test_images = (['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg'])
 
 Quick = (['chess.jpg', 'chess.png', 'dice.jpg'])
+
 allHOG = []
-for i in range(len(Test_images)):
+test = Quick
+
+for i in range(len(test)):
 
 	print("New image")
-	image = Test_images[i]
+	image = test[i]
 	intensity, shift = getImageIntensity(image)
 	
 	print("Computing Intensity derivatives")
@@ -312,10 +374,11 @@ for i in range(len(Test_images)):
 	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
 
 	print("Identifying corners and edges")
-	R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05, 1)
+	R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05, 0)
 	
 	print("Computing histogram of gradient orientation")
 	# descripter_funct(CornerPoints, 'dice.jpg')
-	allHOG.append(hog(Ix, Iy, CornerPoints, 1))
+	allHOG.append(hog(Ix, Iy, CornerPoints, 0))
 
-print(allHOG)
+# allHOG = np.array(allHOG)
+# np.savetxt('hogQuick', allHOG)
