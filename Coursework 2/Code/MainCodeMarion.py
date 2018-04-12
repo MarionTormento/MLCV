@@ -97,16 +97,14 @@ def cornerness_funct(image, GIxx, GIyy, GIxy, alpha):
 	# or neither. 
 	thresholdCorner = np.percentile(R, 97)
 	cornerPoints = np.where(R > thresholdCorner)
-	NN = 10
-
 	# Find local maxima for the corners
-	maxCornerPointsX, maxCornerPointsY = local_maxima(R, cornerPoints, NN)
+	maxCornerPointsX, maxCornerPointsY = local_maxima(R, cornerPoints, 8)
 	CornerPoints = (np.asarray(maxCornerPointsX), np.asarray(maxCornerPointsY))
 
 	thresholdEdge = np.percentile(R, 3)
 	edgePoints = np.where(R < thresholdEdge)
 	# Find local minima for the edges
-	maxEdgePointsX, maxEdgePointsY = local_maxima(R, edgePoints, NN)
+	maxEdgePointsX, maxEdgePointsY = local_maxima(R, edgePoints, 8)
 	EdgePoints = (np.asarray(maxEdgePointsX), np.asarray(maxEdgePointsY))
 	
 	# Plot
@@ -163,7 +161,7 @@ def local_maxima(R, Points, NN):
 
 	return localMaxPointsX, localMaxPointsY
 
-def descripter_funct(CornerPoints, OriginalImage):
+def descripter_funct(gradMag, gradOr, CornerPoints):
 
 	# Finds simple descriptors based on the intensity derivative in the square region around
 	# interest points. From CW2 Q1.2: "...descriptor (simple colour and/or gradient orientation histogram)" -
@@ -175,28 +173,18 @@ def descripter_funct(CornerPoints, OriginalImage):
 	# zoom etc. it will suck. Which is why we then need to go on to do a SIFT descriptor (Q1.3). Thoughts? 
 
 	# Set
-	box = np.ones((5,5,3))
-	# boxY = np.ones((4,4))
-	img = cv2.imread('Photos/' + OriginalImage)
-	print(img.shape)
-	print(type(img.shape))
-
+	boxX = np.ones((4,4))
+	boxY = np.ones((4,4))
 	for i in range(0,1): #len(CornerPoints[0])):
-		print(CornerPoints[0][i]-2)
-		print(CornerPoints[0][i]+3)
-		print(CornerPoints[1][i]-2)
-		print(CornerPoints[1][i]+3)
+		boxX[:][:] = Ix[CornerPoints[0][i]-2:CornerPoints[0][i]+2][:,CornerPoints[1][i]-2:CornerPoints[1][i]+2]
+		boxY[:][:] = Iy[CornerPoints[0][i]-2:CornerPoints[0][i]+2][:,CornerPoints[1][i]-2:CornerPoints[1][i]+2]
+		print(boxX)
+		print(boxY)
+		box = np.concatenate((boxX,boxY))
+		print(box)
 
-		box[:,:,:] = img[CornerPoints[0][i]-2:CornerPoints[0][i]+3, CornerPoints[1][i]-2:CornerPoints[1][i]+3,:]
-		# boxY[:][:] = Iy[CornerPoints[0][i]-2:CornerPoints[0][i]+2][:,CornerPoints[1][i]-2:CornerPoints[1][i]+2]
-		# box = np.concatenate((boxX,boxY))
-		color = ('b','g','r')
-		for i,col in enumerate(color):
-			histr = cv2.calcHist([box[:,:,i]],[i],None,[256],[0,256])
-			plt.plot(histr,color = col)
-			plt.xlim([0,256])
-		plt.show()
-
+		del boxX
+		del boxY
 
 def hog(Ix, Iy, CornerPoints):
 	# Compute the magnitude of the gradient
@@ -213,9 +201,6 @@ def hog(Ix, Iy, CornerPoints):
 				gradOrientation[i][j] = 0
 			else:
 				gradOrientation[i][j] = np.arctan(Iy[i][j]/Ix[i][j])
-				if gradOrientation[i][j] < 0:
-					gradOrientation[i][j] = gradOrientation[i][j] + np.pi
-
 
 	# Calculate Histogram of Gradients in 8×8 cells
 	# 2 - Compute the 0 bin histogram for the cell (0: 0, 1:20, ..., 9:160)
@@ -232,24 +217,6 @@ def hog(Ix, Iy, CornerPoints):
 	CornerPoints = np.delete(CornerPoints, idx[0], 1)
 	
 	# 1 - Extract the 8x8 submatrix of magnitude and orientation
-	# histOrientGrad = np.zeros((len(CornerPoints[0]),9))
-	# i = 9
-	# boxMagn = gradMagnitude[CornerPoints[0][i]-2:CornerPoints[0][i]+3][:,CornerPoints[1][i]-2:CornerPoints[1][i]+3]
-	# boxOrient = gradOrientation[CornerPoints[0][i]-2:CornerPoints[0][i]+3][:,CornerPoints[1][i]-2:CornerPoints[1][i]+3]
-	# j = 0
-	# k = 0
-	# magn = boxMagn[j][k]
-	# orient = boxOrient[j][k]
-	# idxMin = int(orient/(rad(20)))
-	# idxSup = idxMin + 1
-	# if idxSup > 8:
-	# 	idxSup = idxSup-9
-	# percSup = (orient-idxMin*rad(20))/rad(20)
-	# percMin = 1-percSup
-	# histOrientGrad[idxMin][i] = percMin*magn
-	# histOrientGrad[idxSup][i] = percSup*magn
-	# print([i,j,k])
-
 	histOrientGrad = np.zeros((len(CornerPoints[0]),9))
 	for i in range(len(CornerPoints[0])):
 		boxMagn = gradMagnitude[CornerPoints[0][i]-2:CornerPoints[0][i]+3][:,CornerPoints[1][i]-2:CornerPoints[1][i]+3]
@@ -258,17 +225,17 @@ def hog(Ix, Iy, CornerPoints):
 			for k in range(5):
 				magn = boxMagn[j][k]
 				orient = boxOrient[j][k]
-				idxMin = int(orient/(rad(20)))
+				idxMin = int(orient/(rad(20))) + 4
 				idxSup = idxMin + 1
 				if idxSup > 8:
 					idxSup = idxSup-9
 				percSup = (orient-idxMin*rad(20))/rad(20)
 				percMin = 1-percSup
-				histOrientGrad[i][idxMin] = percMin*magn
-				histOrientGrad[i][idxSup] = percSup*magn
+				histOrientGrad[idxMin][i] = percMin*magn
+				histOrientGrad[idxSup][i] = percSup*magn
+		print(histOrientGrad[:][i])
 		del boxMagn
 		del boxOrient
-
 
 	# Plotting
 	plt.figure()
@@ -293,17 +260,17 @@ HD = (['3.2_1.jpg', '3.2_2.jpg', '3.2_3.jpg',  '4.0_1.jpg', '4.0_2.jpg',
 
 Test_images = (['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg'])
 
-for i in range(1):
+for i in range(0,1):
 
 	intensity, shift = getImageIntensity('dice.jpg')
 
 	Ix, Iy = derivatives(intensity, shift)
 	
 	sigma = 1.6*shift
-	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
+	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, 5, shift)
 	
 	R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05)
 
-	# descripter_funct(CornerPoints, 'chess.jpg')
-	hog(Ix, Iy, CornerPoints)
+	# descripter_funct(Ix, Iy, CornerPoints)
+	# hog(Ix,Iy, CornerPoints)
 
