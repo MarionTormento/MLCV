@@ -15,9 +15,9 @@ def getImageIntensity(image):
 
 	# Autonomously find the size of the shift window adapted to the image
 	width, height = img.shape
-	shift_w = int(width/50)
-	shift_h = int(height/50)
-	shift = max(1, min(shift_h, shift_w)) # In case the image is smaller than 50x50, shift = 1
+	shift_w = int(width/100)
+	shift_h = int(height/100)
+	shift = max(3, min(shift_h, shift_w)) # In case the image is smaller than 50x50, shift = 3
 
 	return img, shift
 
@@ -87,7 +87,7 @@ def gaussian_window(Ix, Iy, sigma, shift):
 
 	return GIxx, GIyy, GIxy
 
-def cornerness_funct(intensity, GIxx, GIyy, GIxy, alpha, plot):
+def cornerness_funct(intensity, GIxx, GIyy, GIxy, alpha, buff, plot):
 
 	# Function to calculate the locations of corners and edges in the image
 	
@@ -96,32 +96,51 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, alpha, plot):
 
 	# Based on each pixels value of R, determine if it is a corner or an edge
 	# or neither. 
-	NN = 8
-
+	NN = 50
+	perc = 97
+	
 	# Corners
-	thresholdCorner = np.percentile(R, 97)
+	thresholdCorner = np.percentile(R, perc)
 	cornerPoints = np.where(R > thresholdCorner)
+	# Delete the corner located on the sides
+	cornerPoints = cleanSides(intensity, cornerPoints, buff)
 	# Find local maxima for the corners
-	maxCornerPointsX, maxCornerPointsY = local_maxima(R, cornerPoints, NN)
-	CornerPoints = (np.asarray(maxCornerPointsX), np.asarray(maxCornerPointsY))
+	cornerPoints = local_maxima(R, cornerPoints, NN)
 	
 	# Edges
-	thresholdEdge = np.percentile(R, 3)
+	thresholdEdge = np.percentile(R, 100-perc)
 	edgePoints = np.where(R < thresholdEdge)
+	# Delete the edges located on the sides
+	edgePoints = cleanSides(intensity, edgePoints, buff)
 	# Find local minima for the edges
-	maxEdgePointsX, maxEdgePointsY = local_maxima(R, edgePoints, NN)
-	EdgePoints = (np.asarray(maxEdgePointsX), np.asarray(maxEdgePointsY))
+	edgePoints = local_maxima(R, edgePoints, NN)
 
 	# Plot
 	if plot == 1:
 		plt.figure()
 		plt.imshow(intensity, cmap='gray')
-		plt.scatter(maxCornerPointsY, maxCornerPointsX, color='r', marker='+')
-		plt.scatter(maxEdgePointsY, maxEdgePointsX, color='g', marker='+')
+		plt.scatter(cornerPoints[1], cornerPoints[0], color='r', marker='+')
+		plt.scatter(edgePoints[1], edgePoints[0], color='g', marker='+')
 		plt.title("Detection of Corners and Edges")
 		plt.show()
 
-	return R, CornerPoints, EdgePoints
+	return R, cornerPoints, edgePoints
+
+def cleanSides(intensity, Points, buff):
+	# Function to delete the interest points located on the sides of the image
+	halfBuff = (buff-1)/2
+	endX, endY = intensity.shape
+
+	idx = np.where(Points[0] < halfBuff)
+	Points = np.delete(Points, idx[0], 1)
+	idx = np.where(Points[0] >= endX-halfBuff)
+	Points = np.delete(Points, idx[0], 1)
+	idx = np.where(Points[1] < halfBuff)
+	Points = np.delete(Points, idx[0], 1)
+	idx = np.where(Points[1] >= endY-halfBuff)
+	Points = np.delete(Points, idx[0], 1)
+
+	return Points
 
 def local_maxima(R, Points, NN):
 
@@ -161,11 +180,16 @@ def local_maxima(R, Points, NN):
 					Xmax = X[k]
 					Ymax = Y[k]
 
-		# Save the new corner index		
-		localMaxPointsX.append(Xmax)
-		localMaxPointsY.append(Ymax)
+		# Save the new corner index if it is not already in the list
+		isX = np.where(localMaxPointsX == Xmax)
+		isY = np.where(localMaxPointsY == Ymax)
+		isAlreadyIn = np.where(isX[0] == isY[0])
+		if len(isAlreadyIn[0]) == 0:
+			localMaxPointsX.append(Xmax)
+			localMaxPointsY.append(Ymax)
 
-	return localMaxPointsX, localMaxPointsY
+	localMaxPoints = (np.asarray(localMaxPointsX), np.asarray(localMaxPointsY))
+	return localMaxPoints
 
 def descripter_funct(CornerPoints, OriginalImage, plot):
 
@@ -206,6 +230,8 @@ def descripter_funct(CornerPoints, OriginalImage, plot):
 			plt.show()
 
 def hog(Ix, Iy, CornerPoints, plot):
+	# Function to compute the histogram of gradient orientation of each interest points
+	# INPUTS : Intensity derivatives, I
 	# Compute the magnitude of the gradient
 	gradMagnitude = (Ix**2+Iy**2)**(1/2)
 	
@@ -288,7 +314,7 @@ def rad(degree):
 	radian = degree*np.pi/180
 	return radian
 
-def knn(imgBase, imgTest, hogBase, hogTest, pointBase, pointTest):
+def knn(imgBase, imgTest, hogBase, hogTest, pointBase, pointTest, plot):
 	# Function to compute the matching interest point between two images using the HOG as a descriptor
 	# INPUTS: full hog of the base image and test image (we are trying to match test with base)
 	# OUTPUTS: list of nearest neighbour : i-th line is the index of the closest neighbour in Base of the i-th interest point of Test
@@ -303,14 +329,21 @@ def knn(imgBase, imgTest, hogBase, hogTest, pointBase, pointTest):
 		distance = (np.sum(distance, axis=0))**(1/2)
 		print(distance)
 		indexNN.append(np.where(distance == np.amin(distance)))
-	# if plot == 1
-	# 	plotList = random.sample(range(len(hogTest)), 10)
-	# 	plotTest = pointTest[plotList][:]
-	# 	plotBase = pointBase[indexNN[plotList]][:]
-	# 	plt.subplot(121), plt.imshow(imgBase, cmap='gray')
-	# 	plt.scatter(plotBase[1], plotBase[0], color='r', marker='+')
-	# 	plt.subplot(122), plt.imshow(imgTest, cmap='gray')
-	# 	plt.scatter(plotTest[1], plotTest[0], color='r', marker='+')
+		print("indexNN")
+		print(indexNN)
+	if plot == 1:
+		# plotList = random.sample(range(len(hogTest)), 10)
+		plotList = 0
+		plotTest = pointTest[plotList][:]
+		print("plotTest")
+		print(plotTest)
+		plotBase = pointBase[indexNN[0][plotList]][:]
+		print("plotBase")
+		print(plotBase)
+		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
+		plt.scatter(plotBase[1], plotBase[0], color='r', marker='+')
+		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
+		plt.scatter(plotTest[1], plotTest[0], color='r', marker='+')
 
 
 	return indexNN
@@ -332,30 +365,30 @@ allIntensity = []
 allPoints = []
 allHOG = []
 test = Quick
+windowSize = 5
 
 for i in range(len(test)):
-
 	print("New image")
 	image = test[i]
 	intensity, shift = getImageIntensity(image)
-	
+	# shift = 5
 	print("Computing Intensity derivatives")
 	Ix, Iy = derivatives(intensity, shift, 0)
 	sigma = 1.6*shift
 	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
 
 	print("Identifying corners and edges")
-	R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05, 0)
+	R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05, windowSize, 1)
 	
-	print("Computing histogram of gradient orientation")
-	# descripter_funct(CornerPoints, image, 0)
-	allHOG.append(hog(Ix, Iy, CornerPoints, 0))
+	# print("Computing histogram of gradient orientation")
+	# # descripter_funct(CornerPoints, image, 0)
+	# allHOG.append(hog(Ix, Iy, CornerPoints, 0))
 
-	allIntensity.append(intensity)
-	allPoints.append(CornerPoints)
+	# allIntensity.append(intensity)
+	# allPoints.append(CornerPoints)
 
 # Test : comparison of the two chessboards
-u = knn(allIntensity[0], allIntensity[1], allHOG[0], allHOG[1], allPoints[0], allPoints[1])
-print(u)
+# u = knn(allIntensity[0], allIntensity[1], allHOG[0], allHOG[1], allPoints[0], allPoints[1], 1)
+# print(u)
 # allHOG = np.array(allHOG)
 # np.savetxt('hogQuick', allHOG)
