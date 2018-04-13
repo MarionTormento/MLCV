@@ -172,17 +172,18 @@ def local_maxima(R, Points, NN):
 		distanceX = (PointsX - Point0X)**2
 		distanceY = (PointsY - Point0Y)**2
 		distance = (distanceX + distanceY)**(1/2)
-		distance = np.delete(distance, i, 0)
+		distanceMax = np.amax(distance)
+		distance[i] = distanceMax
 
 		# Looking for the maxima among the cornerPoint0 NN nearest neighbour
-		Rmax = 0
-		Xmax = 0
-		Ymax = 0
+		Rmax = R[PointsX[i]][PointsY[i]]
+		Xmax = PointsX[i] 
+		Ymax = PointsY[i]
 
 		for j in range(NN):
 		
 			index = np.where(distance == np.amin(distance))
-			distance[index[0]] = 100000
+			distance[index[0]] = distanceMax
 			Y = PointsY[index[0]]
 			X = PointsX[index[0]]
 			for k in range(len(Y)):
@@ -328,35 +329,41 @@ def knn(imgBase, imgTest, hogBase, hogTest, pointBase, pointTest, plot):
 	# INPUTS: full hog of the base image and test image (we are trying to match test with base)
 	# OUTPUTS: list of nearest neighbour : i-th line is the index of the closest neighbour in Base of the i-th interest point of Test
 	
-	#len(hogTest)
 	indexNN = []
 	for i in range(1):
 		# Store the hog of the descriptor we want to compare
-		hogDesc = hogTest[i]
-		hogDesc = hogDesc*np.ones(hogBase.shape)
-		distance = (hogBase-hogDesc)**2
-		distance = (np.sum(distance, axis=0))**(1/2)
-		print(distance)
-		indexNN.append(np.where(distance == np.amin(distance)))
-		print("indexNN")
-		print(indexNN)
+		# hogDesc = hogTest[i]
+		# hogDesc = hogDesc*np.ones(hogBase.shape)
+		# distance = (hogBase-hogDesc)**2
+		# distance = (np.sum(distance, axis=1))**(1/2)
+		# # print(hogBase-hogTest[i])
+		distance = np.linalg.norm(hogBase-hogTest[i], axis=1)
+		minDistance = np.where(distance == np.amin(distance))
+		indexNN.append(minDistance[0][0])
+
+	pointTestX = pointTest[0]
+	pointTestY = pointTest[1]
+	pointBaseX = pointBase[0]
+	pointBaseY = pointBase[1]
+
 	if plot == 1:
 		# plotList = random.sample(range(len(hogTest)), 10)
 		plotList = 0
-		plotTest = pointTest[plotList][:]
+		plotTest = [pointTestX[plotList], pointTestY[plotList]]
 		print("plotTest")
 		print(plotTest)
-		plotBase = pointBase[indexNN[0][plotList]][:]
+		print(len(plotTest))
+		plotBase = [pointBaseX[indexNN[plotList]], pointBaseY[indexNN[plotList]]]
 		print("plotBase")
 		print(plotBase)
+		print(len(plotBase))
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
 		plt.scatter(plotBase[1], plotBase[0], color='r', marker='+')
 		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
 		plt.scatter(plotTest[1], plotTest[0], color='r', marker='+')
-
+		plt.show()
 
 	return indexNN
-
 # ------------------------- Main Script --------------------------------
 
 # import images
@@ -389,7 +396,7 @@ for i in range(2):
 	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
 
 	print("Identifying corners and edges")
-	R, CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05, windowSize, 1)
+	R, CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05, windowSize, 0)
 	
 	print("Computing histogram of gradient orientation")
 	# descripter_funct(CornerPoints, image, 0)
@@ -399,8 +406,9 @@ for i in range(2):
 	allPoints.append(CornerPoints)
 
 # Test : comparison of the two chessboards
-# u = knn(allIntensity[0], allIntensity[1], allHOG[0], allHOG[1], allPoints[0], allPoints[1], 1)
-# print(u)
+print(allPoints[0])
+u = knn(allIntensity[0], allIntensity[1], allHOG[0], allHOG[1], allPoints[0], allPoints[1], 1)
+print(u)
 
 # allHOG = np.array(allHOG)
 # np.savetxt('hogQuick', allHOG)
