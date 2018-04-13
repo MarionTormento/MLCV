@@ -202,7 +202,7 @@ def local_maxima(R, Points, NN):
 	localMaxPoints = (np.asarray(localMaxPointsX), np.asarray(localMaxPointsY))
 	return localMaxPoints
 
-def descripter_funct(CornerPoints, OriginalImage, plot):
+def descripter_funct(CornerPoints, OriginalImage, buff, plot):
 
 	# Finds simple descriptors based on the intensity derivative in the square region around
 	# interest points. From CW2 Q1.2: "...descriptor (simple colour and/or gradient orientation histogram)" -
@@ -213,11 +213,9 @@ def descripter_funct(CornerPoints, OriginalImage, plot):
 	# then need to KNN to these clusters in the M-D space. I think that as this doesn't consider orientation,
 	# zoom etc. it will suck. Which is why we then need to go on to do a SIFT descriptor (Q1.3). Thoughts? 
 
-	# Set
-	boxSize = 11
-	lengthA = (boxSize-1)//2
-	lengthB = (boxSize+1)//2
-	boxImg = np.ones((boxSize,boxSize))
+	lengthA = (buff-1)//2
+	lengthB = (buff+1)//2
+	boxImg = np.ones((buff,buff))
 	# boxY = np.ones((4,4))
 	imgread = cv2.imread('Photos/' + OriginalImage)
 	img = cv2.split(imgread)
