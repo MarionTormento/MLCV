@@ -91,40 +91,51 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, alpha, buff, plot):
 
 	# Function to calculate the locations of corners and edges in the image
 	
-	# Calculate R
+	## Calculate R
+	# Harris method
 	R = (GIxx)*(GIyy) - GIxy**2 - alpha*(GIxx + GIyy)**2
+	perc = 97
+
+	# Tomasi and Shi
+	# R = np.zeros(GIxx.shape)
+	# endX, endY = GIxx.shape
+	# for i in range(endX):
+	# 	for j in range(endY):
+	# 		M = np.array([[GIxx[i][j], GIxy[i][j]],[GIxy[i][j], GIyy[i][j]]])
+	# 		eigVals = np.linalg.eigh(M)
+	# 		R[i][j]  = np.amin(eigVals[0])
+	# perc = 97
 
 	# Based on each pixels value of R, determine if it is a corner or an edge
 	# or neither. 
 	NN = 50
-	perc = 97
 	
-	# Corners
+	## Corners
 	thresholdCorner = np.percentile(R, perc)
 	cornerPoints = np.where(R > thresholdCorner)
 	# Delete the corner located on the sides
 	cornerPoints = cleanSides(intensity, cornerPoints, buff)
 	# Find local maxima for the corners
 	cornerPoints = local_maxima(R, cornerPoints, NN)
-	
-	# Edges
-	thresholdEdge = np.percentile(R, 100-perc)
-	edgePoints = np.where(R < thresholdEdge)
-	# Delete the edges located on the sides
-	edgePoints = cleanSides(intensity, edgePoints, buff)
-	# Find local minima for the edges
-	edgePoints = local_maxima(R, edgePoints, NN)
+
+	# ## Edges
+	# thresholdEdge = np.percentile(R, 100-perc)
+	# edgePoints = np.where(R < thresholdEdge)
+	# # Delete the edges located on the sides
+	# edgePoints = cleanSides(intensity, edgePoints, buff)
+	# # Find local minima for the edges
+	# edgePoints = local_maxima(R, edgePoints, NN)
 
 	# Plot
 	if plot == 1:
 		plt.figure()
 		plt.imshow(intensity, cmap='gray')
 		plt.scatter(cornerPoints[1], cornerPoints[0], color='r', marker='+')
-		plt.scatter(edgePoints[1], edgePoints[0], color='g', marker='+')
+		# plt.scatter(edgePoints[1], edgePoints[0], color='g', marker='+')
 		plt.title("Detection of Corners and Edges")
 		plt.show()
 
-	return R, cornerPoints, edgePoints
+	return R, cornerPoints
 
 def cleanSides(intensity, Points, buff):
 	# Function to delete the interest points located on the sides of the image
@@ -261,15 +272,15 @@ def hog(Ix, Iy, CornerPoints, plot):
 	# Calculate Histogram of Gradients in 8×8 cells
 	# https://www.learnopencv.com/histogram-of-oriented-gradients/
 	
-	# 0 - Clean the side corner points
-	idx = np.where(CornerPoints[0] < 2)
-	CornerPoints = np.delete(CornerPoints, idx[0], 1)
-	idx = np.where(CornerPoints[0] >= endX-2)
-	CornerPoints = np.delete(CornerPoints, idx[0], 1)
-	idx = np.where(CornerPoints[1] < 2)
-	CornerPoints = np.delete(CornerPoints, idx[0], 1)
-	idx = np.where(CornerPoints[1] >= endY-2)
-	CornerPoints = np.delete(CornerPoints, idx[0], 1)
+	# # 0 - Clean the side corner points
+	# idx = np.where(CornerPoints[0] < 2)
+	# CornerPoints = np.delete(CornerPoints, idx[0], 1)
+	# idx = np.where(CornerPoints[0] >= endX-2)
+	# CornerPoints = np.delete(CornerPoints, idx[0], 1)
+	# idx = np.where(CornerPoints[1] < 2)
+	# CornerPoints = np.delete(CornerPoints, idx[0], 1)
+	# idx = np.where(CornerPoints[1] >= endY-2)
+	# CornerPoints = np.delete(CornerPoints, idx[0], 1)
 	
 	# 1 - Extract the 8x8 submatrix of magnitude and orientation
 	histOrientGrad = np.zeros((len(CornerPoints[0]),9))
@@ -367,7 +378,9 @@ allHOG = []
 test = Quick
 windowSize = 5
 
-for i in range(len(test)):
+# for i in range(len(test)):
+for i in range(2):
+
 	print("New image")
 	image = test[i]
 	intensity, shift = getImageIntensity(image)
@@ -378,17 +391,18 @@ for i in range(len(test)):
 	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
 
 	print("Identifying corners and edges")
-	R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05, windowSize, 1)
+	R, CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05, windowSize, 1)
 	
-	# print("Computing histogram of gradient orientation")
-	# # descripter_funct(CornerPoints, image, 0)
-	# allHOG.append(hog(Ix, Iy, CornerPoints, 0))
+	print("Computing histogram of gradient orientation")
+	# descripter_funct(CornerPoints, image, 0)
+	allHOG.append(hog(Ix, Iy, CornerPoints, 0))
 
-	# allIntensity.append(intensity)
-	# allPoints.append(CornerPoints)
+	allIntensity.append(intensity)
+	allPoints.append(CornerPoints)
 
 # Test : comparison of the two chessboards
 # u = knn(allIntensity[0], allIntensity[1], allHOG[0], allHOG[1], allPoints[0], allPoints[1], 1)
 # print(u)
+
 # allHOG = np.array(allHOG)
 # np.savetxt('hogQuick', allHOG)
