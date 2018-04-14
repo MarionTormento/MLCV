@@ -63,11 +63,11 @@ def derivatives(intensity, shift, plot):
 	return Ix, Iy
 
 def gaussian_window(Ix, Iy, sigma, shift):
-
+	# Function to apply the gaussian window to each shift x shift frame of the image
 	# INPUTS: Derivatives of image intensity in the x and y directions
 	# OUTPUTS: Gaussian filtered intensity derivatives.
 
-	# Define the gaussian window sized by the shift
+	# Define the gaussian window of size shift x shift
 	m0 = -(shift-1)/2
 	m = []
 	n = []
@@ -89,14 +89,16 @@ def gaussian_window(Ix, Iy, sigma, shift):
 
 def cornerness_funct(intensity, GIxx, GIyy, GIxy, alpha, buff, plot):
 
-	# Function to calculate the locations of corners and edges in the image
-	
-	## Calculate R
-	# Harris method
-	R = (GIxx)*(GIyy) - GIxy**2 - alpha*(GIxx + GIyy)**2
-	perc = 97
+	# Function to calculate the locations of corners (and edges) in the image
+	# Both Harris corner detection and Tomasi and Shi methods are implemented
+	# INPUTS: Gaussian filtered intensities, alpha value for HCD, buffer to delete the sides interest points
+	# OUTPUTS: Interest points coordinates
+	# PLOT: Location of computed interest points on the image
 
-	# Tomasi and Shi
+	## Compute R
+	# Harris Corner detection method
+	R = (GIxx)*(GIyy) - GIxy**2 - alpha*(GIxx + GIyy)**2
+	# Tomasi and Shi method
 	# R = np.zeros(GIxx.shape)
 	# endX, endY = GIxx.shape
 	# for i in range(endX):
@@ -104,13 +106,14 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, alpha, buff, plot):
 	# 		M = np.array([[GIxx[i][j], GIxy[i][j]],[GIxy[i][j], GIyy[i][j]]])
 	# 		eigVals = np.linalg.eigh(M)
 	# 		R[i][j]  = np.amin(eigVals[0])
-	# perc = 97
 
 	# Based on each pixels value of R, determine if it is a corner or an edge
 	# or neither. 
-	NN = 50
+	NN = 50 # Number of Nearest Neighbour
+	perc = 97 # Percentage of value kept by the thresholding
 	
 	## Corners
+	# Threshold
 	thresholdCorner = np.percentile(R, perc)
 	cornerPoints = np.where(R > thresholdCorner)
 	# Delete the corner located on the sides
@@ -135,13 +138,18 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, alpha, buff, plot):
 		plt.title("Detection of Corners and Edges")
 		plt.show()
 
-	return R, cornerPoints
+	return cornerPoints
 
-def cleanSides(intensity, Points, buff):
+def cleanSides(img, Points, buff):
 	# Function to delete the interest points located on the sides of the image
-	halfBuff = (buff-1)/2
-	endX, endY = intensity.shape
+	# INPUTS: Image to extract the shape and locate the sides, Points coordinates to be cleaned, size of the buffer window
+	# OUTPUT: Points coordinates with the points located on the buff sides deleted
+	
+	# Compute the size of the buffer window and image
+	halfBuff = int((buff-1)/2)
+	endX, endY = img.shape
 
+	# Deletion of points located on the sides
 	idx = np.where(Points[0] < halfBuff)
 	Points = np.delete(Points, idx[0], 1)
 	idx = np.where(Points[0] >= endX-halfBuff)
@@ -154,8 +162,11 @@ def cleanSides(intensity, Points, buff):
 	return Points
 
 def local_maxima(R, Points, NN):
-
 	# Function to compute the local maxima of the corners or edges by computing the max among the nearest neighbour of each corner point
+	# INPUTS : R value, coordinates of the Interest Points, and number of Nearest Neighbour
+	# OUTPUT : Local maxima Interest Points coordinates
+
+	# Initialisation of the variable
 	PointsX = Points[0]
 	PointsY = Points[1]
 	nbPoints = len(PointsX)
@@ -164,38 +175,40 @@ def local_maxima(R, Points, NN):
 	localMaxPointsY = []
 
 	for i in range(nbPoints):
-
-		Point0X = PointsX[i]*np.ones(nbPoints)
-		Point0Y = PointsY[i]*np.ones(nbPoints)
-
-		# Compute the distance between each corner point and cornerPoint0
-		distanceX = (PointsX - Point0X)**2
-		distanceY = (PointsY - Point0Y)**2
-		distance = (distanceX + distanceY)**(1/2)
+		# Save the coordinates of the points for which we are currently looking for its nearest neighbour
+		Point0X = PointsX[i]
+		Point0Y = PointsY[i]
+		# Compute the distance between each point and Point0
+		distance = np.linalg.norm([PointsX-Point0X,PointsY-Point0Y], axis=0)
+		# Set its own distance value to max distance so that it is not taken for a nearest neighbour
 		distanceMax = np.amax(distance)
 		distance[i] = distanceMax
 
-		# Looking for the maxima among the cornerPoint0 NN nearest neighbour
-		Rmax = R[PointsX[i]][PointsY[i]]
-		Xmax = PointsX[i] 
-		Ymax = PointsY[i]
+		# Looking for the maxima R among the cornerPoint NN nearest neighbour 
+		Rmax = R[Point0X][Point0Y]
+		Xmax = Point0X 
+		Ymax = Point0Y
 
 		for j in range(NN):
-		
+			# Looking for the index of the nearest neigbour (= minimal distance to Point0)
 			index = np.where(distance == np.amin(distance))
+			# Set its distance to max distance so it is not taken twice for a neighbour
 			distance[index[0]] = distanceMax
+			# Saves its coordinates
 			Y = PointsY[index[0]]
 			X = PointsX[index[0]]
-			for k in range(len(Y)):
-				if abs(R[X[k]][Y[k]]) > Rmax:
+			for k in range(len(Y)): # Security in case several points are equally distanced to Point0
+				# If R of the neighbour is greater than the previous R, save the location of the point and R
+				if abs(R[X[k]][Y[k]]) > Rmax: 
 					Rmax = abs(R[X[k]][Y[k]]) 
 					Xmax = X[k]
 					Ymax = Y[k]
 
-		# Save the new corner index if it is not already in the list
-		isX = np.where(localMaxPointsX == Xmax)
-		isY = np.where(localMaxPointsY == Ymax)
-		isAlreadyIn = np.where(isX[0] == isY[0])
+		# Save the new local maxima point if it is not already in the list
+		isX = np.where(localMaxPointsX == Xmax) # indices of the local maxima with same X value
+		isY = np.where(localMaxPointsY == Ymax) # indices of the local maxima with same Y value
+		isAlreadyIn = np.where(isX[0] == isY[0]) # matching indices between isX and isY
+		# if isX and isY indices matches somewhere, then it means the local maxima coordinates are already in the list
 		if len(isAlreadyIn[0]) == 0:
 			localMaxPointsX.append(Xmax)
 			localMaxPointsY.append(Ymax)
@@ -239,9 +252,12 @@ def descripter_funct(CornerPoints, OriginalImage, buff, plot):
 				plt.xlim([0,256])
 			plt.show()
 
-def hog(Ix, Iy, CornerPoints, buff, plot):
-	# Function to compute the histogram of gradient orientation of each interest points
-	# INPUTS : Intensity derivatives, I
+def hog(Ix, Iy, Points, buff, plot):
+	# Function to compute the histogram of gradient orientation of each interest point
+	# INPUTS: Intensity derivatives, interest point coordinates
+	# OUTPUT: Histogram of gradient orientation for each interest points (# Interest Points x 9 matrix)
+	# PLOTS: Gradient Magnitude, Gradient Orientation and HOG for 9 random interest points
+
 	# Compute the magnitude of the gradient
 	gradMagnitude = (Ix**2+Iy**2)**(1/2)
 	
@@ -256,8 +272,10 @@ def hog(Ix, Iy, CornerPoints, buff, plot):
 				gradOrientation[i][j] = 0
 			else:
 				gradOrientation[i][j] = np.arctan(Iy[i][j]/Ix[i][j])
+				# Arctan returns angles between -pi/2 and pi/2, but we want only positive orientation
+				# By adding pi to the negative values we have the same direction
 				if gradOrientation[i][j] < 0:
-					gradOrientation[i][j] = gradOrientation[i][j] + np.pi #makes sure every angle is positive value (rad)
+					gradOrientation[i][j] = gradOrientation[i][j] + np.pi
 
 	# Plotting
 	if plot == 1:
@@ -271,38 +289,35 @@ def hog(Ix, Iy, CornerPoints, buff, plot):
 	# Calculate Histogram of Gradients in 8×8 cells
 	# https://www.learnopencv.com/histogram-of-oriented-gradients/
 	
-	# # 0 - Clean the side corner points
-	# idx = np.where(CornerPoints[0] < 2)
-	# CornerPoints = np.delete(CornerPoints, idx[0], 1)
-	# idx = np.where(CornerPoints[0] >= endX-2)
-	# CornerPoints = np.delete(CornerPoints, idx[0], 1)
-	# idx = np.where(CornerPoints[1] < 2)
-	# CornerPoints = np.delete(CornerPoints, idx[0], 1)
-	# idx = np.where(CornerPoints[1] >= endY-2)
-	# CornerPoints = np.delete(CornerPoints, idx[0], 1)
-	
-	# 1 - Extract the 8x8 submatrix of magnitude and orientation
-	histOrientGrad = np.zeros((len(CornerPoints[0]),9))
+	# 0 - Initialisation
+	nbBin = 9
+	sizeBin = 180/nbBin
+	histOrientGrad = np.zeros((len(Points[0]),nbBin))
 	lengthA = (buff-1)//2
 	lengthB = (buff+1)//2
 
-	for i in range(len(CornerPoints[0])):
-		boxMagn = gradMagnitude[CornerPoints[0][i]-lengthA:CornerPoints[0][i]+lengthB][:,CornerPoints[1][i]-lengthA:CornerPoints[1][i]+lengthB]
-		boxOrient = gradOrientation[CornerPoints[0][i]-lengthA:CornerPoints[0][i]+lengthB][:,CornerPoints[1][i]-lengthA:CornerPoints[1][i]+lengthB]
-		# 2 - Compute the 9 bin histogram for the 8x8 submatrix (0: 0, 1:20, ..., 8:160)
-		for j in range(5):
-			for k in range(5):
+	for i in range(len(Points[0])):
+	# 1 - Extract the buff x buff submatrix of magnitude and orientation
+		boxMagn = gradMagnitude[Points[0][i]-lengthA:Points[0][i]+lengthB][:,Points[1][i]-lengthA:Points[1][i]+lengthB]
+		boxOrient = gradOrientation[Points[0][i]-lengthA:Points[0][i]+lengthB][:,Points[1][i]-lengthA:Points[1][i]+lengthB]
+	# 2 - Compute the nbBin histogram for the buff x buff submatrix (0: 0, 1:1*sizeBin, ...)
+		for j in range(buff):
+			for k in range(buff):
+				# Save the magnitude and orientation of each point in the buff x buff submatrix
 				magn = boxMagn[j][k]
 				orient = boxOrient[j][k]
-				idxMin = int(orient/(rad(20)))
+				# Find the corresponding indices in the histogram for the point orientation
+				idxMin = int(orient/(rad(sizeBin)))
 				idxSup = idxMin + 1
-				if idxSup > 8 and idxMin > 8:
-					idxSup = idxSup-9
-					idxMin = idxMin-9
-				elif idxSup > 8:
-					idxSup = idxSup - 9
-				percSup = (orient-idxMin*rad(20))/rad(20)
+				if idxSup > nbBin-1 and idxMin > nbBin-1:
+					idxSup = idxSup-nbBin
+					idxMin = idxMin-nbBin
+				elif idxSup > nbBin-1:
+					idxSup = idxSup - nbBin
+				# Find the percentage repartition of the magnitude between the two bins
+				percSup = (orient-idxMin*rad(sizeBin))/rad(sizeBin)
 				percMin = 1-percSup
+				# Append the weighted magnitude to each bin
 				histOrientGrad[i][idxMin] = percMin*magn
 				histOrientGrad[i][idxSup] = percSup*magn
 		del boxMagn
@@ -323,6 +338,8 @@ def hog(Ix, Iy, CornerPoints, buff, plot):
 	return histOrientGrad
 
 def rad(degree):
+	# Function to transform a degree angle in a radians
+
 	radian = degree*np.pi/180
 	return radian
 
@@ -330,39 +347,49 @@ def knn(imgBase, imgTest, hogBase, hogTest, pointBase, pointTest, plot):
 	# Function to compute the matching interest point between two images using the HOG as a descriptor
 	# INPUTS: full hog of the base image and test image (we are trying to match test with base)
 	# OUTPUTS: list of nearest neighbour : i-th line is the index of the closest neighbour in Base of the i-th interest point of Test
-	
-	indexNN = []
-	for i in range(1):
-		# Store the hog of the descriptor we want to compare
-		# hogDesc = hogTest[i]
-		# hogDesc = hogDesc*np.ones(hogBase.shape)
-		# distance = (hogBase-hogDesc)**2
-		# distance = (np.sum(distance, axis=1))**(1/2)
-		# # print(hogBase-hogTest[i])
-		distance = np.linalg.norm(hogBase-hogTest[i], axis=1)
-		minDistance = np.where(distance == np.amin(distance))
-		indexNN.append(minDistance[0][0])
 
+	indexNN = []
+	minDistance = 10000000000000000
+
+	for i in range(len(hogTest)):
+		# Store the hog of the descriptor we want to compare
+		distance = np.linalg.norm(hogBase-hogTest[i], axis=1)
+		minDistanceIdx = np.where(distance == np.amin(distance))
+		if np.amin(distance) < minDistance:
+			minDistance = np.amin(distance)
+			minIdx = i
+		indexNN.append(minDistanceIdx[0][0])
+
+	print(minDistance)
 	pointTestX = pointTest[0]
 	pointTestY = pointTest[1]
 	pointBaseX = pointBase[0]
 	pointBaseY = pointBase[1]
+	plotBase = [[],[]]
 
 	if plot == 1:
-		# plotList = random.sample(range(len(hogTest)), 10)
-		plotList = 0
+		plotList = random.sample(range(len(hogTest)), 10)
 		plotTest = [pointTestX[plotList], pointTestY[plotList]]
-		print("plotTest")
-		print(plotTest)
-		print(len(plotTest))
-		plotBase = [pointBaseX[indexNN[plotList]], pointBaseY[indexNN[plotList]]]
-		print("plotBase")
-		print(plotBase)
-		print(len(plotBase))
+		for i in plotList:
+			index = indexNN[i]
+			plotBase[0].append(pointBaseX[index])
+			plotBase[1].append(pointBaseY[index])
+		colors = ['gray', 'red','gold', 'chartreuse', 'lightseagreen', 'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white']
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
-		plt.scatter(plotBase[1], plotBase[0], color='r', marker='+')
+		for i in range(10):
+			plt.scatter(plotBase[1][i], plotBase[0][i], color=colors[i], marker='+')
 		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
-		plt.scatter(plotTest[1], plotTest[0], color='r', marker='+')
+		for i in range(10):
+			plt.scatter(plotTest[1][i], plotTest[0][i], color=colors[i], marker='+')
+		# plotList = minIdx
+		# plotTest = [pointTestX[plotList], pointTestY[plotList]]
+		# plotBase = [pointBaseX[indexNN[minIdx]], pointBaseY[indexNN[minIdx]]]
+		# plt.subplot(121), plt.imshow(imgBase, cmap='gray')
+		# plt.scatter(plotBase[1], plotBase[0], color='r', marker='+')
+		# plt.title("Base Image")
+		# plt.subplot(122), plt.imshow(imgTest, cmap='gray')
+		# plt.scatter(plotTest[1], plotTest[0], color='r', marker='+')
+		# plt.title("Test Image")
 		plt.show()
 
 	return indexNN
@@ -382,10 +409,9 @@ Quick = (['chess.jpg', 'chess.png', 'dice.jpg'])
 allIntensity = []
 allPoints = []
 allHOG = []
-test = Quick
+test = Test_images
 windowSize = 5
 
-# for i in range(len(test)):
 for i in range(2):
 
 	print("New image")
@@ -398,7 +424,7 @@ for i in range(2):
 	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
 
 	print("Identifying corners and edges")
-	R, CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05, windowSize, 0)
+	CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05, windowSize, 0)
 	
 	print("Computing histogram of gradient orientation")
 	# descripter_funct(CornerPoints, image, 0)
@@ -407,10 +433,9 @@ for i in range(2):
 	allIntensity.append(intensity)
 	allPoints.append(CornerPoints)
 
+print("Looking for matching descriptors")
 # Test : comparison of the two chessboards
-print(allPoints[0])
 u = knn(allIntensity[0], allIntensity[1], allHOG[0], allHOG[1], allPoints[0], allPoints[1], 1)
-print(u)
 
 # allHOG = np.array(allHOG)
 # np.savetxt('hogQuick', allHOG)
