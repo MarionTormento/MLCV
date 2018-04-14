@@ -206,20 +206,20 @@ allHOG = []
 test = Test_images
 windowSize = 5
 
-for i in range(0,len(test)):
+for i in range(0,1):
 
-	# print("New image")
-	# intensity, shift = getImageIntensity(test[i])
+	print("New image")
+	intensity, shift = getImageIntensity('Leaf.jpg')
 
-	# print("Computing Intensity derivatives")
-	# Ix, Iy = derivatives(intensity, shift, 0)
-	# sigma = 1.6*shift
-	# GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
+	print("Computing Intensity derivatives")
+	Ix, Iy = derivatives(intensity, shift, 0)
+	sigma = 1.6*shift
+	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
 
-	# print("Identifying corners and edges")
-	# R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05, windowSize, 1)
+	print("Identifying corners and edges")
+	R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05, windowSize, 1)
 	
-	filename = test[i]
+	filename = 'Leaf.jpg'
 	img = cv2.imread('Photos/' + filename)
 	gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
