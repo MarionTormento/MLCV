@@ -239,7 +239,7 @@ def descripter_funct(CornerPoints, OriginalImage, buff, plot):
 				plt.xlim([0,256])
 			plt.show()
 
-def hog(Ix, Iy, CornerPoints, plot):
+def hog(Ix, Iy, CornerPoints, buff, plot):
 	# Function to compute the histogram of gradient orientation of each interest points
 	# INPUTS : Intensity derivatives, I
 	# Compute the magnitude of the gradient
@@ -283,10 +283,12 @@ def hog(Ix, Iy, CornerPoints, plot):
 	
 	# 1 - Extract the 8x8 submatrix of magnitude and orientation
 	histOrientGrad = np.zeros((len(CornerPoints[0]),9))
+	lengthA = (buff-1)//2
+	lengthB = (buff+1)//2
 
 	for i in range(len(CornerPoints[0])):
-		boxMagn = gradMagnitude[CornerPoints[0][i]-2:CornerPoints[0][i]+3][:,CornerPoints[1][i]-2:CornerPoints[1][i]+3]
-		boxOrient = gradOrientation[CornerPoints[0][i]-2:CornerPoints[0][i]+3][:,CornerPoints[1][i]-2:CornerPoints[1][i]+3]
+		boxMagn = gradMagnitude[CornerPoints[0][i]-lengthA:CornerPoints[0][i]+lengthB][:,CornerPoints[1][i]-lengthA:CornerPoints[1][i]+lengthB]
+		boxOrient = gradOrientation[CornerPoints[0][i]-lengthA:CornerPoints[0][i]+lengthB][:,CornerPoints[1][i]-lengthA:CornerPoints[1][i]+lengthB]
 		# 2 - Compute the 9 bin histogram for the 8x8 submatrix (0: 0, 1:20, ..., 8:160)
 		for j in range(5):
 			for k in range(5):
@@ -400,7 +402,7 @@ for i in range(2):
 	
 	print("Computing histogram of gradient orientation")
 	# descripter_funct(CornerPoints, image, 0)
-	allHOG.append(hog(Ix, Iy, CornerPoints, 0))
+	allHOG.append(hog(Ix, Iy, CornerPoints, windowSize, 0))
 
 	allIntensity.append(intensity)
 	allPoints.append(CornerPoints)
