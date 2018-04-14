@@ -118,7 +118,7 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, alpha, buff, plot):
 	# Plot
 	if plot == 1:
 		plt.figure()
-		plt.subplot(2,1,2), plt.imshow(intensity, cmap='gray')
+		plt.imshow(intensity, cmap='gray')
 		plt.scatter(cornerPoints[1], cornerPoints[0], color='r', marker='+')
 		plt.scatter(edgePoints[1], edgePoints[0], color='g', marker='+')
 		plt.title("Detection of Corners and Edges")
@@ -218,6 +218,8 @@ for i in range(0,1):
 
 	print("Identifying corners and edges")
 	R, CornerPoints, EdgePoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05, windowSize, 1)
+
+	# --------------------- Harris Corner Detector ----------------------
 	
 	filename = 'Leaf.jpg'
 	img = cv2.imread('Photos/' + filename)
@@ -232,8 +234,24 @@ for i in range(0,1):
 	# Threshold for an optimal value, it may vary depending on the image.
 	img[dst>0.01*dst.max()]=[0,0,255]
 
-	cv2.imshow('dst',img)
+	cv2.imshow('Inbuilt Harris: Detection of Corners and Edges',img)
 	if cv2.waitKey(0) & 0xff == 27:
 	    cv2.destroyAllWindows()
+
+	#  --------------------- Shi-Tomasi Dectector --------------------------
+
+	img1 = cv2.imread('Photos/' + filename)
+	gray1 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)
+
+	corners1 = cv2.goodFeaturesToTrack(gray1,25,0.01,10)
+	corners1 = np.int0(corners1)
+
+	for i in corners1:
+	    x,y = i.ravel()
+	    cv2.circle(img1,(x,y),3,255,-1)
+
+	plt.figure()
+	plt.imshow(img1)
+	plt.title("Inbuilt Shi-Tomasi: Detection of Corners and Edges")
 	 
 	plt.show()
