@@ -87,7 +87,7 @@ def gaussian_window(Ix, Iy, sigma, shift):
 
 	return GIxx, GIyy, GIxy
 
-def cornerness_funct(intensity, GIxx, GIyy, GIxy, alpha, buff, plot):
+def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot):
 
 	# Function to calculate the locations of corners (and edges) in the image
 	# Both Harris corner detection and Tomasi and Shi methods are implemented
@@ -111,7 +111,7 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, alpha, buff, plot):
 	# or neither. 
 	NN = 50 # Number of Nearest Neighbour
 	perc = 97 # Percentage of value kept by the thresholding
-	
+	halfShift = int(shift/2)
 	## Corners
 	# Threshold
 	thresholdCorner = np.percentile(R, perc)
@@ -252,7 +252,7 @@ def descripter_funct(CornerPoints, OriginalImage, buff, plot):
 				plt.xlim([0,256])
 			plt.show()
 
-def hog(Ix, Iy, Points, buff, plot):
+def hog(img, Ix, Iy, Points, buff, plot):
 	# Function to compute the histogram of gradient orientation of each interest point
 	# INPUTS: Intensity derivatives, interest point coordinates
 	# OUTPUT: Histogram of gradient orientation for each interest points (# Interest Points x 9 matrix)
@@ -300,6 +300,15 @@ def hog(Ix, Iy, Points, buff, plot):
 	# 1 - Extract the buff x buff submatrix of magnitude and orientation
 		boxMagn = gradMagnitude[Points[0][i]-lengthA:Points[0][i]+lengthB][:,Points[1][i]-lengthA:Points[1][i]+lengthB]
 		boxOrient = gradOrientation[Points[0][i]-lengthA:Points[0][i]+lengthB][:,Points[1][i]-lengthA:Points[1][i]+lengthB]
+		# print(boxOrient*180/np.pi)
+		# plt.figure()
+		# plt.imshow(img, cmap='gray')
+		# plt.scatter(Points[1][i], Points[0][i], color='r', marker='+')
+		# plt.scatter(Points[1][i]-lengthA, Points[0][i]-lengthA, color='r', marker='o')
+		# plt.scatter(Points[1][i]+lengthB, Points[0][i]-lengthA, color='r', marker='o')
+		# plt.scatter(Points[1][i]-lengthA, Points[0][i]+lengthB, color='r', marker='o')
+		# plt.scatter(Points[1][i]+lengthB, Points[0][i]+lengthB, color='r', marker='o')
+		# plt.show()
 	# 2 - Compute the nbBin histogram for the buff x buff submatrix (0: 0, 1:1*sizeBin, ...)
 		for j in range(buff):
 			for k in range(buff):
@@ -360,7 +369,6 @@ def knn(imgBase, imgTest, hogBase, hogTest, pointBase, pointTest, plot):
 			minIdx = i
 		indexNN.append(minDistanceIdx[0][0])
 
-	print(minDistance)
 	pointTestX = pointTest[0]
 	pointTestY = pointTest[1]
 	pointBaseX = pointBase[0]
@@ -404,12 +412,12 @@ HD = (['3.2_1.jpg', '3.2_2.jpg', '3.2_3.jpg',  '4.0_1.jpg', '4.0_2.jpg',
 
 Test_images = (['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg'])
 
-Quick = (['chess.jpg', 'chess.png', 'dice.jpg'])
+Quick = (['chess.png', 'chess2.png', 'chess3.png'])
 
 allIntensity = []
 allPoints = []
 allHOG = []
-test = Test_images
+test = Quick
 windowSize = 5
 
 for i in range(2):
@@ -417,25 +425,25 @@ for i in range(2):
 	print("New image")
 	image = test[i]
 	intensity, shift = getImageIntensity(image)
-	# shift = 5
+
 	print("Computing Intensity derivatives")
 	Ix, Iy = derivatives(intensity, shift, 0)
 	sigma = 1.6*shift
 	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
 
 	print("Identifying corners and edges")
-	CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, 0.05, windowSize, 0)
+	CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, 0.05, windowSize, 1)
 	
 	print("Computing histogram of gradient orientation")
-	# descripter_funct(CornerPoints, image, 0)
-	allHOG.append(hog(Ix, Iy, CornerPoints, windowSize, 0))
+	lol = descripter_funct(CornerPoints, image, 0)
+	allHOG.append(hog(intensity, Ix, Iy, CornerPoints, windowSize, 1))
 
 	allIntensity.append(intensity)
 	allPoints.append(CornerPoints)
 
-print("Looking for matching descriptors")
-# Test : comparison of the two chessboards
-u = knn(allIntensity[0], allIntensity[1], allHOG[0], allHOG[1], allPoints[0], allPoints[1], 1)
+# print("Looking for matching descriptors")
+# # Test : comparison of the two chessboards
+# u = knn(allIntensity[0], allIntensity[1], allHOG[0], allHOG[1], allPoints[0], allPoints[1], 1)
 
-# allHOG = np.array(allHOG)
-# np.savetxt('hogQuick', allHOG)
+# # allHOG = np.array(allHOG)
+# # np.savetxt('hogQuick', allHOG)
