@@ -37,7 +37,7 @@ shape = img1.shape
 nbPoints = len(ImageA)
 chi = np.zeros((nbPoints, 9))
 
-#populate P matrix
+#populate chi matrix
 for i in range(0,nbPoints):
 	chi[i][:] = [ImageA[i,0]*ImageB[i,0], ImageA[i,0]*ImageB[i,1], ImageA[i,0], ImageA[i,1]*ImageB[i,0], ImageA[i,1]*ImageB[i,1], ImageA[i,1], ImageB[i,0], ImageB[i,1], 1]
 
@@ -48,9 +48,7 @@ detF = np.linalg.det(F)
 FU, FD, FV = np.linalg.svd(F)
 FV = FV.T
 FD = np.diagflat(FD)
-print(FD)
 FD[-1][-1] = 0
-print(FD)
 F = np.dot(FU, np.dot(FD,FV.T))
 
 plt.figure()
@@ -67,7 +65,7 @@ for i in range(0,nbPoints):
 
 	# Finding epipolar line on image 2
 	Epipolar = np.dot(F, ImageA[i,:].T)
-	Epipolar_x = np.arange(2*shape[0])
+	Epipolar_x = np.arange(shape[0])
 	Epipolar_y = (-Epipolar[2] - Epipolar[0]*Epipolar_x)/Epipolar[1]
 
 	# Plotting epipolar lines onto images

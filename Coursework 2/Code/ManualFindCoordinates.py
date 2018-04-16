@@ -20,7 +20,7 @@ def mouse_click(event):
 path = 'Photos/img3.JPG'
 root = tk.Tk()
 img = Image.open(path).convert('LA')
-img = img.resize((600, 600), Image.ANTIALIAS)
+# img = img.resize((600, 600), Image.ANTIALIAS)
 img = ImageTk.PhotoImage(img)
 panel = tk.Label(root, image = img)
 panel.pack(side = "bottom", fill = "both", expand = "yes")

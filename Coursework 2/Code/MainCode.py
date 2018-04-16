@@ -282,11 +282,11 @@ def hog(img, Ix, Iy, Points, buff, plot):
 			elif Ix[i][j] == 0 and Iy[i][j] == 0:
 				gradOrientation[i][j] = 0
 			else:
-				gradOrientation[i][j] = np.arctan(Iy[i][j]/Ix[i][j])
+				gradOrientation[i][j] = np.arctan2(Iy[i][j],Ix[i][j])
 				# Arctan returns angles between -pi/2 and pi/2, but we want only positive orientation
 				# By adding pi to the negative values we have the same direction
-				if gradOrientation[i][j] < 0:
-					gradOrientation[i][j] = gradOrientation[i][j] + np.pi
+				# if gradOrientation[i][j] < 0:
+				# 	gradOrientation[i][j] = gradOrientation[i][j] + np.pi
 
 	# Plotting
 	if plot == 1:
@@ -338,8 +338,8 @@ def hog(img, Ix, Iy, Points, buff, plot):
 				percSup = (orient-idxMin*rad(sizeBin))/rad(sizeBin)
 				percMin = 1-percSup
 				# Append the weighted magnitude to each bin
-				histOrientGrad[i][idxMin] = percMin*magn
-				histOrientGrad[i][idxSup] = percSup*magn
+				histOrientGrad[i][idxMin] += percMin*magn
+				histOrientGrad[i][idxSup] += percSup*magn
 		del boxMagn
 		del boxOrient
 
@@ -358,8 +358,8 @@ def hog(img, Ix, Iy, Points, buff, plot):
 	return histOrientGrad
 
 def rad(degree):
-	# Function to transform a degree angle in a radians
 
+	# Function to transform a degree angle in a radians
 	radian = degree*np.pi/180
 	return radian
 
@@ -406,7 +406,8 @@ def knn(typeMat, imgBase, imgTest, matBase, matTest, pointBase, pointTest, plot)
 
 	if plot == 1:
 		# Plot the 10 best matching descriptors
-		plotList = minDistIdxNN
+		print(len(pointTestX))
+		plotList = np.random.choice(len(pointTestX), 10)
 		plotTest = [pointTestX[plotList], pointTestY[plotList]]
 		for i in plotList:
 			index = indexNN[i]
@@ -462,13 +463,15 @@ for i in range(2):
 	# desc = descripter_funct(CornerPoints, image, windowSize, 0)
 	
 	print("Computing histogram of gradient orientation")
-	desc = hog(intensity, Ix, Iy, CornerPoints, windowSize, 0)
+	desc = hog(intensity, Ix, Iy, CornerPoints, windowSize, 1)
 
 	print("Saving all values")
 	allDesc.append(desc)
 	allIntensity.append(intensity)
 	allPoints.append(CornerPoints)
 
+AD = np.asarray(allDesc)
+print(AD[1].shape)
 print("Looking for matching descriptors")
 u = knn("hog", allIntensity[0], allIntensity[1], allDesc[0], allDesc[1], allPoints[0], allPoints[1], 1)
 
