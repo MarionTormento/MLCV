@@ -5,7 +5,7 @@ from scipy import ndimage
 from scipy import signal
 import time
 import random
-from tempfile import TemporaryFile
+# from tempfile import TemporaryFile
 
 def getImageIntensity(image):
 
@@ -110,7 +110,7 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot):
 	# Based on each pixels value of R, determine if it is a corner or an edge
 	# or neither. 
 	NN = 50 # Number of Nearest Neighbour
-	perc = 97 # Percentage of value kept by the thresholding
+	perc = 99 # Percentage of value kept by the thresholding
 	halfShift = int(shift/2)
 	## Corners
 	# Threshold
@@ -216,41 +216,52 @@ def local_maxima(R, Points, NN):
 	localMaxPoints = (np.asarray(localMaxPointsX), np.asarray(localMaxPointsY))
 	return localMaxPoints
 
-def descripter_funct(CornerPoints, OriginalImage, buff, plot):
+def descripter_funct(Points, OriginalImage, buff, plot):
 
-	# Finds simple descriptors based on the intensity derivative in the square region around
-	# interest points. From CW2 Q1.2: "...descriptor (simple colour and/or gradient orientation histogram)" -
-	# so think this is the right thing to do.
-	# We then have to "Implement a method that performs nearest neighbour matching of descriptors."
-	# LUCKILY you are the queen of KNN :) :) So for one image we make a M-D space where M is the number of
-	# Ix and Iy intensities we have in the region around the interest points. For the rest of the images we
-	# then need to KNN to these clusters in the M-D space. I think that as this doesn't consider orientation,
-	# zoom etc. it will suck. Which is why we then need to go on to do a SIFT descriptor (Q1.3). Thoughts? 
+	# Finds simple descriptors based on the colours
+	# INPUTS: Coordinates of Interest Points, Original Image to store the RGB colors, size of the window
+	# OUTPUTS: ColorHist[0:nbInterestPoints][0:3] (ColorHist[i][j]: histogram of color j for interest point i, for j 0:blue, 1:green, 2:red)
 
 	lengthA = (buff-1)//2
 	lengthB = (buff+1)//2
 	boxImg = np.ones((buff,buff))
-	# boxY = np.ones((4,4))
 	imgread = cv2.imread('Photos/' + OriginalImage)
 	img = cv2.split(imgread)
-	print(len(img))
+	# colorHist = []
+	blueHist = []
+	greenHist = []
+	redHist = []
 
-	for i in range(80,81): #len(CornerPoints[0])):
-		print(CornerPoints[0][i]-lengthA)
-		print(CornerPoints[0][i]+lengthB)
-		print(CornerPoints[1][i]-lengthA)
-		print(CornerPoints[1][i]+lengthB)
-
+	for i in range(len(Points[0])):
+		# colorHist.append([[],[],[]])
+		blueHist.append([])
+		greenHist.append([])
+		redHist.append([])
 		mask = np.zeros(imgread.shape[:2], np.uint8)
-		mask[CornerPoints[0][i]-lengthA:CornerPoints[0][i]+lengthB,CornerPoints[1][i]-lengthA:CornerPoints[1][i]+lengthB] = 255
+		mask[Points[0][i]-lengthA:Points[0][i]+lengthB,Points[1][i]-lengthA:Points[1][i]+lengthB] = 255
 		color = ('b','g','r')
+		for j,col in zip(img, color):
+			# colorHist[i][idx] = []
+			histr = cv2.calcHist([j],[0],mask,[256],[0,256])
+			for k in range(len(histr)):
+				if col == 'b':
+					blueHist[i].append(histr[k][0])
+				if col == 'g':
+					greenHist[i].append(histr[k][0])
+				if col == 'r':
+					redHist[i].append(histr[k][0])
+				# colorHist[i][idx].append(histr[j][0])
+
 		if plot == 1:
 			plt.figure()
+			idx = 0
 			for j,col in zip(img, color):
-				histr = cv2.calcHist([j],[0],mask,[256],[0,256])
-				plt.plot(histr,color = col)
-				plt.xlim([0,256])
+				plt.plot(colorHist[i][idx], color = col)
+				idx += 1
 			plt.show()
+
+	colorHist = (np.asarray(blueHist), np.asarray(greenHist), np.asarray(redHist))
+	return colorHist
 
 def hog(img, Ix, Iy, Points, buff, plot):
 	# Function to compute the histogram of gradient orientation of each interest point
@@ -290,7 +301,7 @@ def hog(img, Ix, Iy, Points, buff, plot):
 	# https://www.learnopencv.com/histogram-of-oriented-gradients/
 	
 	# 0 - Initialisation
-	nbBin = 9
+	nbBin = 36
 	sizeBin = 180/nbBin
 	histOrientGrad = np.zeros((len(Points[0]),nbBin))
 	lengthA = (buff-1)//2
@@ -338,8 +349,8 @@ def hog(img, Ix, Iy, Points, buff, plot):
 		plt.figure()
 		for i in range(9):
 			idx = 330 + i + 1
-			plt.subplot(idx), plt.bar(range(9), histOrientGrad[plotList[i]])
-			plt.xticks(range(9), ('0', '20', '40', '60', '80', '100', '120', '140', '160'))
+			plt.subplot(idx), plt.bar(range(nbBin), histOrientGrad[plotList[i]])
+			# plt.xticks(range(9), ('0', '20', '40', '60', '80', '100', '120', '140', '160'))
 			plt.title(plotList[i])
 		plt.suptitle('Histogram of Gradient for 9 random 8x8 cells')
 		plt.show()
@@ -352,22 +363,40 @@ def rad(degree):
 	radian = degree*np.pi/180
 	return radian
 
-def knn(imgBase, imgTest, hogBase, hogTest, pointBase, pointTest, plot):
+def knn(typeMat, imgBase, imgTest, matBase, matTest, pointBase, pointTest, plot):
 	# Function to compute the matching interest point between two images using the HOG as a descriptor
 	# INPUTS: full hog of the base image and test image (we are trying to match test with base)
 	# OUTPUTS: list of nearest neighbour : i-th line is the index of the closest neighbour in Base of the i-th interest point of Test
 
 	indexNN = []
-	minDistance = 10000000000000000
+	distanceNN = []
 
-	for i in range(len(hogTest)):
-		# Store the hog of the descriptor we want to compare
-		distance = np.linalg.norm(hogBase-hogTest[i], axis=1)
+	for i in range(len(matTest)):
+		if typeMat == "hog":
+			# Store the hog of the descriptor we want to compare
+			distance = np.linalg.norm(matBase-matTest[i], axis=1)
+		elif typeMat == "color":
+			# Compute the distance for each color and then combine it
+			distance = [[],[],[]]
+			for j in range(3):
+				distance[j] = np.linalg.norm(matBase[j]-matTest[j][i], axis=1)
+			distance = sum(distance)
+		# Look for minimal distance and save the index
 		minDistanceIdx = np.where(distance == np.amin(distance))
-		if np.amin(distance) < minDistance:
-			minDistance = np.amin(distance)
-			minIdx = i
 		indexNN.append(minDistanceIdx[0][0])
+		distanceNN.append(np.amin(distance))
+
+	# Looking for the 10 best matching descriptors
+	distanceMax = np.amax(distanceNN)
+	minDistIdxNN = []
+	for i in range(2):
+		# Looking for the index of the nearest neigbour (= minimal distance)
+		index = np.where(distanceNN == np.amin(distanceNN))
+		index = index[0][0]
+		# Set its distance to max distance so it is not taken twice for a neighbour
+		distanceNN[index] = distanceMax
+		# Saves its indices
+		minDistIdxNN.append(index)
 
 	pointTestX = pointTest[0]
 	pointTestY = pointTest[1]
@@ -376,31 +405,25 @@ def knn(imgBase, imgTest, hogBase, hogTest, pointBase, pointTest, plot):
 	plotBase = [[],[]]
 
 	if plot == 1:
-		plotList = random.sample(range(len(hogTest)), 10)
+		# Plot the 10 best matching descriptors
+		plotList = minDistIdxNN
 		plotTest = [pointTestX[plotList], pointTestY[plotList]]
 		for i in plotList:
 			index = indexNN[i]
 			plotBase[0].append(pointBaseX[index])
 			plotBase[1].append(pointBaseY[index])
-		colors = ['gray', 'red','gold', 'chartreuse', 'lightseagreen', 'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white']
+		colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white']
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
-		for i in range(10):
+		for i in range(len(minDistIdxNN)):
 			plt.scatter(plotBase[1][i], plotBase[0][i], color=colors[i], marker='+')
 		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
-		for i in range(10):
+		for i in range(len(minDistIdxNN)):
 			plt.scatter(plotTest[1][i], plotTest[0][i], color=colors[i], marker='+')
-		# plotList = minIdx
-		# plotTest = [pointTestX[plotList], pointTestY[plotList]]
-		# plotBase = [pointBaseX[indexNN[minIdx]], pointBaseY[indexNN[minIdx]]]
-		# plt.subplot(121), plt.imshow(imgBase, cmap='gray')
-		# plt.scatter(plotBase[1], plotBase[0], color='r', marker='+')
-		# plt.title("Base Image")
-		# plt.subplot(122), plt.imshow(imgTest, cmap='gray')
-		# plt.scatter(plotTest[1], plotTest[0], color='r', marker='+')
-		# plt.title("Test Image")
 		plt.show()
 
 	return indexNN
+
+
 # ------------------------- Main Script --------------------------------
 
 # import images
@@ -412,13 +435,14 @@ HD = (['3.2_1.jpg', '3.2_2.jpg', '3.2_3.jpg',  '4.0_1.jpg', '4.0_2.jpg',
 
 Test_images = (['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg'])
 
-Quick = (['chess.png', 'chess2.png', 'chess3.png'])
+Quick1 = (['chess.png', 'chess2.png', 'chess3.png'])
+Quick2 = (['chess.png', 'chess.jpg'])
 
 allIntensity = []
 allPoints = []
-allHOG = []
-test = Quick
-windowSize = 5
+allDesc = []
+test = Test_images
+windowSize = 21 #WARNING : Must be uneve
 
 for i in range(2):
 
@@ -432,18 +456,22 @@ for i in range(2):
 	GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
 
 	print("Identifying corners and edges")
-	CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, 0.05, windowSize, 1)
+	CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, 0.05, windowSize, 0)
+
+	# print("Computing RGB descriptor")
+	# desc = descripter_funct(CornerPoints, image, windowSize, 0)
 	
 	print("Computing histogram of gradient orientation")
-	lol = descripter_funct(CornerPoints, image, 0)
-	allHOG.append(hog(intensity, Ix, Iy, CornerPoints, windowSize, 1))
+	desc = hog(intensity, Ix, Iy, CornerPoints, windowSize, 0)
 
+	print("Saving all values")
+	allDesc.append(desc)
 	allIntensity.append(intensity)
 	allPoints.append(CornerPoints)
 
-# print("Looking for matching descriptors")
-# # Test : comparison of the two chessboards
-# u = knn(allIntensity[0], allIntensity[1], allHOG[0], allHOG[1], allPoints[0], allPoints[1], 1)
+print("Looking for matching descriptors")
+u = knn("hog", allIntensity[0], allIntensity[1], allDesc[0], allDesc[1], allPoints[0], allPoints[1], 1)
 
 # # allHOG = np.array(allHOG)
 # # np.savetxt('hogQuick', allHOG)
+ 
