@@ -17,7 +17,7 @@ def mouse_click(event):
     print('X: {}'.format(coords[0]))
     print('Y: {}'.format(coords[1]))
 
-path = 'Photos/3.2_1.JPG'
+path = 'Photos/img3.JPG'
 root = tk.Tk()
 img = Image.open(path).convert('LA')
 img = img.resize((600, 600), Image.ANTIALIAS)
