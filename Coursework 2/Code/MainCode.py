@@ -381,7 +381,7 @@ def knn(typeMat, imgBase, imgTest, matBase, matTest, pointBase, pointTest, plot)
 	# Looking for the 10 best matching descriptors
 	distanceMax = np.amax(distanceNN)
 	minDistIdxNN = []
-	for i in range(50):
+	for i in range(25):
 		# Looking for the index of the nearest neigbour (= minimal distance)
 		index = np.where(distanceNN == np.amin(distanceNN))
 		index = index[0][0]
@@ -401,14 +401,17 @@ def knn(typeMat, imgBase, imgTest, matBase, matTest, pointBase, pointTest, plot)
 	if plot == 1:
 		# Plot the 10 best matching descriptors
 		# plotList = minDistIdxNN
-		plotList = np.random.choice(minDistIdxNN, 10)
+		plotList = minDistIdxNN
 		plotTest = [pointTestX[plotList], pointTestY[plotList]]
 		print(plotTest)
 		for i in plotList:
 			index = indexNN[i]
 			plotBase[0].append(pointBaseX[index])
 			plotBase[1].append(pointBaseY[index])
-		colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white']
+		colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
+				  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white'
+				  'magenta', 'black','coral', 'orange', 'ivory',
+				  'salmon','silver','teal','orchid','plum']
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
 		for i in range(len(plotList)):
 			plt.scatter(plotBase[1][i], plotBase[0][i], marker='+')
@@ -455,11 +458,11 @@ for i in range(2):
 	print("Identifying corners and edges")
 	CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, 0.05, windowSize, 0)
 
-	# print("Computing RGB descriptor")
-	# desc = descripter_funct(CornerPoints, image, windowSize, 0)
+	print("Computing RGB descriptor")
+	desc = descripter_funct(CornerPoints, image, windowSize, 0)
 	
-	print("Computing histogram of gradient orientation")
-	desc = hog(intensity, Ix, Iy, CornerPoints, windowSize, 0)
+	# print("Computing histogram of gradient orientation")
+	# desc = hog(intensity, Ix, Iy, CornerPoints, windowSize, 0)
 
 	print("Saving all values")
 	allDesc.append(desc)
@@ -475,7 +478,7 @@ for i in range(2):
 # print(A[1][1].shape)
 # print(A[1][2].shape)
 print("Looking for matching descriptors")
-u = knn("hog", allIntensity[0], allIntensity[1], allDesc[0], allDesc[1], allPoints[0], allPoints[1], 1)
+u = knn("color", allIntensity[0], allIntensity[1], allDesc[0], allDesc[1], allPoints[0], allPoints[1], 1)
 
 # # allHOG = np.array(allHOG)
 # # np.savetxt('hogQuick', allHOG)
