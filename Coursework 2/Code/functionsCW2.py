@@ -412,21 +412,22 @@ def knn(typeMat, img, mat, point, base, test, plot):
 
 	if plot == 1:
 		# Plot the 10 best matching descriptors
-		plotList = np.random.choice(minDistIdxNN, 10)
+		plotList = minDistIdxNN
 		plotTest = [pointTestX[plotList], pointTestY[plotList]]
 		for i in plotList:
 			index = indexNN[i]
 			plotBase[0].append(pointBaseX[index])
 			plotBase[1].append(pointBaseY[index])
-		colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white']
+		colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
+				  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white'
+				  'magenta', 'black','coral', 'orange', 'ivory',
+				  'salmon','silver','teal','orchid','plum']
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
 		for i in range(len(plotList)):
 			plt.scatter(plotBase[1][i], plotBase[0][i], marker='+')
-		plt.title('Base Image ' + str(base))
 		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
 		for i in range(len(plotList)):
 			plt.scatter(plotTest[1][i], plotTest[0][i], marker='+')
-		plt.title('Test Image ' + str(test))
 		plt.show()
 
 	return indexNN
