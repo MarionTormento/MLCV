@@ -7,7 +7,6 @@ from matplotlib import pyplot as plt
 from PIL import ImageTk, Image
 
 def mouse_click(event):
-
     # retrieve XY coords as a tuple
     x = event.x
     y = event.y
@@ -25,4 +24,5 @@ img = ImageTk.PhotoImage(img)
 panel = tk.Label(root, image = img)
 panel.pack(side = "bottom", fill = "both", expand = "yes")
 root.bind('<Button>', mouse_click)
+click = root.bind('<Button>', mouse_click)
 root.mainloop()
