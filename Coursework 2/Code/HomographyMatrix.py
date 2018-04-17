@@ -42,8 +42,7 @@ points_estimated = (point_estimated_prime[:][0:2] / point_estimated_prime[:][-1]
 print(points_estimated)
 print(ImageB)
 
-diff = ImageB-points_estimated
-dist_diff = np.sqrt(np.sum(diff**2, axis =1))
+dist_diff = np.linalg.norm(ImageB-points_estimated, axis = 1)
 Homography_accuracy = np.mean(dist_diff)
 print(Homography_accuracy)
 

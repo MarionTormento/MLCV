@@ -207,9 +207,13 @@ def local_maxima(R, Points, NN):
 		# Save the new local maxima point if it is not already in the list
 		isX = np.where(localMaxPointsX == Xmax) # indices of the local maxima with same X value
 		isY = np.where(localMaxPointsY == Ymax) # indices of the local maxima with same Y value
-		isAlreadyIn = np.where(isX[0] == isY[0]) # matching indices between isX and isY
+		isAlreadyIn = []
+		for j in range(len(isY[0])):
+			where = np.where(isX[0] == isY[0][j])
+			isAlreadyIn.append(where[0])
+		# isAlreadyIn = np.where(isX[0] == isY[0]) # matching indices between isX and isY
 		# if isX and isY indices matches somewhere, then it means the local maxima coordinates are already in the list
-		if len(isAlreadyIn[0]) == 0:
+		if len(isAlreadyIn) == 0:
 			localMaxPointsX.append(Xmax)
 			localMaxPointsY.append(Ymax)
 
@@ -233,7 +237,6 @@ def descripter_funct(Points, OriginalImage, buff, plot):
 	redHist = []
 
 	for i in range(len(Points[0])):
-		# colorHist.append([[],[],[]])
 		blueHist.append([])
 		greenHist.append([])
 		redHist.append([])
@@ -241,7 +244,6 @@ def descripter_funct(Points, OriginalImage, buff, plot):
 		mask[Points[0][i]-lengthA:Points[0][i]+lengthB,Points[1][i]-lengthA:Points[1][i]+lengthB] = 255
 		color = ('b','g','r')
 		for j,col in zip(img, color):
-			# colorHist[i][idx] = []
 			histr = cv2.calcHist([j],[0],mask,[256],[0,256])
 			for k in range(len(histr)):
 				if col == 'b':
@@ -250,7 +252,6 @@ def descripter_funct(Points, OriginalImage, buff, plot):
 					greenHist[i].append(histr[k][0])
 				if col == 'r':
 					redHist[i].append(histr[k][0])
-				# colorHist[i][idx].append(histr[j][0])
 
 		if plot == 1:
 			plt.figure()
@@ -355,26 +356,32 @@ def knn(typeMat, imgBase, imgTest, matBase, matTest, pointBase, pointTest, plot)
 
 	indexNN = []
 	distanceNN = []
-
-	for i in range(len(matTest)):
-		if typeMat == "hog":
+		
+	if typeMat == "hog":
+		for i in range(len(matTest)):
 			# Store the hog of the descriptor we want to compare
 			distance = np.linalg.norm(matBase-matTest[i], axis=1)
-		elif typeMat == "color":
+			# Look for minimal distance and save the index
+			minDistanceIdx = np.where(distance == np.amin(distance))
+			indexNN.append(minDistanceIdx[0][0])
+			distanceNN.append(np.amin(distance))
+	
+	elif typeMat == "color":
+		for i in range(len(matTest[0])):
 			# Compute the distance for each color and then combine it
 			distance = [[],[],[]]
 			for j in range(3):
 				distance[j] = np.linalg.norm(matBase[j]-matTest[j][i], axis=1)
 			distance = sum(distance)
-		# Look for minimal distance and save the index
-		minDistanceIdx = np.where(distance == np.amin(distance))
-		indexNN.append(minDistanceIdx[0][0])
-		distanceNN.append(np.amin(distance))
+			# Look for minimal distance and save the index
+			minDistanceIdx = np.where(distance == np.amin(distance))
+			indexNN.append(minDistanceIdx[0][0])
+			distanceNN.append(np.amin(distance))
 
 	# Looking for the 10 best matching descriptors
 	distanceMax = np.amax(distanceNN)
 	minDistIdxNN = []
-	for i in range(30):
+	for i in range(50):
 		# Looking for the index of the nearest neigbour (= minimal distance)
 		index = np.where(distanceNN == np.amin(distanceNN))
 		index = index[0][0]
@@ -382,6 +389,8 @@ def knn(typeMat, imgBase, imgTest, matBase, matTest, pointBase, pointTest, plot)
 		distanceNN[index] = distanceMax
 		# Saves its indices
 		minDistIdxNN.append(index)
+
+	print(minDistIdxNN)
 
 	pointTestX = pointTest[0]
 	pointTestY = pointTest[1]
@@ -391,19 +400,22 @@ def knn(typeMat, imgBase, imgTest, matBase, matTest, pointBase, pointTest, plot)
 
 	if plot == 1:
 		# Plot the 10 best matching descriptors
-		plotList = minDistIdxNN
+		# plotList = minDistIdxNN
+		plotList = np.random.choice(minDistIdxNN, 10)
 		plotTest = [pointTestX[plotList], pointTestY[plotList]]
+		print(plotTest)
 		for i in plotList:
 			index = indexNN[i]
 			plotBase[0].append(pointBaseX[index])
 			plotBase[1].append(pointBaseY[index])
-		# colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white']
+		colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white']
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
-		for i in range(len(minDistIdxNN)):
+		for i in range(len(plotList)):
 			plt.scatter(plotBase[1][i], plotBase[0][i], marker='+')
 		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
-		for i in range(len(minDistIdxNN)):
+		for i in range(len(plotList)):
 			plt.scatter(plotTest[1][i], plotTest[0][i], marker='+')
+			# print([plotTest[1][i], plotTest[0][i]])
 		plt.show()
 
 	return indexNN
@@ -454,6 +466,14 @@ for i in range(2):
 	allIntensity.append(intensity)
 	allPoints.append(CornerPoints)
 
+# A = np.asarray(allDesc)
+# print(A.shape)
+# print(A[0][0].shape)
+# print(A[0][1].shape)
+# print(A[0][2].shape)
+# print(A[1][0].shape)
+# print(A[1][1].shape)
+# print(A[1][2].shape)
 print("Looking for matching descriptors")
 u = knn("hog", allIntensity[0], allIntensity[1], allDesc[0], allDesc[1], allPoints[0], allPoints[1], 1)
 
