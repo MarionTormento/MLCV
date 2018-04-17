@@ -435,23 +435,6 @@ def knn(typeMat, img, mat, point, base, test, plot):
 # ------------------------- Homography and fundamental matrix --------------------------------
 def findHomography(Image1, Image2, ImageA, ImageB):
 
-	#ImageA = img1.jpg
-	#ImageB = img3.jpg
-	#Set of points manually selected from images, should be replaced with our own
-	#interest points
-	# ImageA = np.array([[253, 183], 
-	#                   [306, 196],
-	#                   [397, 211],
-	#                   [389, 329],
-	#                   [473, 391],
-	#                   [481, 279]])
-	# ImageB = np.array([[287, 196],
-	#                   [314, 222],
-	#                   [359, 260],
-	#                   [331, 359],
-	#                   [362, 429], 
-	#                   [387,338]])
-
 	img1 = cv2.imread('Photos/' + Image1)
 	img2 = cv2.imread('Photos/' + Image2)
 
@@ -493,37 +476,12 @@ def findHomography(Image1, Image2, ImageA, ImageB):
 
 def findFundamental(Image1, Image2, ImageA, ImageB):
 
-	#ImageA = img1.jpg
-	#ImageB = img3.jpg
-	#Set of points manually selected from images, should be replaced with our own
-	#interest points
-	# Image1 = 'img1.jpg'
-	# Image2 = 'img3.jpg'
 	img1 = cv2.imread('Photos/' + Image1)
 	img2 = cv2.imread('Photos/' + Image2)
 	img1 = np.asarray(img1)
 	img2 = np.asarray(img2)
 	ImageA = np.concantenate(ImageA, np.ones((len(ImageA,1))))
 	ImageB = np.concantenate(ImageB, np.ones((len(ImageB,1))))
-
-	# ImageA = np.array([[253, 183, 1], 
-	#                   [306, 196, 1],
-	#                   [397, 211, 1],
-	#                   [389, 329, 1],
-	#                   [473, 391, 1],
-	#                   [481, 279, 1],
-	#                   [99, 473, 1],
-	#                   [287, 435, 1],
-	#                   [510, 110, 1]])
-	# ImageB = np.array([[287, 196, 1],
-	#                   [314, 222, 1],
-	#                   [359, 260, 1],
-	#                   [331, 359, 1],
-	#                   [362, 429, 1], 
-	#                   [387,338, 1],
-	#                   [129, 431, 1],
-	#                   [253, 435, 1],
-	#                   [433, 205, 1]])
 
 	shape = img1.shape
 

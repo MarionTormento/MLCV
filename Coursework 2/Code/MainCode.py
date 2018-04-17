@@ -59,4 +59,6 @@ for i in range(2):
 print("Looking for matching descriptors")
 u = knn("color", allIntensity, allDesc, allPoints, 0, 1, 1)
 
+print(u)
+
 
