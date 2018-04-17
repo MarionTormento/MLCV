@@ -325,7 +325,7 @@ def hog(img, Ix, Iy, Points, buff, plot):
 				# Append the weighted magnitude to each bin
 				histOrientGrad[i][idxMin] += percMin*magn
 				histOrientGrad[i][idxSup] += percSup*magn
-		histOrientGrad[i] = histOrientGrad[i]/np.sum(boxMagn)
+		# histOrientGrad[i] = histOrientGrad[i]/np.sum(boxMagn)
 		del boxMagn
 		del boxOrient
 
@@ -427,11 +427,11 @@ def knn(typeMat, imgBase, imgTest, matBase, matTest, pointBase, pointTest, plot)
 # ------------------------- Main Script --------------------------------
 
 # import images
-FD = (['FD1.jpg', 'FD2.jpg', 'FD3.jpg', 'FD4.jpg', 'FD5.jpg', 'FD6.jpg',
-      'FD7.jpg', 'FD8.jpg', 'FD9.jpg', 'FD10.jpg', 'FD11.jpg', 'FD12.jpg', 'FD13.jpg'])
+FD = (['fd1.jpg', 'fd2.jpg', 'fd3.jpg', 'fd4.jpg', 'fd5.jpg', 'fd6.jpg',
+      'fd7.jpg', 'fd8.jpg', 'fd9.jpg', 'fd10.jpg', 'fd11.jpg', 'fd12.jpg', 'fd13.jpg'])
 
-HD = (['3.2_1.jpg', '3.2_2.jpg', '3.2_3.jpg',  '4.0_1.jpg', '4.0_2.jpg',
-      '4.0_3.jpg', '5.0_1.jpg', '5.0_2.jpg', '5.0_3.jpg'])
+HD = (['3_2_1.jpg', '3_2_2.jpg', '3_2_3.jpg',  '4_0_1.jpg', '4_0_2.jpg',
+      '4_0_3.jpg', '5_0_1.jpg', '5_0_2.jpg', '5_0_3.jpg'])
 
 Test_images = (['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg'])
 
@@ -447,7 +447,7 @@ windowSize = 21 #WARNING : Must be uneve
 for i in range(2):
 
 	print("New image")
-	image = test[i]
+	image = HD[i]
 	intensity, shift = getImageIntensity(image)
 
 	print("Computing Intensity derivatives")
