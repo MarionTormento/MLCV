@@ -51,9 +51,13 @@ FD = np.diagflat(FD)
 FD[-1][-1] = 0
 F = np.dot(FU, np.dot(FD,FV.T))
 
+print(F)
+
 plt.figure()
 plt.subplot(2,1,1), plt.imshow(img1)
 plt.subplot(2,1,2), plt.imshow(img2)
+
+colour = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white']
 
 for i in range(0,nbPoints):
 
@@ -65,15 +69,15 @@ for i in range(0,nbPoints):
 
 	# Finding epipolar line on image 2
 	Epipolar = np.dot(F, ImageA[i,:].T)
-	Epipolar_x = np.arange(shape[0])
+	Epipolar_x = np.arange(2*shape[0])
 	Epipolar_y = (-Epipolar[2] - Epipolar[0]*Epipolar_x)/Epipolar[1]
 
 	# Plotting epipolar lines onto images
-	plt.subplot(2,1,1), plt.plot(ImageA[i,0], ImageA[i,1], 'r+')
-	plt.plot(epipole_x, epipole_y)
+	plt.subplot(2,1,1), plt.plot(ImageA[i,0], ImageA[i,1], '+', color=colour[i])
+	plt.plot(epipole_x, epipole_y, color=colour[i])
 	plt.axis([0, shape[1], shape[0], 0])
-	plt.subplot(2,1,2), plt.plot(ImageB[i,0], ImageB[i,1], 'r+')
-	plt.plot(Epipolar_x, Epipolar_y)
+	plt.subplot(2,1,2), plt.plot(ImageB[i,0], ImageB[i,1], '+', color=colour[i])
+	plt.plot(Epipolar_x, Epipolar_y, color=colour[i])
 	plt.axis([0, shape[1], shape[0], 0])
 
 plt.show()

@@ -270,23 +270,18 @@ def hog(img, Ix, Iy, Points, buff, plot):
 	# PLOTS: Gradient Magnitude, Gradient Orientation and HOG for 9 random interest points
 
 	# Compute the magnitude of the gradient
-	gradMagnitude = (Ix*2+Iy2)*(1/2)
+	gradMagnitude = (Ix**2+Iy**2)**(1/2)
 	
 	# Compute the orientation of the gradient
 	endX, endY = Ix.shape
 	gradOrientation = np.zeros((endX,endY))
 	for i in range(endX):
 		for j in range(endY):
-			if Ix[i][j] == 0 and Iy[i][j] != 0:
-				gradOrientation[i][j] = np.pi/2
-			elif Ix[i][j] == 0 and Iy[i][j] == 0:
-				gradOrientation[i][j] = 0
-			else:
-				gradOrientation[i][j] = np.arctan2(Iy[i][j],Ix[i][j])
-				# Arctan returns angles between -pi/2 and pi/2, but we want only positive orientation
-				# By adding pi to the negative values we have the same direction
-				# if gradOrientation[i][j] < 0:
-				# 	gradOrientation[i][j] = gradOrientation[i][j] + np.pi
+			gradOrientation[i][j] = np.arctan2(Iy[i][j],Ix[i][j])
+			# Arctan returns angles between -pi/2 and pi/2, but we want only positive orientation
+			# By adding pi to the negative values we have the same direction
+			if gradOrientation[i][j] < 0:
+				gradOrientation[i][j] = gradOrientation[i][j] + np.pi
 
 	# Plotting
 	if plot == 1:
@@ -311,15 +306,6 @@ def hog(img, Ix, Iy, Points, buff, plot):
 	# 1 - Extract the buff x buff submatrix of magnitude and orientation
 		boxMagn = gradMagnitude[Points[0][i]-lengthA:Points[0][i]+lengthB][:,Points[1][i]-lengthA:Points[1][i]+lengthB]
 		boxOrient = gradOrientation[Points[0][i]-lengthA:Points[0][i]+lengthB][:,Points[1][i]-lengthA:Points[1][i]+lengthB]
-		# print(boxOrient*180/np.pi)
-		# plt.figure()
-		# plt.imshow(img, cmap='gray')
-		# plt.scatter(Points[1][i], Points[0][i], color='r', marker='+')
-		# plt.scatter(Points[1][i]-lengthA, Points[0][i]-lengthA, color='r', marker='o')
-		# plt.scatter(Points[1][i]+lengthB, Points[0][i]-lengthA, color='r', marker='o')
-		# plt.scatter(Points[1][i]-lengthA, Points[0][i]+lengthB, color='r', marker='o')
-		# plt.scatter(Points[1][i]+lengthB, Points[0][i]+lengthB, color='r', marker='o')
-		# plt.show()
 	# 2 - Compute the nbBin histogram for the buff x buff submatrix (0: 0, 1:1*sizeBin, ...)
 		for j in range(buff):
 			for k in range(buff):
@@ -327,22 +313,18 @@ def hog(img, Ix, Iy, Points, buff, plot):
 				magn = boxMagn[j][k]
 				orient = boxOrient[j][k]
 				# Find the corresponding indices in the histogram for the point orientation
-				idxMin = int(orient/(rad(sizeBin)) + nbBin/2)
-				idxSup = idxMin + 1
-				if idxSup > nbBin-1 and idxMin > nbBin-1:
-					idxSup = idxSup-nbBin
-					idxMin = idxMin-nbBin
-				elif idxSup > nbBin-1:
-					idxSup = idxSup - nbBin
+				idxMin = np.mod(int(orient/(rad(sizeBin)) + nbBin/2), nbBin)
+				idxSup = np.mod(idxMin + 1, nbBin)
 				# Find the percentage repartition of the magnitude between the two bins
-				percSup = (orient-(-np.pi+idxMin*rad(sizeBin)))/rad(sizeBin)
+				percSup = np.mod(orient,rad(sizeBin))/rad(sizeBin)
 				percMin = 1-percSup
-				if orient == np.pi:
-					percSup = 0
-					percMin = 1
+				# if orient == np.pi:
+				# 	percSup = 0
+				# 	percMin = 1
 				# Append the weighted magnitude to each bin
 				histOrientGrad[i][idxMin] += percMin*magn
 				histOrientGrad[i][idxSup] += percSup*magn
+		histOrientGrad[i] = histOrientGrad[i]/np.sum(boxMagn)
 		del boxMagn
 		del boxOrient
 
@@ -389,8 +371,6 @@ def knn(typeMat, imgBase, imgTest, matBase, matTest, pointBase, pointTest, plot)
 		indexNN.append(minDistanceIdx[0][0])
 		distanceNN.append(np.amin(distance))
 
-	print(indexNN)
-
 	# Looking for the 10 best matching descriptors
 	distanceMax = np.amax(distanceNN)
 	minDistIdxNN = []
@@ -420,10 +400,10 @@ def knn(typeMat, imgBase, imgTest, matBase, matTest, pointBase, pointTest, plot)
 		# colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white']
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
 		for i in range(len(minDistIdxNN)):
-			plt.scatter(plotBase[0][i], plotBase[1][i], marker='+')
+			plt.scatter(plotBase[1][i], plotBase[0][i], marker='+')
 		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
 		for i in range(len(minDistIdxNN)):
-			plt.scatter(plotTest[0][i], plotTest[1][i], marker='+')
+			plt.scatter(plotTest[1][i], plotTest[0][i], marker='+')
 		plt.show()
 
 	return indexNN
@@ -463,21 +443,19 @@ for i in range(2):
 	print("Identifying corners and edges")
 	CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, 0.05, windowSize, 0)
 
-	print("Computing RGB descriptor")
-	desc = descripter_funct(CornerPoints, image, windowSize, 0)
+	# print("Computing RGB descriptor")
+	# desc = descripter_funct(CornerPoints, image, windowSize, 0)
 	
-	# print("Computing histogram of gradient orientation")
-	# desc = hog(intensity, Ix, Iy, CornerPoints, windowSize, 0)
+	print("Computing histogram of gradient orientation")
+	desc = hog(intensity, Ix, Iy, CornerPoints, windowSize, 0)
 
 	print("Saving all values")
 	allDesc.append(desc)
 	allIntensity.append(intensity)
 	allPoints.append(CornerPoints)
 
-AD = np.asarray(allDesc)
-print(AD[1].shape)
 print("Looking for matching descriptors")
-u = knn("color", allIntensity[0], allIntensity[1], allDesc[0], allDesc[1], allPoints[0], allPoints[1], 1)
+u = knn("hog", allIntensity[0], allIntensity[1], allDesc[0], allDesc[1], allPoints[0], allPoints[1], 1)
 
 # # allHOG = np.array(allHOG)
 # # np.savetxt('hogQuick', allHOG)
