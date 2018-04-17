@@ -270,7 +270,7 @@ def hog(img, Ix, Iy, Points, buff, plot):
 	# PLOTS: Gradient Magnitude, Gradient Orientation and HOG for 9 random interest points
 
 	# Compute the magnitude of the gradient
-	gradMagnitude = (Ix**2+Iy**2)**(1/2)
+	gradMagnitude = (Ix*2+Iy2)*(1/2)
 	
 	# Compute the orientation of the gradient
 	endX, endY = Ix.shape
@@ -302,7 +302,7 @@ def hog(img, Ix, Iy, Points, buff, plot):
 	
 	# 0 - Initialisation
 	nbBin = 36
-	sizeBin = 180/nbBin
+	sizeBin = 360/nbBin
 	histOrientGrad = np.zeros((len(Points[0]),nbBin))
 	lengthA = (buff-1)//2
 	lengthB = (buff+1)//2
@@ -327,7 +327,7 @@ def hog(img, Ix, Iy, Points, buff, plot):
 				magn = boxMagn[j][k]
 				orient = boxOrient[j][k]
 				# Find the corresponding indices in the histogram for the point orientation
-				idxMin = int(orient/(rad(sizeBin)))
+				idxMin = int(orient/(rad(sizeBin)) + nbBin/2)
 				idxSup = idxMin + 1
 				if idxSup > nbBin-1 and idxMin > nbBin-1:
 					idxSup = idxSup-nbBin
@@ -335,8 +335,11 @@ def hog(img, Ix, Iy, Points, buff, plot):
 				elif idxSup > nbBin-1:
 					idxSup = idxSup - nbBin
 				# Find the percentage repartition of the magnitude between the two bins
-				percSup = (orient-idxMin*rad(sizeBin))/rad(sizeBin)
+				percSup = (orient-(-np.pi+idxMin*rad(sizeBin)))/rad(sizeBin)
 				percMin = 1-percSup
+				if orient == np.pi:
+					percSup = 0
+					percMin = 1
 				# Append the weighted magnitude to each bin
 				histOrientGrad[i][idxMin] += percMin*magn
 				histOrientGrad[i][idxSup] += percSup*magn
@@ -386,10 +389,12 @@ def knn(typeMat, imgBase, imgTest, matBase, matTest, pointBase, pointTest, plot)
 		indexNN.append(minDistanceIdx[0][0])
 		distanceNN.append(np.amin(distance))
 
+	print(indexNN)
+
 	# Looking for the 10 best matching descriptors
 	distanceMax = np.amax(distanceNN)
 	minDistIdxNN = []
-	for i in range(2):
+	for i in range(30):
 		# Looking for the index of the nearest neigbour (= minimal distance)
 		index = np.where(distanceNN == np.amin(distanceNN))
 		index = index[0][0]
@@ -406,20 +411,19 @@ def knn(typeMat, imgBase, imgTest, matBase, matTest, pointBase, pointTest, plot)
 
 	if plot == 1:
 		# Plot the 10 best matching descriptors
-		print(len(pointTestX))
-		plotList = np.random.choice(len(pointTestX), 10)
+		plotList = minDistIdxNN
 		plotTest = [pointTestX[plotList], pointTestY[plotList]]
 		for i in plotList:
 			index = indexNN[i]
 			plotBase[0].append(pointBaseX[index])
 			plotBase[1].append(pointBaseY[index])
-		colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white']
+		# colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white']
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
 		for i in range(len(minDistIdxNN)):
-			plt.scatter(plotBase[1][i], plotBase[0][i], color=colors[i], marker='+')
+			plt.scatter(plotBase[0][i], plotBase[1][i], marker='+')
 		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
 		for i in range(len(minDistIdxNN)):
-			plt.scatter(plotTest[1][i], plotTest[0][i], color=colors[i], marker='+')
+			plt.scatter(plotTest[0][i], plotTest[1][i], marker='+')
 		plt.show()
 
 	return indexNN
@@ -459,11 +463,11 @@ for i in range(2):
 	print("Identifying corners and edges")
 	CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, 0.05, windowSize, 0)
 
-	# print("Computing RGB descriptor")
-	# desc = descripter_funct(CornerPoints, image, windowSize, 0)
+	print("Computing RGB descriptor")
+	desc = descripter_funct(CornerPoints, image, windowSize, 0)
 	
-	print("Computing histogram of gradient orientation")
-	desc = hog(intensity, Ix, Iy, CornerPoints, windowSize, 1)
+	# print("Computing histogram of gradient orientation")
+	# desc = hog(intensity, Ix, Iy, CornerPoints, windowSize, 0)
 
 	print("Saving all values")
 	allDesc.append(desc)
@@ -473,7 +477,7 @@ for i in range(2):
 AD = np.asarray(allDesc)
 print(AD[1].shape)
 print("Looking for matching descriptors")
-u = knn("hog", allIntensity[0], allIntensity[1], allDesc[0], allDesc[1], allPoints[0], allPoints[1], 1)
+u = knn("color", allIntensity[0], allIntensity[1], allDesc[0], allDesc[1], allPoints[0], allPoints[1], 1)
 
 # # allHOG = np.array(allHOG)
 # # np.savetxt('hogQuick', allHOG)
