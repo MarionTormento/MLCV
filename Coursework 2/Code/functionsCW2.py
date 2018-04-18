@@ -428,9 +428,10 @@ def knn(typeMat, img, mat, point, base, test, plot):
 			indexNN.append(minDistanceIdx[0][0])
 			distanceNN.append(np.amin(distance))
 
-	# Looking for the 10 best matching descriptors
+	# Looking for the best matching descriptors
 	distanceMax = np.amax(distanceNN)
-	minDistIdxNN = []
+	interestPointsTest = [[],[]]
+	interestPointsBase = [[],[]]
 	for i in range(25):
 		# Looking for the index of the nearest neigbour (= minimal distance)
 		index = np.where(distanceNN == np.amin(distanceNN))
@@ -438,36 +439,27 @@ def knn(typeMat, img, mat, point, base, test, plot):
 		# Set its distance to max distance so it is not taken twice for a neighbour
 		distanceNN[index] = distanceMax
 		# Saves its indices
-		minDistIdxNN.append(index)
-
-	pointTestX = pointTest[0]
-	pointTestY = pointTest[1]
-	pointBaseX = pointBase[0]
-	pointBaseY = pointBase[1]
-	plotBase = [[],[]]
+		interestPointsTest[0].append(pointTest[0][index])
+		interestPointsTest[1].append(pointTest[1][index])
+		interestPointsBase[0].append(pointBase[0][indexNN[index]])
+		interestPointsBase[1].append(pointBase[1][indexNN[index]])
 
 	if plot == 1:
-		# Plot the 10 best matching descriptors
-		plotList = minDistIdxNN
-		plotTest = [pointTestX[plotList], pointTestY[plotList]]
-		for i in plotList:
-			index = indexNN[i]
-			plotBase[0].append(pointBaseX[index])
-			plotBase[1].append(pointBaseY[index])
+		# Plot the best matching descriptors
 		colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
 				  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white'
 				  'magenta', 'black','coral', 'orange', 'ivory',
 				  'salmon','silver','teal','orchid','plum']
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
-		for i in range(len(plotList)):
-			plt.scatter(plotBase[1][i], plotBase[0][i], marker='+')
+		for i in range(len(interestPointsBase[0])):
+			plt.scatter(interestPointsBase[1][i], interestPointsBase[0][i], marker='+')
 		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
-		for i in range(len(plotList)):
-			plt.scatter(plotTest[1][i], plotTest[0][i], marker='+')
+		for i in range(len(interestPointsTest[0])):
+			plt.scatter(interestPointsTest[1][i], interestPointsTest[0][i], marker='+')
 		plt.show()
 
-		interestPointsTest = pointTest
-		interestPointsBase = (np.asarray(pointBase[0][indexNN]), np.asarray(pointBase[1][indexNN]))
+	interestPointsBase = (np.asarray(interestPointsBase[0]), np.asarray(interestPointsBase[1]))
+	interestPointsTest = (np.asarray(interestPointsTest[0]), np.asarray(interestPointsTest[1]))
 
 	return indexNN, interestPointsBase, interestPointsTest
 
@@ -476,6 +468,8 @@ def findHomography(Image1, Image2, ImageA, ImageB):
 
 	img1 = cv2.imread('Photos/' + Image1)
 	img2 = cv2.imread('Photos/' + Image2)
+	ImageA = np.asarray(ImageA).T
+	ImageB = np.asarray(ImageB).T
 
 	#set length of P matrix
 	nbPoints = len(ImageA)
@@ -495,7 +489,8 @@ def findHomography(Image1, Image2, ImageA, ImageB):
 	H=VT[-1,:].reshape((3,3))
 
 	# Find and print a test point to check it's working
-	point_estimated_prime = np.dot(H, np.concatenate((ImageA, np.ones((len(ImageA[0]),1))), axis = 0).T)
+	pointsImageA = np.concatenate((ImageA, np.ones((nbPoints,1))), axis = 1)
+	point_estimated_prime = np.dot(H, pointsImageA.T)
 	points_estimated = (point_estimated_prime[:][0:2] / point_estimated_prime[:][-1]).T
 	print(points_estimated)
 	print(ImageB)
