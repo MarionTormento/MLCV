@@ -66,3 +66,5 @@ print("Looking for matching descriptors")
 indexNN, corrBasePoints, corrTestPoints = knn("color", allIntensity, allDesc, allPoints, 0, 1, 1)
 
 findHomography(test[0], test[1], corrBasePoints, corrTestPoints)
+
+findFundamental(test[0], test[1], corrBasePoints, corrTestPoints)

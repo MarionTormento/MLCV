@@ -458,8 +458,8 @@ def knn(typeMat, img, mat, point, base, test, plot):
 			plt.scatter(interestPointsTest[1][i], interestPointsTest[0][i], marker='+')
 		plt.show()
 
-	interestPointsBase = (np.asarray(interestPointsBase[0]), np.asarray(interestPointsBase[1]))
-	interestPointsTest = (np.asarray(interestPointsTest[0]), np.asarray(interestPointsTest[1]))
+	interestPointsBase = (np.asarray(interestPointsBase[1]), np.asarray(interestPointsBase[0]))
+	interestPointsTest = (np.asarray(interestPointsTest[1]), np.asarray(interestPointsTest[0]))
 
 	return indexNN, interestPointsBase, interestPointsTest
 
@@ -514,8 +514,10 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 	img2 = cv2.imread('Photos/' + Image2)
 	img1 = np.asarray(img1)
 	img2 = np.asarray(img2)
-	ImageA = np.concantenate(ImageA, np.ones((len(ImageA,1))))
-	ImageB = np.concantenate(ImageB, np.ones((len(ImageB,1))))
+	ImageA = np.asarray(ImageA).T
+	ImageB = np.asarray(ImageB).T
+	ImageA = np.concatenate((ImageA, np.ones((len(ImageA),1))), axis=1)
+	ImageB = np.concatenate((ImageB, np.ones((len(ImageB),1))), axis=1)
 
 	shape = img1.shape
 
@@ -527,7 +529,7 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		chi[i][:] = [ImageA[i,0]*ImageB[i,0], ImageA[i,0]*ImageB[i,1], ImageA[i,0], ImageA[i,1]*ImageB[i,0], ImageA[i,1]*ImageB[i,1], ImageA[i,1], ImageB[i,0], ImageB[i,1], 1]
 
 	U, S, V = np.linalg.svd(chi)
-	F = V.T[:,-1].reshape(3,3) / V[-1][-1]
+	F = V.T[:,-1].reshape(3,3)# / V[-1][-1]
 	detF = np.linalg.det(F)
 
 	FU, FD, FV = np.linalg.svd(F)
@@ -543,11 +545,12 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 	plt.subplot(2,1,2), plt.imshow(img2)
 
 	colour = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
-			  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white'
+			  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white',
 			  'magenta', 'black','coral', 'orange', 'ivory',
-			  'salmon','silver','teal','orchid','plum']
+			  'salmon','silver','teal','orchid','plum',
+			  'goldenrod','green','lightgreen','lavendar','lime']
 
-	for i in range(0,nbPoints):
+	for i in range(0,10):
 
 		# Finding epipolar line on image 1
 		epipole1 = FV.T[:,-1]
@@ -558,7 +561,7 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		# Finding epipolar line on image 2
 		Epipolar = np.dot(F, ImageA[i,:].T)
 		Epipolar_x = np.arange(2*shape[0])
-		Epipolar_y = (-Epipolar[2] - Epipolar[0]*Epipolar_x)/Epipolar[1]
+		Epipolar_y = -(Epipolar[2] + Epipolar[0]*Epipolar_x)/Epipolar[1]
 
 		# Plotting epipolar lines onto images
 		plt.subplot(2,1,1), plt.plot(ImageA[i,0], ImageA[i,1], '+', color=colour[i])
