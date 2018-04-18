@@ -8,6 +8,7 @@ import time
 import random
 import tkinter as tk
 from PIL import ImageTk, Image
+import os
 
 # ------------------------- Images --------------------------------
 def getImageIntensity(image):
@@ -33,6 +34,41 @@ def mouse_click(event):
     print('coords: {}'.format(coords))
     print('X: {}'.format(coords[0]))
     print('Y: {}'.format(coords[1]))
+
+def manualCornerPoints(image, i):
+
+	def mouse_click(event):
+	    # retrieve XY coords as a tuple
+	    x = event.x
+	    y = event.y
+	    coords = (x,y)
+	    # coords = root.winfo_pointerxy()
+	    print('coords: {}'.format(coords))
+	    print('X: {}'.format(coords[0]))
+	    print('Y: {}'.format(coords[1]))
+	    CornerPointsX.append(y)
+	    CornerPointsY.append(x)
+	    file.write('{}, {} \n'.format(x, y))
+
+	CornerPointsX = []
+	CornerPointsY = []
+
+	file = open("Image" + str(i) + ".csv", 'w')
+	path = 'Photos/' + image
+	root = tk.Tk()
+	img = Image.open(path).convert('LA')
+	# img = img.resize((600, 600), Image.ANTIALIAS)
+	img = ImageTk.PhotoImage(img)
+	panel = tk.Label(root, image = img)
+	panel.pack(side = "bottom", fill = "both", expand = "yes")
+	root.bind('<Button>', mouse_click)
+	click = root.bind('<Button>', mouse_click)
+	root.mainloop()
+
+	file.close()
+	CornerPoints = (np.asarray(CornerPointsX), np.asarray(CornerPointsY))
+
+	return CornerPoints
 
 # ------------------------- Corner Detection --------------------------------
 def derivatives(intensity, shift, plot):
@@ -348,6 +384,7 @@ def hog(img, Ix, Iy, Points, buff, plot):
 		for i in range(9):
 			idx = 330 + i + 1
 			plt.subplot(idx), plt.bar(range(nbBin), histOrientGrad[plotList[i]])
+			# plt.xticks(range(9), ('0', '20', '40', '60', '80', '100', '120', '140', '160'))
 			plt.title(plotList[i])
 		plt.suptitle('Histogram of Gradient for 9 random 8x8 cells')
 		plt.show()
@@ -391,60 +428,51 @@ def knn(typeMat, img, mat, point, base, test, plot):
 			indexNN.append(minDistanceIdx[0][0])
 			distanceNN.append(np.amin(distance))
 
-
 	# Looking for the 10 best matching descriptors
 	distanceMax = np.amax(distanceNN)
-	matchTest = []
-	matchBase = []
-
-	for i in range(20):
+	minDistIdxNN = []
+	for i in range(25):
 		# Looking for the index of the nearest neigbour (= minimal distance)
 		index = np.where(distanceNN == np.amin(distanceNN))
 		index = index[0][0]
 		# Set its distance to max distance so it is not taken twice for a neighbour
 		distanceNN[index] = distanceMax
-		# Saves its indices to be returned
-		matchTest.append([pointTest[0][index], pointTest[1][index]])
-		matchBase.append([pointBase[0][indexNN[index]], pointBase[1][indexNN[index]]])
+		# Saves its indices
+		minDistIdxNN.append(index)
+
+	pointTestX = pointTest[0]
+	pointTestY = pointTest[1]
+	pointBaseX = pointBase[0]
+	pointBaseY = pointBase[1]
+	plotBase = [[],[]]
 
 	if plot == 1:
-		# Plot the best matching descriptors
+		# Plot the 10 best matching descriptors
+		plotList = minDistIdxNN
+		plotTest = [pointTestX[plotList], pointTestY[plotList]]
+		for i in plotList:
+			index = indexNN[i]
+			plotBase[0].append(pointBaseX[index])
+			plotBase[1].append(pointBaseY[index])
 		colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
 				  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white'
 				  'magenta', 'black','coral', 'orange', 'ivory',
 				  'salmon','silver','teal','orchid','plum']
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
-		for i in range(len(matchBase)):
-			plt.scatter(matchBase[i][1], matchBase[i][0], marker='+')
+		for i in range(len(plotList)):
+			plt.scatter(plotBase[1][i], plotBase[0][i], marker='+')
 		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
-		for i in range(len(matchTest)):
-			plt.scatter(matchTest[i][1], matchTest[i][0], marker='+')
+		for i in range(len(plotList)):
+			plt.scatter(plotTest[1][i], plotTest[0][i], marker='+')
 		plt.show()
-	print("MatchTest")
-	print(matchTest)
-	print("MatchBase")
-	print(matchBase)
-	return matchTest, matchBase
+
+		interestPointsTest = pointTest
+		interestPointsBase = (np.asarray(pointBase[0][indexNN]), np.asarray(pointBase[1][indexNN]))
+
+	return indexNN, interestPointsBase, interestPointsTest
 
 # ------------------------- Homography and fundamental matrix --------------------------------
 def findHomography(Image1, Image2, ImageA, ImageB):
-
-	#ImageA = img1.jpg
-	#ImageB = img3.jpg
-	#Set of points manually selected from images, should be replaced with our own
-	#interest points
-	# ImageA = np.array([[253, 183], 
-	#                   [306, 196],
-	#                   [397, 211],
-	#                   [389, 329],
-	#                   [473, 391],
-	#                   [481, 279]])
-	# ImageB = np.array([[287, 196],
-	#                   [314, 222],
-	#                   [359, 260],
-	#                   [331, 359],
-	#                   [362, 429], 
-	#                   [387,338]])
 
 	img1 = cv2.imread('Photos/' + Image1)
 	img2 = cv2.imread('Photos/' + Image2)
@@ -467,7 +495,7 @@ def findHomography(Image1, Image2, ImageA, ImageB):
 	H=VT[-1,:].reshape((3,3))
 
 	# Find and print a test point to check it's working
-	point_estimated_prime = np.dot(H, np.concatenate((ImageA, np.ones((nbPoints,1))), axis = 1).T)
+	point_estimated_prime = np.dot(H, np.concatenate((ImageA, np.ones((len(ImageA[0]),1))), axis = 0).T)
 	points_estimated = (point_estimated_prime[:][0:2] / point_estimated_prime[:][-1]).T
 	print(points_estimated)
 	print(ImageB)
@@ -487,37 +515,12 @@ def findHomography(Image1, Image2, ImageA, ImageB):
 
 def findFundamental(Image1, Image2, ImageA, ImageB):
 
-	#ImageA = img1.jpg
-	#ImageB = img3.jpg
-	#Set of points manually selected from images, should be replaced with our own
-	#interest points
-	# Image1 = 'img1.jpg'
-	# Image2 = 'img3.jpg'
 	img1 = cv2.imread('Photos/' + Image1)
 	img2 = cv2.imread('Photos/' + Image2)
 	img1 = np.asarray(img1)
 	img2 = np.asarray(img2)
 	ImageA = np.concantenate(ImageA, np.ones((len(ImageA,1))))
 	ImageB = np.concantenate(ImageB, np.ones((len(ImageB,1))))
-
-	# ImageA = np.array([[253, 183, 1], 
-	#                   [306, 196, 1],
-	#                   [397, 211, 1],
-	#                   [389, 329, 1],
-	#                   [473, 391, 1],
-	#                   [481, 279, 1],
-	#                   [99, 473, 1],
-	#                   [287, 435, 1],
-	#                   [510, 110, 1]])
-	# ImageB = np.array([[287, 196, 1],
-	#                   [314, 222, 1],
-	#                   [359, 260, 1],
-	#                   [331, 359, 1],
-	#                   [362, 429, 1], 
-	#                   [387,338, 1],
-	#                   [129, 431, 1],
-	#                   [253, 435, 1],
-	#                   [433, 205, 1]])
 
 	shape = img1.shape
 
