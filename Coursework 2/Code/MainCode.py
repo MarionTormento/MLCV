@@ -17,7 +17,7 @@ Quick2 = (['chess.png', 'chess.jpg'])
 allIntensity = []
 allPoints = []
 allDesc = []
-test = Test_images
+test = HD
 windowSize = 21 #WARNING : Must be uneve
 
 
