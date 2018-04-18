@@ -61,3 +61,5 @@ indexNN, corrBasePoints, corrTestPoints = knn("color", allIntensity, allDesc, al
 findHomography(test[0], test[1], corrBasePoints, corrTestPoints)
 
 findFundamental(test[0], test[1], corrBasePoints, corrTestPoints)
+
+plt.show()

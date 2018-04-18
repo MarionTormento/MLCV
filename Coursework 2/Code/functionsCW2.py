@@ -444,8 +444,8 @@ def knn(typeMat, img, mat, point, base, test, plot):
 		interestPointsBase[0].append(pointBase[0][indexNN[index]])
 		interestPointsBase[1].append(pointBase[1][indexNN[index]])
 
-	print(interestPointsBase)
-	print(interestPointsTest)
+	# print(interestPointsBase)
+	# print(interestPointsTest)
 
 
 	if plot == 1:
@@ -460,7 +460,6 @@ def knn(typeMat, img, mat, point, base, test, plot):
 		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
 		for i in range(len(interestPointsTest[0])):
 			plt.scatter(interestPointsTest[0][i], interestPointsTest[1][i], marker='+')
-		plt.show()
 
 	interestPointsBase = (np.asarray(interestPointsBase[0]), np.asarray(interestPointsBase[1]))
 	interestPointsTest = (np.asarray(interestPointsTest[0]), np.asarray(interestPointsTest[1]))
@@ -474,6 +473,11 @@ def findHomography(Image1, Image2, ImageA, ImageB):
 	img2 = cv2.imread('Photos/' + Image2)
 	ImageA = np.asarray(ImageA).T
 	ImageB = np.asarray(ImageB).T
+	ImageA = np.flip(ImageA,1)
+	ImageB = np.flip(ImageB,1)
+
+	print(ImageA)
+	print(ImageB)
 
 	#set length of P matrix
 	nbPoints = len(ImageA)
@@ -487,30 +491,27 @@ def findHomography(Image1, Image2, ImageA, ImageB):
 
 	#Perform SVD
 	U, S, VT = np.linalg.svd(P)
+	V = VT.T
 
 	# Set H as the last column of V (last row of VT) as it will cause least error
 	H = np.zeros((3,3))
-	H=VT[-1,:].reshape((3,3))
+	H = V[:,-1]/V[-1,-1]
+	H = H.reshape((3,3))
 
 	# Find and print a test point to check it's working
 	pointsImageA = np.concatenate((ImageA, np.ones((nbPoints,1))), axis = 1)
-	point_estimated_prime = np.dot(H, pointsImageA.T)
-	points_estimated = (point_estimated_prime[:][0:2] / point_estimated_prime[:][-1]).T
-	print(points_estimated)
-	print(ImageB)
+	point_estimated_prime = np.dot(H, pointsImageA.T).T
+	points_estimated = (point_estimated_prime[:][:,0:2].T / point_estimated_prime[:][:,-1]).T
 
 	dist_diff = np.linalg.norm(ImageB-points_estimated, axis = 1)
 	Homography_accuracy = np.mean(dist_diff)
-	print(Homography_accuracy)
 
 	plt.figure()
 	plt.subplot(211), plt.imshow(img1)
 	plt.scatter(ImageA[:,0], ImageA[:,1], color='b', marker='+')
 	plt.subplot(212), plt.imshow(img2)
-	plt.scatter(ImageB[:,0], ImageB[:,1], color='r')
-	plt.scatter(points_estimated[:,0], points_estimated[:,1], color='b', marker='+')
-
-	plt.show()
+	plt.scatter(points_estimated[:,0], points_estimated[:,1], color='r')
+	plt.scatter(ImageB[:,0], ImageB[:,1], color='b', marker='+')
 
 def findFundamental(Image1, Image2, ImageA, ImageB):
 
@@ -554,7 +555,7 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 			  'salmon','silver','teal','orchid','plum',
 			  'goldenrod','green','lightgreen','lavendar','lime']
 
-	for i in range(0,10):
+	for i in range(0,20):
 
 		# Finding epipolar line on image 1
 		epipole1 = FV.T[:,-1]
@@ -574,8 +575,6 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		plt.subplot(2,1,2), plt.plot(ImageB[i,0], ImageB[i,1], '+', color=colour[i])
 		plt.plot(Epipolar_x, Epipolar_y, color=colour[i])
 		plt.axis([0, shape[1], shape[0], 0])
-
-	plt.show()
 
 # ------------------------- Others --------------------------------
 def rad(degree):
