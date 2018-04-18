@@ -9,7 +9,7 @@ FD = (['fd1.jpg', 'fd2.jpg', 'fd3.jpg', 'fd4.jpg', 'fd5.jpg', 'fd6.jpg',
 HD = (['3_2_1.jpg', '3_2_2.jpg', '3_2_3.jpg',  '4_0_1.jpg', '4_0_2.jpg',
       '4_0_3.jpg', '5_0_1.jpg', '5_0_2.jpg', '5_0_3.jpg'])
 
-Test_images = (['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg'])
+Test_images = (['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg', 'img0.jpg'])
 
 Quick1 = (['chess.png', 'chess2.png', 'chess3.png'])
 Quick2 = (['chess.png', 'chess.jpg'])
@@ -19,7 +19,7 @@ allIntensity = []
 allPoints = []
 allDesc = []
 test = Test_images
-windowSize = 21 #WARNING : Must be uneve
+windowSize = 21 #WARNING : Must be uneven
 
 
 for i in range(2):
@@ -27,13 +27,6 @@ for i in range(2):
 	print("New image")
 	image = test[i]
 	intensity, shift = getImageIntensity(image)
-
-	# print("Manually find interest points")
-	# root = tk.Tk()
-	# img = Image.open('Photos/' + image).convert('LA')
-	# img = ImageTk.PhotoImage(img)
-	# root.bind('<Button>', mouse_click)
-	# root.mainloop()
 	
 	if findPoints == 'Manual':
 

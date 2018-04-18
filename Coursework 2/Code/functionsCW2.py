@@ -183,8 +183,8 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot):
 	if plot == 1:
 		plt.figure()
 		plt.imshow(intensity, cmap='gray')
-		plt.scatter(cornerPoints[1], cornerPoints[0], color='r', marker='+')
-		# plt.scatter(edgePoints[1], edgePoints[0], color='g', marker='+')
+		plt.scatter(cornerPoints[0], cornerPoints[1], color='r', marker='+')
+		# plt.scatter(edgePoints[0], edgePoints[1], color='g', marker='+')
 		plt.title("Detection of Corners and Edges")
 		plt.show()
 
@@ -217,8 +217,8 @@ def local_maxima(R, Points, NN):
 	# OUTPUT : Local maxima Interest Points coordinates
 
 	# Initialisation of the variable
-	PointsX = Points[0]
-	PointsY = Points[1]
+	PointsX = Points[1]
+	PointsY = Points[0]
 	nbPoints = len(PointsX)
 
 	localMaxPointsX = []
@@ -235,7 +235,7 @@ def local_maxima(R, Points, NN):
 		distance[i] = distanceMax
 
 		# Looking for the maxima R among the cornerPoint NN nearest neighbour 
-		Rmax = R[Point0X][Point0Y]
+		Rmax = R[Point0Y][Point0X]
 		Xmax = Point0X 
 		Ymax = Point0Y
 
@@ -249,8 +249,8 @@ def local_maxima(R, Points, NN):
 			X = PointsX[index[0]]
 			for k in range(len(Y)): # Security in case several points are equally distanced to Point0
 				# If R of the neighbour is greater than the previous R, save the location of the point and R
-				if abs(R[X[k]][Y[k]]) > Rmax: 
-					Rmax = abs(R[X[k]][Y[k]]) 
+				if abs(R[Y[k]][X[k]]) > Rmax: 
+					Rmax = abs(R[Y[k]][X[k]]) 
 					Xmax = X[k]
 					Ymax = Y[k]
 
@@ -292,7 +292,7 @@ def descripter_funct(Points, OriginalImage, buff, plot):
 		greenHist.append([])
 		redHist.append([])
 		mask = np.zeros(imgread.shape[:2], np.uint8)
-		mask[Points[0][i]-lengthA:Points[0][i]+lengthB,Points[1][i]-lengthA:Points[1][i]+lengthB] = 255
+		mask[Points[1][i]-lengthA:Points[1][i]+lengthB,Points[0][i]-lengthA:Points[0][i]+lengthB] = 255
 		color = ('b','g','r')
 		for j,col in zip(img, color):
 			histr = cv2.calcHist([j],[0],mask,[256],[0,256])
@@ -304,13 +304,13 @@ def descripter_funct(Points, OriginalImage, buff, plot):
 				if col == 'r':
 					redHist[i].append(histr[k][0])
 
-		if plot == 1:
-			plt.figure()
-			idx = 0
-			for j,col in zip(img, color):
-				plt.plot(colorHist[i][idx], color = col)
-				idx += 1
-			plt.show()
+		# if plot == 1:
+		# 	plt.figure()
+		# 	idx = 0
+		# 	for j,col in zip(img, color):
+		# 		plt.plot(colorHist[i][idx], color = col)
+		# 		idx += 1
+		# 	plt.show()
 
 	colorHist = (np.asarray(blueHist), np.asarray(greenHist), np.asarray(redHist))
 	return colorHist
@@ -356,8 +356,8 @@ def hog(img, Ix, Iy, Points, buff, plot):
 
 	for i in range(len(Points[0])):
 	# 1 - Extract the buff x buff submatrix of magnitude and orientation
-		boxMagn = gradMagnitude[Points[0][i]-lengthA:Points[0][i]+lengthB][:,Points[1][i]-lengthA:Points[1][i]+lengthB]
-		boxOrient = gradOrientation[Points[0][i]-lengthA:Points[0][i]+lengthB][:,Points[1][i]-lengthA:Points[1][i]+lengthB]
+		boxMagn = gradMagnitude[Points[1][i]-lengthA:Points[1][i]+lengthB][:,Points[0][i]-lengthA:Points[0][i]+lengthB]
+		boxOrient = gradOrientation[Points[1][i]-lengthA:Points[1][i]+lengthB][:,Points[0][i]-lengthA:Points[0][i]+lengthB]
 	# 2 - Compute the nbBin histogram for the buff x buff submatrix (0: 0, 1:1*sizeBin, ...)
 		for j in range(buff):
 			for k in range(buff):
@@ -444,6 +444,10 @@ def knn(typeMat, img, mat, point, base, test, plot):
 		interestPointsBase[0].append(pointBase[0][indexNN[index]])
 		interestPointsBase[1].append(pointBase[1][indexNN[index]])
 
+	print(interestPointsBase)
+	print(interestPointsTest)
+
+
 	if plot == 1:
 		# Plot the best matching descriptors
 		colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
@@ -452,10 +456,10 @@ def knn(typeMat, img, mat, point, base, test, plot):
 				  'salmon','silver','teal','orchid','plum']
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
 		for i in range(len(interestPointsBase[0])):
-			plt.scatter(interestPointsBase[1][i], interestPointsBase[0][i], marker='+')
+			plt.scatter(interestPointsBase[0][i], interestPointsBase[1][i], marker='+')
 		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
 		for i in range(len(interestPointsTest[0])):
-			plt.scatter(interestPointsTest[1][i], interestPointsTest[0][i], marker='+')
+			plt.scatter(interestPointsTest[0][i], interestPointsTest[1][i], marker='+')
 		plt.show()
 
 	interestPointsBase = (np.asarray(interestPointsBase[0]), np.asarray(interestPointsBase[1]))
