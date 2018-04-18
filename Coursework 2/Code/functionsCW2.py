@@ -533,7 +533,7 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		chi[i][:] = [ImageA[i,0]*ImageB[i,0], ImageA[i,0]*ImageB[i,1], ImageA[i,0], ImageA[i,1]*ImageB[i,0], ImageA[i,1]*ImageB[i,1], ImageA[i,1], ImageB[i,0], ImageB[i,1], 1]
 
 	U, S, V = np.linalg.svd(chi)
-	F = V.T[:,-1].reshape(3,3)# / V[-1][-1]
+	F = V.T[:,-1].reshape(3,3)/V[-1][-1]
 	detF = np.linalg.det(F)
 
 	FU, FD, FV = np.linalg.svd(F)
