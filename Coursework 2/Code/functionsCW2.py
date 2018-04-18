@@ -458,8 +458,8 @@ def knn(typeMat, img, mat, point, base, test, plot):
 			plt.scatter(interestPointsTest[1][i], interestPointsTest[0][i], marker='+')
 		plt.show()
 
-	interestPointsBase = (np.asarray(interestPointsBase[1]), np.asarray(interestPointsBase[0]))
-	interestPointsTest = (np.asarray(interestPointsTest[1]), np.asarray(interestPointsTest[0]))
+	interestPointsBase = (np.asarray(interestPointsBase[0]), np.asarray(interestPointsBase[1]))
+	interestPointsTest = (np.asarray(interestPointsTest[0]), np.asarray(interestPointsTest[1]))
 
 	return indexNN, interestPointsBase, interestPointsTest
 
@@ -561,7 +561,7 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		# Finding epipolar line on image 2
 		Epipolar = np.dot(F, ImageA[i,:].T)
 		Epipolar_x = np.arange(2*shape[0])
-		Epipolar_y = -(Epipolar[2] + Epipolar[0]*Epipolar_x)/Epipolar[1]
+		Epipolar_y = (-Epipolar[2] - Epipolar[0]*Epipolar_x)/Epipolar[1]
 
 		# Plotting epipolar lines onto images
 		plt.subplot(2,1,1), plt.plot(ImageA[i,0], ImageA[i,1], '+', color=colour[i])
