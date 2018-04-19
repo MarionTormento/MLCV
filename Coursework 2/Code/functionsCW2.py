@@ -451,7 +451,7 @@ def knn(typeMat, img, mat, point, base, test, plot):
 	interestPointsTest = [[],[]]
 	interestPointsBase = [[],[]]
 
-	for i in range(20):#min(len(pointBase[0]),len(pointTest[0]))):
+	for i in range(len(pointBase[0])):#min(len(pointBase[0]),len(pointTest[0]))):
 		# Looking for the index of the nearest neigbour (= minimal distance)
 		index = np.where(distanceNN == np.amin(distanceNN))
 		index = index[0][0]
@@ -465,16 +465,16 @@ def knn(typeMat, img, mat, point, base, test, plot):
 
 	if plot == 1:
 		# Plot the best matching descriptors
-		colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
-				  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white',
-				  'magenta', 'black','coral', 'orange', 'ivory',
-				  'salmon','silver','teal','orchid','plum']
+		# colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
+		# 		  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white',
+		# 		  'magenta', 'black','coral', 'orange', 'ivory',
+		# 		  'salmon','silver','teal','orchid','plum']
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
 		for i in range(len(interestPointsBase[0])):
-			plt.plot(interestPointsBase[0][i], interestPointsBase[1][i], color=colors[i], marker='+')
+			plt.plot(interestPointsBase[0][i], interestPointsBase[1][i], marker='+')
 		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
 		for i in range(len(interestPointsTest[0])):
-			plt.plot(interestPointsTest[0][i], interestPointsTest[1][i], color=colors[i], marker='+')
+			plt.plot(interestPointsTest[0][i], interestPointsTest[1][i], marker='+')
 
 	interestPointsBase = (np.asarray(interestPointsBase[0]), np.asarray(interestPointsBase[1]))
 	interestPointsTest = (np.asarray(interestPointsTest[0]), np.asarray(interestPointsTest[1]))
@@ -490,7 +490,7 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 	width, height, channels = img1.shape
 	width2, height2, channels = img2.shape
 
-	fewPointsIdx = np.random.choice(5, selection, 0)
+	fewPointsIdx = np.random.choice(12, selection, 0)
 	print(fewPointsIdx)
 	ImageA = np.asarray(ImageA).T
 	ImageB = np.asarray(ImageB).T
@@ -499,7 +499,7 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 	K = int(0)
 	goodPercent = int(0)
 
-	while K < 10 and goodPercent < 60:
+	while K < 10 and goodPercent < 0.60:
 
 		#set length of P matrix
 		nbPoints = len(ImageAfew)
@@ -531,10 +531,12 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 		point_estimated_prime_all = np.dot(H, pointsImageA_all.T).T
 		points_estimated_all = (point_estimated_prime_all[:][:,0:2].T / point_estimated_prime_all[:][:,-1]).T
 		dist_diff_all = np.linalg.norm(ImageB-points_estimated_all, axis=1)
-		acceptableIdx = np.where(dist_diff_all < 4)
+
+		acceptableIdx = np.where(dist_diff_all < 3)
 		ImageAfew = ImageA[acceptableIdx[0]]
 		ImageBfew = ImageB[acceptableIdx[0]]
 		goodPercent = len(acceptableIdx[0])/len(ImageA)
+		print(len(acceptableIdx[0]), len(ImageA), goodPercent)
 		K += 1
 		
 	Homography_accuracy = np.mean(dist_diff)
@@ -623,8 +625,6 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		plt.axis([0, shape[1], shape[0], 0])
 
 	fundamentalAccuracy = distanceTotal / len(ImageA)
-	print(distanceTotal)
-	print(fundamentalAccuracy)
 
 	return fundamentalAccuracy
 
