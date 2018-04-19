@@ -407,8 +407,8 @@ def knn(typeMat, img, mat, point, base, test, plot):
 			# Store the hog of the descriptor we want to compare
 			distance = np.linalg.norm(matBase-matTest[i], axis=1)
 			# Look for minimal distance and save the index
-			minDistanceIdx = np.where(distance == np.amin(distance))
-			indexNN.append(minDistanceIdx[0][0])
+			index = np.where(distance == np.amin(distance))
+			indexNN.append(index[0][0])
 			distanceNN.append(np.amin(distance))
 	
 	elif typeMat == "color":
@@ -419,15 +419,16 @@ def knn(typeMat, img, mat, point, base, test, plot):
 				distance[j] = np.linalg.norm(matBase[j]-matTest[j][i], axis=1)
 			distance = sum(distance)
 			# Look for minimal distance and save the index
-			minDistanceIdx = np.where(distance == np.amin(distance))
-			indexNN.append(minDistanceIdx[0][0])
+			index = np.where(distance == np.amin(distance))
+			indexNN.append(index[0][0])
 			distanceNN.append(np.amin(distance))
 
 	# Looking for the best matching descriptors
 	distanceMax = np.amax(distanceNN)
 	interestPointsTest = [[],[]]
 	interestPointsBase = [[],[]]
-	for i in range(25):
+
+	for i in range(20):
 		# Looking for the index of the nearest neigbour (= minimal distance)
 		index = np.where(distanceNN == np.amin(distanceNN))
 		index = index[0][0]

@@ -9,7 +9,7 @@ FD = (['fd1.jpg', 'fd2.jpg', 'fd3.jpg', 'fd4.jpg', 'fd5.jpg', 'fd6.jpg',
 HD = (['3_2_1.jpg', '3_2_2.jpg', '3_2_3.jpg',  '4_0_1.jpg', '4_0_2.jpg',
       '4_0_3.jpg', '5_0_1.jpg', '5_0_2.jpg', '5_0_3.jpg'])
 
-Test_images = (['img1.jpg', 'img0.jpg','img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg', 'img0.jpg'])
+Test_images = (['img1.jpg','img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg', 'img0.jpg'])
 
 Quick1 = (['chess.png', 'chess2.png', 'chess3.png'])
 Quick2 = (['chess.png', 'chess.jpg'])
@@ -44,11 +44,11 @@ for i in range(2):
 		print("Identifying corners and edges")
 		CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, 0.05, windowSize, 0)
 
-	# print("Computing RGB descriptor")
-	# desc = descripter_funct(CornerPoints, image, windowSize, 0)
+	print("Computing RGB descriptor")
+	desc = descripter_funct(CornerPoints, image, windowSize, 0)
 	
-	print("Computing histogram of gradient orientation")
-	desc = hog(intensity, Ix, Iy, CornerPoints, windowSize, 0)
+	# print("Computing histogram of gradient orientation")
+	# desc = hog(intensity, Ix, Iy, CornerPoints, windowSize, 0)
 
 	print("Saving all values")
 	allDesc.append(desc)
@@ -56,7 +56,7 @@ for i in range(2):
 	allPoints.append(CornerPoints)
 
 print("Looking for matching descriptors")
-indexNN, corrBasePoints, corrTestPoints = knn("hog", allIntensity, allDesc, allPoints, 0, 1, 1)
+indexNN, corrBasePoints, corrTestPoints = knn("color", allIntensity, allDesc, allPoints, 0, 1, 1)
 
 findHomography(test[0], test[1], corrBasePoints, corrTestPoints)
 
