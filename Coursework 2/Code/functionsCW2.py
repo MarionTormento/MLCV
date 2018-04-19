@@ -170,6 +170,8 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot):
 	cornerPoints = cleanSides(intensity, cornerPoints, buff)
 	# Find local maxima for the corners
 	cornerPoints = local_maxima(R, cornerPoints, NN)
+	# Dismiss corner points in promimity to others
+	cornerPoints = eliminate_close_corners(cornerPoints)
 
 	# ## Edges
 	# thresholdEdge = np.percentile(R, 100-perc)
@@ -189,6 +191,24 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot):
 		plt.show()
 
 	return cornerPoints
+
+def eliminate_close_corners(cornerPoints):
+
+	# Initialisation of the variable
+	PointsX = cornerPoints[0]
+	PointsY = cornerPoints[1]
+
+	for i in range(len(cornerPoints[1])):
+		# Compute the distance between each point and Point0
+		dist = np.linalg.norm([PointsX-PointsX[i],PointsY-PointsY[i]], axis=0)
+		close = np.where(np.amin(dist) < 50)
+		if np.sum(close[0]) > 0:
+			PointsX = np.delete(PointsX, i)
+			PointsY = np.delete(PointsY, i)
+
+	cornerPointGood = (np.asarray(PointsX), np.asarray(PointsY))
+
+	return cornerPointGood
 
 def cleanSides(img, Points, buff):
 	# Function to delete the interest points located on the sides of the image
@@ -225,19 +245,16 @@ def local_maxima(R, Points, NN):
 	localMaxPointsY = []
 
 	for i in range(nbPoints):
-		# Save the coordinates of the points for which we are currently looking for its nearest neighbour
-		Point0X = PointsX[i]
-		Point0Y = PointsY[i]
 		# Compute the distance between each point and Point0
-		distance = np.linalg.norm([PointsX-Point0X,PointsY-Point0Y], axis=0)
+		distance = np.linalg.norm([PointsX-PointsX[i],PointsY-PointsY[i]], axis=0)
 		# Set its own distance value to max distance so that it is not taken for a nearest neighbour
 		distanceMax = np.amax(distance)
 		distance[i] = distanceMax
 
 		# Looking for the maxima R among the cornerPoint NN nearest neighbour 
-		Rmax = R[Point0Y][Point0X]
-		Xmax = Point0X 
-		Ymax = Point0Y
+		Rmax = R[PointsY[i]][PointsX[i]]
+		Xmax = PointsX[i] 
+		Ymax = PointsY[i]
 
 		for j in range(NN):
 			# Looking for the index of the nearest neigbour (= minimal distance to Point0)
@@ -407,8 +424,6 @@ def knn(typeMat, img, mat, point, base, test, plot):
 	matTest = mat[test]
 	pointBase = point[base]
 	pointTest = point[test]
-	print(pointBase)
-	print(pointTest)
 
 	indexNN = []
 	distanceNN = []
@@ -440,7 +455,7 @@ def knn(typeMat, img, mat, point, base, test, plot):
 	interestPointsTest = [[],[]]
 	interestPointsBase = [[],[]]
 
-	for i in range(20):
+	for i in range(min(len(pointBase[0]),len(pointTest[0]))):
 		# Looking for the index of the nearest neigbour (= minimal distance)
 		index = np.where(distanceNN == np.amin(distanceNN))
 		index = index[0][0]
@@ -471,54 +486,75 @@ def knn(typeMat, img, mat, point, base, test, plot):
 	return indexNN, interestPointsBase, interestPointsTest
 
 # ------------------------- Homography and fundamental matrix --------------------------------
-def findHomography(Image1, Image2, ImageA, ImageB):
+def findHomography(Image1, Image2, ImageA, ImageB, selection):
 
 	img1 = cv2.imread('Photos/' + Image1)
 	img2 = cv2.imread('Photos/' + Image2)
 	width, height, channels = img1.shape
 	width2, height2, channels = img2.shape
+
+	fewPointsIdx = np.random.choice(5, selection, 0)
+	print(fewPointsIdx)
 	ImageA = np.asarray(ImageA).T
 	ImageB = np.asarray(ImageB).T
+	ImageAfew = ImageA[fewPointsIdx,:]
+	ImageBfew = ImageB[fewPointsIdx,:]
+	K = int(0)
+	goodPercent = int(0)
 
-	#set length of P matrix
-	nbPoints = len(ImageA)
-	P = np.zeros((2*nbPoints + 1, 9))
+	while K < 10 and goodPercent < 60:
 
-	#populate P matrix
-	for i in range(1,nbPoints+1):
-		P[(2*i-2):(2*i)][:] = np.array([[-ImageA[i-1][0], -ImageA[i-1][1], -1,             0,             0,  0, ImageA[i-1][0]*ImageB[i-1][0], ImageA[i-1][1]*ImageB[i-1][0] , ImageB[i-1][0]],
-		                      			 [             0,             0,  0, -ImageA[i-1][0], -ImageA[i-1][1], -1, ImageA[i-1][0]*ImageB[i-1][1], ImageA[i-1][1]*ImageB[i-1][1] , ImageB[i-1][1]]])
-	P[2*len(ImageA)][:] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 1])
+		#set length of P matrix
+		nbPoints = len(ImageAfew)
+		print(nbPoints)
+		nbPoints_all = len(ImageA)
 
-	#Perform SVD
-	U, S, VT = np.linalg.svd(P)
-	V = VT.T
+		P = np.zeros((2*nbPoints + 1, 9))
+		for i in range(1,nbPoints+1):
+			P[(2*i-2):(2*i)][:] = np.array([[-ImageAfew[i-1][0], -ImageAfew[i-1][1], -1,             0,             0,  0, ImageAfew[i-1][0]*ImageBfew[i-1][0], ImageAfew[i-1][1]*ImageBfew[i-1][0] , ImageBfew[i-1][0]],
+			                      			 [             0,             0,  0, -ImageAfew[i-1][0], -ImageAfew[i-1][1], -1, ImageAfew[i-1][0]*ImageBfew[i-1][1], ImageAfew[i-1][1]*ImageBfew[i-1][1] , ImageBfew[i-1][1]]])
+		P[2*len(ImageAfew)][:] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 1])
 
-	# Set H as the last column of V (last row of VT) as it will cause least error
-	H = np.zeros((3,3))
-	H = V[:,-1]/V[-1,-1]
-	H = H.reshape((3,3))
+		#Perform SVD
+		U, S, VT = np.linalg.svd(P)
+		V = VT.T
 
-	# Find and print a test point to check it's working
-	pointsImageA = np.concatenate((ImageA, np.ones((nbPoints,1))), axis = 1)
-	point_estimated_prime = np.dot(H, pointsImageA.T).T
-	points_estimated = (point_estimated_prime[:][:,0:2].T / point_estimated_prime[:][:,-1]).T
+		# Set H as the last column of V (last row of VT) as it will cause least error
+		H = np.zeros((3,3))
+		H = V[:,-1]/V[-1,-1]
+		H = H.reshape((3,3))
 
-	dist_diff = np.linalg.norm(ImageB-points_estimated, axis = 1)
-	Homography_accuracy = np.mean(dist_diff)
+		# Find and print a test point to check it's working
+		pointsImageA = np.concatenate((ImageAfew, np.ones((nbPoints,1))), axis = 1)
+		point_estimated_prime = np.dot(H, pointsImageA.T).T
+		points_estimated = (point_estimated_prime[:][:,0:2].T / point_estimated_prime[:][:,-1]).T
+		dist_diff = np.linalg.norm(ImageBfew-points_estimated, axis = 1)
 
+		pointsImageA_all = np.concatenate((ImageA, np.ones((nbPoints_all,1))), axis = 1)
+		point_estimated_prime_all = np.dot(H, pointsImageA_all.T).T
+		points_estimated_all = (point_estimated_prime_all[:][:,0:2].T / point_estimated_prime_all[:][:,-1]).T
+		dist_diff_all = np.linalg.norm(ImageB-points_estimated_all, axis=1)
+		acceptableIdx = np.where(dist_diff_all < 4)
+		ImageAfew = ImageA[acceptableIdx[0]]
+		ImageBfew = ImageB[acceptableIdx[0]]
+		goodPercent = len(acceptableIdx[0])/len(ImageA)
+		K += 1
+		
+	Homography_accuracy = np.mean(dist_diff_all)
 	HInv = np.linalg.inv(H)
 	im_dst = cv2.warpPerspective(img2, HInv, (height, width))
 	im_dst2 = cv2.warpPerspective(img1, H, (height2, width2))
 
-	plt.figure()
+	plt.figure(2)
 	plt.subplot(2,2,1), plt.imshow(img1)
-	plt.scatter(ImageA[:,0], ImageA[:,1], color='b', marker='+')
+	plt.scatter(ImageAfew[:,0], ImageAfew[:,1], color='b', marker='+')
 	plt.subplot(2,2,2), plt.imshow(img2)
 	plt.scatter(points_estimated[:,0], points_estimated[:,1], color='r')
-	plt.scatter(ImageB[:,0], ImageB[:,1], color='b', marker='+')
+	plt.scatter(ImageBfew[:,0], ImageBfew[:,1], color='b', marker='+')
 	plt.subplot(2,2,3), plt.imshow(im_dst)
 	plt.subplot(2,2,4), plt.imshow(im_dst2)
+
+	return ImageAfew, ImageBfew
 
 def findFundamental(Image1, Image2, ImageA, ImageB):
 
@@ -526,8 +562,9 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 	img2 = cv2.imread('Photos/' + Image2)
 	img1 = np.asarray(img1)
 	img2 = np.asarray(img2)
-	ImageA = np.asarray(ImageA).T
-	ImageB = np.asarray(ImageB).T
+	print(ImageA)
+	ImageA = np.asarray(ImageA)
+	ImageB = np.asarray(ImageB)
 	ImageA = np.concatenate((ImageA, np.ones((len(ImageA),1))), axis=1)
 	ImageB = np.concatenate((ImageB, np.ones((len(ImageB),1))), axis=1)
 
@@ -538,7 +575,7 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 
 	#populate chi matrix
 	for i in range(0,nbPoints):
-		chi[i][:] = [ImageA[i,0]*ImageB[i,0], ImageA[i,0]*ImageB[i,1], ImageA[i,0], ImageA[i,1]*ImageB[i,0], ImageA[i,1]*ImageB[i,1], ImageA[i,1], ImageB[i,0], ImageB[i,1], 1]
+		chi[i][:] = [ImageA[i,0]*ImageB[i,0], ImageA[i,1]*ImageB[i,0], ImageB[i,0], ImageA[i,0]*ImageB[i,1], ImageA[i,1]*ImageB[i,1], ImageB[i,1], ImageA[i,0], ImageA[i,1], 1]
 
 	U, S, V = np.linalg.svd(chi)
 	F = V.T[:,-1].reshape(3,3)/V[-1][-1]
@@ -550,7 +587,7 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 	FD[-1][-1] = 0
 	F = np.dot(FU, np.dot(FD,FV.T))
 
-	plt.figure()
+	plt.figure(3)
 	plt.subplot(2,1,1), plt.imshow(img1)
 	plt.subplot(2,1,2), plt.imshow(img2)
 
@@ -560,7 +597,7 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 			  'salmon','silver','teal','orchid','plum',
 			  'goldenrod','green','lightgreen','lavendar','lime']
 
-	for i in range(0,20):
+	for i in range(len(ImageA)):
 
 		# Finding epipolar line on image 1
 		epipole1 = FV.T[:,-1]
@@ -573,12 +610,13 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		Epipolar_x = np.arange(2*shape[0])
 		Epipolar_y = (-Epipolar[2] - Epipolar[0]*Epipolar_x)/Epipolar[1]
 
+		print(i, len(ImageA), ImageA.shape)
 		# Plotting epipolar lines onto images
-		plt.subplot(2,2,1), plt.plot(ImageA[i,0], ImageA[i,1], '+', color=colour[i])
-		plt.plot(epipole_x, epipole_y, color=colour[i])
+		plt.subplot(2,1,1), plt.plot(ImageA[i,0], ImageA[i,1], '+')
+		plt.plot(epipole_x, epipole_y)
 		plt.axis([0, shape[1], shape[0], 0])
-		plt.subplot(2,2,2), plt.plot(ImageB[i,0], ImageB[i,1], '+', color=colour[i])
-		plt.plot(Epipolar_x, Epipolar_y, color=colour[i])
+		plt.subplot(2,1,2), plt.plot(ImageB[i,0], ImageB[i,1], '+')
+		plt.plot(Epipolar_x, Epipolar_y)
 		plt.axis([0, shape[1], shape[0], 0])
 
 # ------------------------- Others --------------------------------
