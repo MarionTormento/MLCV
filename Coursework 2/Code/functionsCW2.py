@@ -386,6 +386,15 @@ def hog(img, Ix, Iy, Points, buff, plot):
 
 	return histOrientGrad
 
+def second_smallest(numbers):
+    m1, m2 = float('inf'), float('inf')
+    for x in numbers:
+        if x <= m1:
+            m1, m2 = x, m1
+        elif x < m2:
+            m2 = x
+    return m2
+
 # ------------------------- Matching --------------------------------
 def knn(typeMat, img, mat, point, base, test, plot):
 	# Function to compute the matching interest point between two images using the HOG as a descriptor
@@ -398,6 +407,8 @@ def knn(typeMat, img, mat, point, base, test, plot):
 	matTest = mat[test]
 	pointBase = point[base]
 	pointTest = point[test]
+	print(pointBase)
+	print(pointTest)
 
 	indexNN = []
 	distanceNN = []
@@ -418,11 +429,13 @@ def knn(typeMat, img, mat, point, base, test, plot):
 			for j in range(3):
 				distance[j] = np.linalg.norm(matBase[j]-matTest[j][i], axis=1)
 			distance = sum(distance)
-			# Look for minimal distance and save the index
-			index = np.where(distance == np.amin(distance))
-			indexNN.append(index[0][0])
-			distanceNN.append(np.amin(distance))
-
+			secondMin = second_smallest(distance)
+			if np.amin(distance)/secondMin <= 0.98:
+				# Look for minimal distance and save the index
+				index = np.where(distance == np.amin(distance))
+				indexNN.append(index[0][0])
+				distanceNN.append(distance[index[0][0]])
+		print(indexNN)
 	# Looking for the best matching descriptors
 	distanceMax = np.amax(distanceNN)
 	interestPointsTest = [[],[]]
@@ -432,13 +445,14 @@ def knn(typeMat, img, mat, point, base, test, plot):
 		# Looking for the index of the nearest neigbour (= minimal distance)
 		index = np.where(distanceNN == np.amin(distanceNN))
 		index = index[0][0]
+		print(index)
 		# Set its distance to max distance so it is not taken twice for a neighbour
 		distanceNN[index] = distanceMax
 		# Saves its indices
 		interestPointsTest[0].append(pointTest[0][index])
 		interestPointsTest[1].append(pointTest[1][index])
-		interestPointsBase[0].append(pointBase[0][indexNN[index]])
-		interestPointsBase[1].append(pointBase[1][indexNN[index]])
+		interestPointsBase[0].append(pointBase[0][indexNN])
+		interestPointsBase[1].append(pointBase[1][indexNN])
 
 	if plot == 1:
 		# Plot the best matching descriptors
@@ -465,11 +479,6 @@ def findHomography(Image1, Image2, ImageA, ImageB):
 	img2 = cv2.imread('Photos/' + Image2)
 	ImageA = np.asarray(ImageA).T
 	ImageB = np.asarray(ImageB).T
-	ImageA = np.flip(ImageA,1)
-	ImageB = np.flip(ImageB,1)
-
-	print(ImageA)
-	print(ImageB)
 
 	#set length of P matrix
 	nbPoints = len(ImageA)
@@ -534,8 +543,6 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 	FD = np.diagflat(FD)
 	FD[-1][-1] = 0
 	F = np.dot(FU, np.dot(FD,FV.T))
-
-	print(F)
 
 	plt.figure()
 	plt.subplot(2,1,1), plt.imshow(img1)

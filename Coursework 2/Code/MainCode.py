@@ -31,7 +31,6 @@ for i in range(2):
 	if findPoints == 'Manual':
 
 		CornerPoints = manualCornerPoints(image, i)
-		print(CornerPoints)
 
 	elif findPoints == 'Auto':
 
