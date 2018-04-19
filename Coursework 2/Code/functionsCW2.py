@@ -271,18 +271,16 @@ def local_maxima(R, Points, NN):
 					Xmax = X[k]
 					Ymax = Y[k]
 
-		# Save the new local maxima point if it is not already in the list
-		isX = np.where(localMaxPointsX == Xmax) # indices of the local maxima with same X value
-		isY = np.where(localMaxPointsY == Ymax) # indices of the local maxima with same Y value
-		isAlreadyIn = []
-		for j in range(len(isY[0])):
-			where = np.where(isX[0] == isY[0][j])
-			isAlreadyIn.append(where[0])
-		# isAlreadyIn = np.where(isX[0] == isY[0]) # matching indices between isX and isY
-		# if isX and isY indices matches somewhere, then it means the local maxima coordinates are already in the list
-		if len(isAlreadyIn) == 0:
+		# Save the new local maxima point if it is not already in the list and if points arent too close
+		if i == 0:
 			localMaxPointsX.append(Xmax)
 			localMaxPointsY.append(Ymax)
+		else:
+			distance = np.linalg.norm((localMaxPointsX-Xmax, localMaxPointsY-Ymax), axis=0)
+			distance = np.amin(distance)
+			if distance > 10.0:
+				localMaxPointsX.append(Xmax)
+				localMaxPointsY.append(Ymax)
 
 	localMaxPoints = (np.asarray(localMaxPointsX), np.asarray(localMaxPointsY))
 	return localMaxPoints
@@ -444,9 +442,7 @@ def knn(typeMat, img, mat, point, base, test, plot):
 			for j in range(3):
 				distance[j] = np.linalg.norm(matBase[j]-matTest[j][i], axis=1)
 			distance = sum(distance)
-			secondMin = second_smallest(distance)
-			# if np.amin(distance)/secondMin <= 0.98:
-				# Look for minimal distance and save the index
+			# Look for minimal distance and save the index
 			index = np.where(distance == np.amin(distance))
 			indexNN.append(index[0][0])
 			distanceNN.append(distance[index[0][0]])
@@ -455,7 +451,7 @@ def knn(typeMat, img, mat, point, base, test, plot):
 	interestPointsTest = [[],[]]
 	interestPointsBase = [[],[]]
 
-	for i in range(min(len(pointBase[0]),len(pointTest[0]))):
+	for i in range(20):#min(len(pointBase[0]),len(pointTest[0]))):
 		# Looking for the index of the nearest neigbour (= minimal distance)
 		index = np.where(distanceNN == np.amin(distanceNN))
 		index = index[0][0]
@@ -470,15 +466,15 @@ def knn(typeMat, img, mat, point, base, test, plot):
 	if plot == 1:
 		# Plot the best matching descriptors
 		colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
-				  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white'
+				  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white',
 				  'magenta', 'black','coral', 'orange', 'ivory',
 				  'salmon','silver','teal','orchid','plum']
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
 		for i in range(len(interestPointsBase[0])):
-			plt.plot(interestPointsBase[0][i], interestPointsBase[1][i], marker='+')
+			plt.plot(interestPointsBase[0][i], interestPointsBase[1][i], color=colors[i], marker='+')
 		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
 		for i in range(len(interestPointsTest[0])):
-			plt.plot(interestPointsTest[0][i], interestPointsTest[1][i], marker='+')
+			plt.plot(interestPointsTest[0][i], interestPointsTest[1][i], color=colors[i], marker='+')
 
 	interestPointsBase = (np.asarray(interestPointsBase[0]), np.asarray(interestPointsBase[1]))
 	interestPointsTest = (np.asarray(interestPointsTest[0]), np.asarray(interestPointsTest[1]))
