@@ -481,7 +481,8 @@ def knn(typeMat, img, mat, point, base, test, plot):
 
 	return indexNN, interestPointsBase, interestPointsTest
 
-# ------------------------- Homography and fundamental matrix --------------------------------
+# ---------------- Find homography and fundamental matrixes ------------------------
+
 def findHomography(Image1, Image2, ImageA, ImageB, selection):
 
 	img1 = cv2.imread('Photos/' + Image1)
@@ -536,7 +537,7 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 		goodPercent = len(acceptableIdx[0])/len(ImageA)
 		K += 1
 		
-	Homography_accuracy = np.mean(dist_diff_all)
+	Homography_accuracy = np.mean(dist_diff)
 	HInv = np.linalg.inv(H)
 	im_dst = cv2.warpPerspective(img2, HInv, (height, width))
 	im_dst2 = cv2.warpPerspective(img1, H, (height2, width2))
@@ -550,7 +551,7 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 	plt.subplot(2,2,3), plt.imshow(im_dst)
 	plt.subplot(2,2,4), plt.imshow(im_dst2)
 
-	return ImageAfew, ImageBfew
+	return ImageAfew, ImageBfew, Homography_accuracy
 
 def findFundamental(Image1, Image2, ImageA, ImageB):
 
@@ -593,6 +594,8 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 			  'salmon','silver','teal','orchid','plum',
 			  'goldenrod','green','lightgreen','lavendar','lime']
 
+	distanceTotal = 0
+
 	for i in range(len(ImageA)):
 
 		# Finding epipolar line on image 1
@@ -606,6 +609,10 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		Epipolar_x = np.arange(2*shape[0])
 		Epipolar_y = (-Epipolar[2] - Epipolar[0]*Epipolar_x)/Epipolar[1]
 
+		# Calculate Accuracy
+		dist = ((Epipolar[0]*ImageB[i,0] + Epipolar[1]*ImageB[i,1] + Epipolar[2])**2)**(1/2)/np.sqrt(Epipolar[0]**2 + Epipolar[1]**2)
+		distanceTotal += dist
+
 		print(i, len(ImageA), ImageA.shape)
 		# Plotting epipolar lines onto images
 		plt.subplot(2,1,1), plt.plot(ImageA[i,0], ImageA[i,1], '+')
@@ -614,6 +621,12 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		plt.subplot(2,1,2), plt.plot(ImageB[i,0], ImageB[i,1], '+')
 		plt.plot(Epipolar_x, Epipolar_y)
 		plt.axis([0, shape[1], shape[0], 0])
+
+	fundamentalAccuracy = distanceTotal / len(ImageA)
+	print(distanceTotal)
+	print(fundamentalAccuracy)
+
+	return fundamentalAccuracy
 
 # ------------------------- Others --------------------------------
 def rad(degree):

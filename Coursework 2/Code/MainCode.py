@@ -59,8 +59,11 @@ for i in range(2):
 print("Looking for matching descriptors")
 indexNN, corrBasePoints, corrTestPoints = knn("color", allIntensity, allDesc, allPoints, 0, 1, 1)
 
-ImageAgood, ImageBgood = findHomography(test[0], test[1], corrBasePoints, corrTestPoints, 4)
+ImageAgood, ImageBgood, acc_homog = findHomography(test[0], test[1], corrBasePoints, corrTestPoints, 4)
 
-findFundamental(test[0], test[1], ImageAgood, ImageBgood)
+acc_fund = findFundamental(test[0], test[1], ImageAgood, ImageBgood)
+
+print('Homography Accuracy = %1.2f' % acc_homog)
+print('Fundamental Accuracy = %1.2f' % acc_fund)
 
 plt.show()
