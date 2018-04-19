@@ -430,12 +430,11 @@ def knn(typeMat, img, mat, point, base, test, plot):
 				distance[j] = np.linalg.norm(matBase[j]-matTest[j][i], axis=1)
 			distance = sum(distance)
 			secondMin = second_smallest(distance)
-			if np.amin(distance)/secondMin <= 0.98:
+			# if np.amin(distance)/secondMin <= 0.98:
 				# Look for minimal distance and save the index
-				index = np.where(distance == np.amin(distance))
-				indexNN.append(index[0][0])
-				distanceNN.append(distance[index[0][0]])
-		print(indexNN)
+			index = np.where(distance == np.amin(distance))
+			indexNN.append(index[0][0])
+			distanceNN.append(distance[index[0][0]])
 	# Looking for the best matching descriptors
 	distanceMax = np.amax(distanceNN)
 	interestPointsTest = [[],[]]
@@ -445,14 +444,13 @@ def knn(typeMat, img, mat, point, base, test, plot):
 		# Looking for the index of the nearest neigbour (= minimal distance)
 		index = np.where(distanceNN == np.amin(distanceNN))
 		index = index[0][0]
-		print(index)
 		# Set its distance to max distance so it is not taken twice for a neighbour
 		distanceNN[index] = distanceMax
 		# Saves its indices
 		interestPointsTest[0].append(pointTest[0][index])
 		interestPointsTest[1].append(pointTest[1][index])
-		interestPointsBase[0].append(pointBase[0][indexNN])
-		interestPointsBase[1].append(pointBase[1][indexNN])
+		interestPointsBase[0].append(pointBase[0][indexNN[index]])
+		interestPointsBase[1].append(pointBase[1][indexNN[index]])
 
 	if plot == 1:
 		# Plot the best matching descriptors
@@ -462,10 +460,10 @@ def knn(typeMat, img, mat, point, base, test, plot):
 				  'salmon','silver','teal','orchid','plum']
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
 		for i in range(len(interestPointsBase[0])):
-			plt.scatter(interestPointsBase[0][i], interestPointsBase[1][i], marker='+')
+			plt.plot(interestPointsBase[0][i], interestPointsBase[1][i], marker='+')
 		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
 		for i in range(len(interestPointsTest[0])):
-			plt.scatter(interestPointsTest[0][i], interestPointsTest[1][i], marker='+')
+			plt.plot(interestPointsTest[0][i], interestPointsTest[1][i], marker='+')
 
 	interestPointsBase = (np.asarray(interestPointsBase[0]), np.asarray(interestPointsBase[1]))
 	interestPointsTest = (np.asarray(interestPointsTest[0]), np.asarray(interestPointsTest[1]))
@@ -477,6 +475,8 @@ def findHomography(Image1, Image2, ImageA, ImageB):
 
 	img1 = cv2.imread('Photos/' + Image1)
 	img2 = cv2.imread('Photos/' + Image2)
+	width, height, channels = img1.shape
+	width2, height2, channels = img2.shape
 	ImageA = np.asarray(ImageA).T
 	ImageB = np.asarray(ImageB).T
 
@@ -507,12 +507,18 @@ def findHomography(Image1, Image2, ImageA, ImageB):
 	dist_diff = np.linalg.norm(ImageB-points_estimated, axis = 1)
 	Homography_accuracy = np.mean(dist_diff)
 
+	HInv = np.linalg.inv(H)
+	im_dst = cv2.warpPerspective(img2, HInv, (height, width))
+	im_dst2 = cv2.warpPerspective(img1, H, (height2, width2))
+
 	plt.figure()
-	plt.subplot(211), plt.imshow(img1)
+	plt.subplot(2,2,1), plt.imshow(img1)
 	plt.scatter(ImageA[:,0], ImageA[:,1], color='b', marker='+')
-	plt.subplot(212), plt.imshow(img2)
+	plt.subplot(2,2,2), plt.imshow(img2)
 	plt.scatter(points_estimated[:,0], points_estimated[:,1], color='r')
 	plt.scatter(ImageB[:,0], ImageB[:,1], color='b', marker='+')
+	plt.subplot(2,2,3), plt.imshow(im_dst)
+	plt.subplot(2,2,4), plt.imshow(im_dst2)
 
 def findFundamental(Image1, Image2, ImageA, ImageB):
 
@@ -568,10 +574,10 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		Epipolar_y = (-Epipolar[2] - Epipolar[0]*Epipolar_x)/Epipolar[1]
 
 		# Plotting epipolar lines onto images
-		plt.subplot(2,1,1), plt.plot(ImageA[i,0], ImageA[i,1], '+', color=colour[i])
+		plt.subplot(2,2,1), plt.plot(ImageA[i,0], ImageA[i,1], '+', color=colour[i])
 		plt.plot(epipole_x, epipole_y, color=colour[i])
 		plt.axis([0, shape[1], shape[0], 0])
-		plt.subplot(2,1,2), plt.plot(ImageB[i,0], ImageB[i,1], '+', color=colour[i])
+		plt.subplot(2,2,2), plt.plot(ImageB[i,0], ImageB[i,1], '+', color=colour[i])
 		plt.plot(Epipolar_x, Epipolar_y, color=colour[i])
 		plt.axis([0, shape[1], shape[0], 0])
 
