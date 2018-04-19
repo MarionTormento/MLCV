@@ -330,11 +330,7 @@ def hog(img, Ix, Iy, Points, buff, plot):
 	for i in range(endX):
 		for j in range(endY):
 			gradOrientation[i][j] = np.arctan2(Iy[i][j],Ix[i][j])
-			# Arctan returns angles between -pi/2 and pi/2, but we want only positive orientation
-			# By adding pi to the negative values we have the same direction
-			if gradOrientation[i][j] < 0:
-				gradOrientation[i][j] = gradOrientation[i][j] + np.pi
-
+			
 	# Plotting
 	if plot == 1:
 		plt.figure()
@@ -384,7 +380,6 @@ def hog(img, Ix, Iy, Points, buff, plot):
 		for i in range(9):
 			idx = 330 + i + 1
 			plt.subplot(idx), plt.bar(range(nbBin), histOrientGrad[plotList[i]])
-			# plt.xticks(range(9), ('0', '20', '40', '60', '80', '100', '120', '140', '160'))
 			plt.title(plotList[i])
 		plt.suptitle('Histogram of Gradient for 9 random 8x8 cells')
 		plt.show()
@@ -443,10 +438,6 @@ def knn(typeMat, img, mat, point, base, test, plot):
 		interestPointsTest[1].append(pointTest[1][index])
 		interestPointsBase[0].append(pointBase[0][indexNN[index]])
 		interestPointsBase[1].append(pointBase[1][indexNN[index]])
-
-	# print(interestPointsBase)
-	# print(interestPointsTest)
-
 
 	if plot == 1:
 		# Plot the best matching descriptors
