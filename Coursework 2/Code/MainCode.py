@@ -24,7 +24,7 @@ test = Test_images
 windowSize = 21 #WARNING : Must be uneven
 
 
-for i in [2,3]:
+for i in [0,1]:
 
 	print("New image")
 	image = test[i]
@@ -36,14 +36,14 @@ for i in [2,3]:
 	allIntensity.append(intensity)
 	allPoints.append(CornerPoints)
 
-print("Looking for matching descriptors")
-indexNN, corrBasePoints, corrTestPoints = knn("color", allIntensity, allDesc, allPoints, 0, 1, 1)
+# print("Looking for matching descriptors")
+# indexNN, corrBasePoints, corrTestPoints = knn("color", allIntensity, allDesc, allPoints, 0, 1, 1)
 
-ImageAgood, ImageBgood, acc_homog = findHomography(test[2], test[3], corrBasePoints, corrTestPoints, 4)
+# ImageAgood, ImageBgood, acc_homog = findHomography(test[0], test[1], corrBasePoints, corrTestPoints, 4)
 
-acc_fund = findFundamental(test[2], test[3], ImageAgood, ImageBgood)
+# acc_fund = findFundamental(test[0], test[1], ImageAgood, ImageBgood)
 
-print('Homography Accuracy = %1.2f' % acc_homog)
-print('Fundamental Accuracy = %1.2f' % acc_fund)
+# print('Homography Accuracy = %1.2f' % acc_homog)
+# print('Fundamental Accuracy = %1.2f' % acc_fund)
 
-plt.show()
+# plt.show()

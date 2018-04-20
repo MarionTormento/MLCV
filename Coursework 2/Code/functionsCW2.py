@@ -208,8 +208,6 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot):
 	cornerPoints = cleanSides(intensity, cornerPoints, buff)
 	# Find local maxima for the corners
 	cornerPoints = local_maxima(R, cornerPoints, NN)
-	# Dismiss corner points in promimity to others
-	cornerPoints = eliminate_close_corners(cornerPoints)
 
 	# ## Edges
 	# thresholdEdge = np.percentile(R, 100-perc)
@@ -230,23 +228,7 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot):
 
 	return cornerPoints
 
-def eliminate_close_corners(cornerPoints):
 
-	# Initialisation of the variable
-	PointsX = cornerPoints[0]
-	PointsY = cornerPoints[1]
-
-	for i in range(len(cornerPoints[1])):
-		# Compute the distance between each point and Point0
-		dist = np.linalg.norm([PointsX-PointsX[i],PointsY-PointsY[i]], axis=0)
-		close = np.where(np.amin(dist) < 50)
-		if np.sum(close[0]) > 0:
-			PointsX = np.delete(PointsX, i)
-			PointsY = np.delete(PointsY, i)
-
-	cornerPointGood = (np.asarray(PointsX), np.asarray(PointsY))
-
-	return cornerPointGood
 
 def cleanSides(img, Points, buff):
 	# Function to delete the interest points located on the sides of the image
