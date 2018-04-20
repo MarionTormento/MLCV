@@ -28,28 +28,8 @@ for i in [2,3]:
 
 	print("New image")
 	image = test[i]
-	intensity, shift = getImageIntensity(image)
-	
-	if findPoints == 'Manual':
 
-		CornerPoints = manualCornerPoints(image, i)
-
-	elif findPoints == 'Auto':
-
-		print("Automatically find interest Points")
-		print("Computing Intensity derivatives")
-		Ix, Iy = derivatives(intensity, shift, 0)
-		sigma = 1.6*shift
-		GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
-
-		print("Identifying corners and edges")
-		CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, 0.05, windowSize, 0)
-
-	print("Computing RGB descriptor")
-	desc = descripter_funct(CornerPoints, image, windowSize, 0)
-	
-	# print("Computing histogram of gradient orientation")
-	# desc = hog(intensity, Ix, Iy, CornerPoints, windowSize, 0)
+	desc, intensity, CornerPoints = getCornerPoints(image, i, findPoints, 'Harris', 'RGB', windowSize)
 
 	print("Saving all values")
 	allDesc.append(desc)

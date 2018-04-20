@@ -10,6 +10,44 @@ import tkinter as tk
 from PIL import ImageTk, Image
 import os
 
+# -------------------- Aggregated Functions -----------------------
+
+def getCornerPoints(image, i, method, cornerDetectionType, descriptorType, windowSize):
+
+	intensity, shift = getImageIntensity(image)
+
+	allIntensity = []
+	allPoints = []
+	allDesc = []
+	
+	if method == 'Manual':
+		print("Manually find interest Points")
+		CornerPoints = manualCornerPoints(image, i)
+	elif method == 'Auto':
+		print("Automatically find interest Points")
+		print("Computing Intensity derivatives")
+
+		if cornerDetectionType == 'Harris':
+			print("Computing Harris Corner Detector")
+			Ix, Iy = derivatives(intensity, shift, 0)
+			sigma = 1.6*shift
+			GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
+			print("Identifying corners and edges")
+			CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, 0.05, windowSize, 0)
+		elif corverDetectionType == 'Shi - Tomasi':
+			print("Computing Shi-Tomasi Corner Detector")
+
+	if descriptorType == 'RGB':
+		print("Computing RGB descriptor")
+		desc = descripter_funct(CornerPoints, image, windowSize, 0)
+	elif descriptorType == 'HOG':	
+		print("Computing histogram of gradient orientation")
+		desc = hog(intensity, Ix, Iy, CornerPoints, windowSize, 0)
+	elif descriptorType == 'SIFT':
+			print("Computing SIFT")
+
+	return desc, intensity, CornerPoints
+
 # ------------------------- Images --------------------------------
 def getImageIntensity(image):
 
