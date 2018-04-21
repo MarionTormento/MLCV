@@ -16,34 +16,36 @@ Test_images = (['img1.jpg','img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6
 Quick1 = (['chess.png', 'chess2.png', 'chess3.png'])
 Quick2 = (['chess.png', 'chess.jpg'])
 
-findPoints = 'Auto'
+findPoints = 'Auto' #'Auto' or 'Manual'
+alpha = 0.02 
+descriptorType = 'RGB' #'RGB' or 'HOG'
+ImplementedOrToolBox = 'Implemented' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
 allDesc = []
 test = Test_images
 windowSize = 21 #WARNING : Must be uneven
 
-
 for i in [0,1]:
 
 	print("New image")
 	image = test[i]
 
-	desc, intensity, CornerPoints = getCornerPoints(image, i, findPoints, 'Harris', 'RGB', windowSize)
+	desc, intensity, CornerPoints = getCornerPoints(image, i, alpha, findPoints, ImplementedOrToolBox, 'Harris', descriptorType, windowSize)
 
 	print("Saving all values")
 	allDesc.append(desc)
 	allIntensity.append(intensity)
 	allPoints.append(CornerPoints)
 
-# print("Looking for matching descriptors")
-# indexNN, corrBasePoints, corrTestPoints = knn("color", allIntensity, allDesc, allPoints, 0, 1, 1)
+print("Looking for matching descriptors")
+indexNN, corrBasePoints, corrTestPoints = knn("color", allIntensity, allDesc, allPoints, 0, 1, 1)
 
-# ImageAgood, ImageBgood, acc_homog = findHomography(test[0], test[1], corrBasePoints, corrTestPoints, 4)
+ImageAgood, ImageBgood, acc_homog = findHomography(test[0], test[1], corrBasePoints, corrTestPoints, 8)
 
-# acc_fund = findFundamental(test[0], test[1], ImageAgood, ImageBgood)
+acc_fund = findFundamental(test[0], test[1], ImageAgood, ImageBgood)
 
-# print('Homography Accuracy = %1.2f' % acc_homog)
-# print('Fundamental Accuracy = %1.2f' % acc_fund)
+print('Homography Accuracy = %1.2f' % acc_homog)
+print('Fundamental Accuracy = %1.2f' % acc_fund)
 
-# plt.show()
+plt.show()

@@ -226,7 +226,7 @@ for i in range(0,1):
 	gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
 	gray = np.float32(gray)
-	dst = cv2.cornerHarris(gray,2,3,0.04)
+	dst = cv2.cornerHarris(gray,2,3,0.05)
 
 	#result is dilated for marking the corners, not important
 	dst = cv2.dilate(dst,None)
@@ -243,7 +243,7 @@ for i in range(0,1):
 	img1 = cv2.imread('Photos/' + filename)
 	gray1 = cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)
 
-	corners1 = cv2.goodFeaturesToTrack(gray1,25,0.01,10)
+	corners1 = cv2.goodFeaturesToTrack(gray1,100,0.04,10)
 	corners1 = np.int0(corners1)
 
 	for i in corners1:

@@ -12,7 +12,7 @@ import os
 
 # -------------------- Aggregated Functions -----------------------
 
-def getCornerPoints(image, i, method, cornerDetectionType, descriptorType, windowSize):
+def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, descriptorType, windowSize):
 
 	intensity, shift = getImageIntensity(image)
 
@@ -23,30 +23,69 @@ def getCornerPoints(image, i, method, cornerDetectionType, descriptorType, windo
 	if method == 'Manual':
 		print("Manually find interest Points")
 		CornerPoints = manualCornerPoints(image, i)
+
 	elif method == 'Auto':
 		print("Automatically find interest Points")
 		print("Computing Intensity derivatives")
 
-		if cornerDetectionType == 'Harris':
-			print("Computing Harris Corner Detector")
-			Ix, Iy = derivatives(intensity, shift, 0)
-			sigma = 1.6*shift
-			GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
-			print("Identifying corners and edges")
-			CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, 0.05, windowSize, 0)
-		elif corverDetectionType == 'Shi - Tomasi':
-			print("Computing Shi-Tomasi Corner Detector")
+		if implemented == 'Implemented':
+			if cornerDetectionType == 'Harris':
+				print("Computing Harris Corner Detector")
+				Ix, Iy = derivatives(intensity, shift, 0)
+				sigma = 1.6*shift
+				GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
+				print("Identifying corners and edges")
+				CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, windowSize, 0)
+		
+		elif implemented == 'ToolBox':
+			CornerPoints = CornerTB(image, cornerDetectionType, alpha)
 
 	if descriptorType == 'RGB':
 		print("Computing RGB descriptor")
 		desc = descripter_funct(CornerPoints, image, windowSize, 0)
+
 	elif descriptorType == 'HOG':	
 		print("Computing histogram of gradient orientation")
 		desc = hog(intensity, Ix, Iy, CornerPoints, windowSize, 0)
+
 	elif descriptorType == 'SIFT':
 			print("Computing SIFT")
 
 	return desc, intensity, CornerPoints
+
+# ---------------------- Toolbox Functions -----------------------
+
+def CornerTB(image, type, alpha):
+
+	img = cv2.imread('Photos/' + image)
+	gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+
+	# Inputs - image, number of corners to detect, quality of coners, min dist between corners 
+	if type == 'Harris':
+		print("Computing ToolBox Harris Corner Detector")
+		corners = cv2.goodFeaturesToTrack(gray,100,0.04,10, useHarrisDetector=True, k=alpha)
+	elif type == 'ST':
+		print("Computing ToolBox Shi-Tomasi Corner Detector")
+		corners = cv2.goodFeaturesToTrack(gray,100,0.04,10)
+
+	corners = np.int0(corners)
+
+	cornerPointsX1 = np.asarray(corners[:,:,0])
+	cornerPointsY1 = np.asarray(corners[:,:,1])
+	cornerPointsX = np.asarray(cornerPointsX1[:,0])
+	cornerPointsY = np.asarray(cornerPointsY1[:,0])
+	CornerPoints = (cornerPointsX, cornerPointsY)
+
+	for i in corners:
+	    x,y = i.ravel()
+	    cv2.circle(img,(x,y),3,255,-1)
+
+	plt.figure()
+	plt.imshow(img)
+	plt.title("Inbuilt Shi-Tomasi: Detection of Corners and Edges")
+	plt.show()
+
+	return CornerPoints
 
 # ------------------------- Images --------------------------------
 def getImageIntensity(image):
@@ -519,7 +558,7 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 	K = int(0)
 	goodPercent = int(0)
 
-	while K < 10 and goodPercent < 0.60:
+	while K < 6 and goodPercent < 0.60:
 
 		#set length of P matrix
 		nbPoints = len(ImageAfew)
@@ -552,11 +591,12 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 		points_estimated_all = (point_estimated_prime_all[:][:,0:2].T / point_estimated_prime_all[:][:,-1]).T
 		dist_diff_all = np.linalg.norm(ImageB-points_estimated_all, axis=1)
 
-		acceptableIdx = np.where(dist_diff_all < 3)
+		acceptableIdx = np.where(dist_diff_all < 3.5)
+		print(acceptableIdx)
+		print(acceptableIdx[0])
 		ImageAfew = ImageA[acceptableIdx[0]]
 		ImageBfew = ImageB[acceptableIdx[0]]
 		goodPercent = len(acceptableIdx[0])/len(ImageA)
-		print(len(acceptableIdx[0]), len(ImageA), goodPercent)
 		K += 1
 		
 	Homography_accuracy = np.mean(dist_diff)
