@@ -41,8 +41,8 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 
 			elif cornerDetectionType == 'FAST':
 				print("Computing 'FAST' Corner Detector")
-				radius = 3
-				S = 9
+				radius = 8
+				S = 34
 				threshold = 40
 				CornerPoints = FASTdetector(intensity, radius, S, threshold)
 		
@@ -240,7 +240,7 @@ def FASTdetector(image, radius, S, threshold):
 			consecLT = getConsec(LTmatrix)
 			if consecGT > S or consecLT > S:
 				cornerPoints.append([i, j])
-
+	print(len(N))
 	cornerPoints = np.asarray(cornerPoints)
 	cornerPointsX = cornerPoints[:][:,1]
 	cornerPointsY = cornerPoints[:][:,0]
@@ -656,7 +656,7 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 	width, height, channels = img1.shape
 	width2, height2, channels = img2.shape
 
-	fewPointsIdx = np.random.choice(12, selection, 0)
+	fewPointsIdx = np.random.choice(6, selection, 0)
 	print(fewPointsIdx)
 	ImageA = np.asarray(ImageA).T
 	ImageB = np.asarray(ImageB).T
@@ -697,10 +697,8 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 		point_estimated_prime_all = np.dot(H, pointsImageA_all.T).T
 		points_estimated_all = (point_estimated_prime_all[:][:,0:2].T / point_estimated_prime_all[:][:,-1]).T
 		dist_diff_all = np.linalg.norm(ImageB-points_estimated_all, axis=1)
-
+		
 		acceptableIdx = np.where(dist_diff_all < 5)
-		print(acceptableIdx)
-		print(acceptableIdx[0])
 		ImageAfew = ImageA[acceptableIdx[0]]
 		ImageBfew = ImageB[acceptableIdx[0]]
 		goodPercent = len(acceptableIdx[0])/len(ImageA)
