@@ -15,6 +15,7 @@ Test_images = (['img1.jpg','img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6
 
 Quick1 = (['chess.png', 'chess2.png', 'chess3.png'])
 Quick2 = (['chess.png', 'chess.jpg'])
+Jennas = (['jennas1.jpg','jennas2.jpg','jennas3.jpg'])
 
 findPoints = 'Auto' #'Auto' or 'Manual' 
 descriptorType = 'RGB' #'RGB' or 'HOG'

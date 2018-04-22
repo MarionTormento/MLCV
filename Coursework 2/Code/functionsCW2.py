@@ -41,8 +41,8 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 
 			elif cornerDetectionType == 'FAST':
 				print("Computing 'FAST' Corner Detector")
-				radius = 8
-				S = 34
+				radius = 3
+				S = 9
 				threshold = 40
 				CornerPoints = FASTdetector(intensity, radius, S, threshold)
 		
