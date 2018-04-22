@@ -9,12 +9,15 @@ import random
 import tkinter as tk
 from PIL import ImageTk, Image
 import os
+from math import atan2
+from itertools import groupby
 
 # -------------------- Aggregated Functions -----------------------
 
 def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, descriptorType, windowSize):
 
 	intensity, shift = getImageIntensity(image)
+	Ix, Iy = derivatives(intensity, shift, 0)
 
 	allIntensity = []
 	allPoints = []
@@ -31,11 +34,17 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 		if implemented == 'Implemented':
 			if cornerDetectionType == 'Harris':
 				print("Computing Harris Corner Detector")
-				Ix, Iy = derivatives(intensity, shift, 0)
 				sigma = 1.6*shift
 				GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
 				print("Identifying corners and edges")
 				CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, windowSize, 0)
+
+			elif cornerDetectionType == 'FAST':
+				print("Computing 'FAST' Corner Detector")
+				radius = 3
+				S = 9
+				threshold = 40
+				CornerPoints = FASTdetector(intensity, radius, S, threshold)
 		
 		elif implemented == 'ToolBox':
 			CornerPoints = CornerTB(image, cornerDetectionType, alpha)
@@ -91,7 +100,7 @@ def CornerTB(image, type, alpha):
 def getImageIntensity(image):
 
 	# Load an color image in grayscale
-	img = cv2.imread('Photos/' + image, 0)
+	img = cv2.imread('Photos/' + image,0)
 	img = np.asarray(img)
 
 	# Autonomously find the size of the shift window adapted to the image
@@ -101,6 +110,57 @@ def getImageIntensity(image):
 	shift = max(3, min(shift_h, shift_w)) # In case the image is smaller than 50x50, shift = 3
 
 	return img, shift
+
+def getConsec(arr):
+ 
+	count = 0
+	result = 0
+
+	for i in range(0, len(arr)):
+		if (arr[i] == 0):
+			count = 0
+		else:
+			count+= 1
+			result = max(result, count) 
+		 
+	return result 
+
+def get_circle(centre, radius):
+
+	x0 = centre[0]
+	y0 = centre[1]
+
+	x, y, p = 0, radius, 1-radius
+
+	L = []
+	L.append((x, y))
+
+	for x in range(int(radius)):
+		if p < 0:
+			p = p + 2 * x + 3
+		else:
+			y -= 1
+			p = p + 2 * x + 3 - 2 * y
+
+		L.append((x, y))
+
+		if x >= y: break
+
+	N = L[:]
+	for i in L:
+		N.append((i[1], i[0]))
+
+	L = N[:]
+	for i in N:
+		L.append((-i[0], i[1]))
+		L.append((i[0], -i[1]))
+		L.append((-i[0], -i[1]))
+
+	N = []
+	for i in L:
+		N.append((x0+i[0], y0+i[1]))
+
+	return N
 
 def mouse_click(event):
     # retrieve XY coords as a tuple
@@ -144,6 +204,53 @@ def manualCornerPoints(image, i):
 
 	file.close()
 	CornerPoints = (np.asarray(CornerPointsX), np.asarray(CornerPointsY))
+
+	return CornerPoints
+
+def FASTdetector(image, radius, S, threshold):
+
+	width, height = image.shape
+
+	wide = np.arange(radius,width-radius-1)
+	high = np.arange(radius,height-radius-1)
+
+	cornerPoints = []
+
+	for i in wide[::2]:
+		for j in high[::2]:
+			pixelI = image[i][j]
+			N = get_circle([i,j],radius)
+			N = list(set(N))
+			N = np.asarray(N)
+			angles = []
+			for n in range(0,len(N)):
+				angle = atan2(N[n,0] - i, N[n,1] - j)
+				angles.append(angle)
+			sortedIdx = np.argsort(angles)
+			N = N[sortedIdx]
+			zN = list(zip(*N))
+			CircleInt = image[zN]
+			greaterThan = CircleInt > pixelI + threshold
+			lessThan = CircleInt < pixelI - threshold
+			greaterThan = greaterThan.astype(int)
+			GTmatrix = np.concatenate((greaterThan,greaterThan), axis=0)
+			consecGT = getConsec(GTmatrix)
+			lessThan = lessThan.astype(int)
+			LTmatrix = np.concatenate((lessThan,lessThan), axis=0)
+			consecLT = getConsec(LTmatrix)
+			if consecGT > S or consecLT > S:
+				cornerPoints.append([i, j])
+
+	cornerPoints = np.asarray(cornerPoints)
+	cornerPointsX = cornerPoints[:][:,1]
+	cornerPointsY = cornerPoints[:][:,0]
+	CornerPoints = (np.asarray(cornerPointsX), np.asarray(cornerPointsY))
+
+	plt.figure()
+	plt.imshow(image, cmap='gray')
+	plt.scatter(cornerPointsX, cornerPointsY, marker='+', color='red')	# plt.scatter(edgePoints[0], edgePoints[1], color='g', marker='+')
+	plt.title("Detection of Corners and Edges")
+	plt.show()
 
 	return CornerPoints
 
@@ -485,7 +592,7 @@ def knn(typeMat, img, mat, point, base, test, plot):
 	indexNN = []
 	distanceNN = []
 		
-	if typeMat == "hog":
+	if typeMat == "HOG":
 		for i in range(len(matTest)):
 			# Store the hog of the descriptor we want to compare
 			distance = np.linalg.norm(matBase-matTest[i], axis=1)
@@ -494,7 +601,7 @@ def knn(typeMat, img, mat, point, base, test, plot):
 			indexNN.append(index[0][0])
 			distanceNN.append(np.amin(distance))
 	
-	elif typeMat == "color":
+	elif typeMat == "RGB":
 		for i in range(len(matTest[0])):
 			# Compute the distance for each color and then combine it
 			distance = [[],[],[]]
@@ -591,7 +698,7 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 		points_estimated_all = (point_estimated_prime_all[:][:,0:2].T / point_estimated_prime_all[:][:,-1]).T
 		dist_diff_all = np.linalg.norm(ImageB-points_estimated_all, axis=1)
 
-		acceptableIdx = np.where(dist_diff_all < 3.5)
+		acceptableIdx = np.where(dist_diff_all < 5)
 		print(acceptableIdx)
 		print(acceptableIdx[0])
 		ImageAfew = ImageA[acceptableIdx[0]]
@@ -613,7 +720,7 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 	plt.subplot(2,2,3), plt.imshow(im_dst)
 	plt.subplot(2,2,4), plt.imshow(im_dst2)
 
-	return ImageAfew, ImageBfew, Homography_accuracy
+	return ImageAfew, ImageBfew, H, Homography_accuracy
 
 def findFundamental(Image1, Image2, ImageA, ImageB):
 
