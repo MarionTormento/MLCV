@@ -17,7 +17,6 @@ from itertools import groupby
 def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, descriptorType, windowSize):
 
 	intensity, shift = getImageIntensity(image)
-	Ix, Iy = derivatives(intensity, shift, 0)
 
 	allIntensity = []
 	allPoints = []
@@ -34,6 +33,7 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 		if implemented == 'Implemented':
 			if cornerDetectionType == 'Harris':
 				print("Computing Harris Corner Detector")
+				Ix, Iy = derivatives(intensity, shift, 0)
 				sigma = 1.6*shift
 				GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
 				print("Identifying corners and edges")
@@ -41,12 +41,14 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 
 			elif cornerDetectionType == 'FAST':
 				print("Computing 'FAST' Corner Detector")
+				Ix, Iy = derivatives(intensity, shift, 0)
 				radius = 3
-				S = 9
-				threshold = 40
+				S = 8
+				threshold = 50
 				CornerPoints = FASTdetector(intensity, radius, S, threshold)
 		
 		elif implemented == 'ToolBox':
+			Ix, Iy = derivatives(intensity, shift, 0)
 			CornerPoints = CornerTB(image, cornerDetectionType, alpha)
 
 	if descriptorType == 'RGB':
