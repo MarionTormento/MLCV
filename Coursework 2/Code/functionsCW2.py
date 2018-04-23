@@ -374,8 +374,6 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot):
 
 	return cornerPoints
 
-
-
 def cleanSides(img, Points, buff):
 	# Function to delete the interest points located on the sides of the image
 	# INPUTS: Image to extract the shape and locate the sides, Points coordinates to be cleaned, size of the buffer window
@@ -566,15 +564,6 @@ def hog(img, Ix, Iy, Points, buff, plot):
 		plt.show()
 
 	return histOrientGrad
-
-def second_smallest(numbers):
-    m1, m2 = float('inf'), float('inf')
-    for x in numbers:
-        if x <= m1:
-            m1, m2 = x, m1
-        elif x < m2:
-            m2 = x
-    return m2
 
 # ------------------------- Matching --------------------------------
 def knn(typeMat, img, mat, point, base, test, plot):
@@ -799,3 +788,12 @@ def rad(degree):
 	# Function to transform a degree angle in a radians
 	radian = degree*np.pi/180
 	return radian
+
+def second_smallest(numbers):
+    m1, m2 = float('inf'), float('inf')
+    for x in numbers:
+        if x <= m1:
+            m1, m2 = x, m1
+        elif x < m2:
+            m2 = x
+    return m2
