@@ -193,7 +193,7 @@ clf;
 % Passing an empty matrix as the second argument tells imshow to take the
 % minimum and maximum values of the data and map the data range to the 
 % display colors.
-image(DbasicSubpixel, []);
+image(DbasicSubpixel);
 
 % Configure the axes to properly display an image.
 axis image;

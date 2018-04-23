@@ -23,25 +23,27 @@ def dispMap(Image1, Image2, windowSize):
 	halfWS = int((windowSize-1)/2)
 	disparityMap = np.zeros(img1.shape)
 	height, width = img1.shape
-	disparityRange = int(min(width, height)/10)
+	disparityRange = 50 #int(min(width, height)/10)
 
 	# Looping
-	for i in range(width):
-		minW = max(0, i-halfWS)
-		maxW = min(width, i+halfWS)
-		for j in range(height):
-			minH = max(0, j-halfWS)
-			maxH = min(height, j+halfWS)
+	for i in range(height):
+		minH = max(0, i-halfWS)
+		maxH = min(width, i+halfWS)
+		for j in range(width):
+			minW = max(0, j-halfWS)
+			maxW = min(height, j+halfWS)
 			minD = max(-disparityRange, -minW);
 			maxD = min(disparityRange, width - maxW);
 			# Select the reference block from img1
+			# template = img1[minW:maxW, minH:maxH]
 			template = img1[minH:maxH, minW:maxW]
 			# Get the number of blocks in this search.
 			numBlocks = maxD - minD
 			# Create a vector to hold the block differences.
 			blockDiffs = np.zeros((numBlocks, 1));
 			for k in range(minD,maxD):
-				block = img2[minH:maxH, minW+k:maxW+k]		
+				block = img2[minH:maxH, minW+k:maxW+k]
+				# block = img2[minW+k:maxW+k,minH:maxH]		
 				blockIndex = k - minD
 				blockDiffs[blockIndex] = np.sum(abs(template - block))
 			bestMatchDisp = np.amin(blockDiffs)
@@ -49,16 +51,16 @@ def dispMap(Image1, Image2, windowSize):
 			bestMatchIdx = bestMatchIdx[0][0]
 
 			if bestMatchIdx == 0 or bestMatchIdx == numBlocks - 1:
-				disparityMap[j,i] = bestMatchIdx + minD
+				disparityMap[i,j] = bestMatchIdx + minD
 			else:
 				C1 = blockDiffs[bestMatchIdx-1]
 				C2 = bestMatchDisp
 				C3 = blockDiffs[bestMatchIdx+1]
-				disparityMap[j,i] = bestMatchIdx + minD - 0.5*(C3-C1)/(C1-2*C2+C3)
-
+				disparityMap[i,j] = bestMatchIdx + minD - 0.5*(C3-C1)/(C1-2*C2+C3)
+			del blockDiffs
 	return disparityMap
 
-resultat = dispMap('right.png','left.png', 11)
+resultat = dispMap('left.png', 'right.png', 7)
 print(resultat)
 plt.figure()
 plt.imshow(resultat, interpolation='nearest')
