@@ -22,7 +22,6 @@ def dispMap(Image1, Image2, windowSize):
 	# Initialisation
 	halfWS = int((windowSize-1)/2)
 	disparityMap = np.zeros(img1.shape)
-	print(disparityMap.shape)
 	height, width = img1.shape
 	disparityRange = int(min(width, height)/10)
 
@@ -60,6 +59,7 @@ def dispMap(Image1, Image2, windowSize):
 	return disparityMap
 
 resultat = dispMap('right.png','left.png', 11)
+print(resultat)
 plt.figure()
 plt.imshow(resultat, interpolation='nearest')
 plt.show()
