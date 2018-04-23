@@ -28,21 +28,22 @@ def dispMap(Image1, Image2, windowSize):
 	# Looping
 	for i in range(height):
 		minH = max(0, i-halfWS)
-		maxH = min(width, i+halfWS)
+		maxH = min(height, i+halfWS)
 		for j in range(width):
 			minW = max(0, j-halfWS)
-			maxW = min(height, j+halfWS)
-			minD = max(-disparityRange, -minW);
-			maxD = min(disparityRange, width - maxW);
+			maxW = min(width, j+halfWS)
+			minD = max(-disparityRange, 1-minW)
+			# minD = 0
+			maxD = min(disparityRange, width - maxW)
 			# Select the reference block from img1
 			# template = img1[minW:maxW, minH:maxH]
-			template = img1[minH:maxH, minW:maxW]
+			template = img2[minH:maxH, minW:maxW]
 			# Get the number of blocks in this search.
 			numBlocks = maxD - minD
 			# Create a vector to hold the block differences.
-			blockDiffs = np.zeros((numBlocks, 1));
+			blockDiffs = np.zeros((numBlocks, 1))
 			for k in range(minD,maxD):
-				block = img2[minH:maxH, minW+k:maxW+k]
+				block = img1[minH:maxH, minW+k:maxW+k]
 				# block = img2[minW+k:maxW+k,minH:maxH]		
 				blockIndex = k - minD
 				blockDiffs[blockIndex] = np.sum(abs(template - block))
@@ -60,7 +61,7 @@ def dispMap(Image1, Image2, windowSize):
 			del blockDiffs
 	return disparityMap
 
-resultat = dispMap('left.png', 'right.png', 7)
+resultat = dispMap('Tsukuba1.jpg', 'Tsukuba2.jpg', 7)
 print(resultat)
 plt.figure()
 plt.imshow(resultat, interpolation='nearest')
