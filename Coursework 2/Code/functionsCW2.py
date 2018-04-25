@@ -14,7 +14,7 @@ from itertools import groupby
 
 # -------------------- Aggregated Functions -----------------------
 
-def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, descriptorType, windowSize):
+def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, descriptorType, windowSize, FAST_S, FAST_radius, FAST_threshold, maxima_NN, maxima_perc):
 
 	intensity, shift = getImageIntensity(image)
 
@@ -38,15 +38,14 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 				sigma = 1.6*shift
 				GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
 				print("Identifying corners and edges")
-				CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, windowSize, 0)
+				CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, windowSize, 0, maxima_NN, maxima_perc)
 
 			elif cornerDetectionType == 'FAST':
 				print("Computing 'FAST' Corner Detector")
 				Ix, Iy = derivatives(intensity, shift, 1)
-				radius = 2
-				S = 5
-				threshold = 40
-				CornerPoints = FASTdetector(intensity, radius, S, threshold)
+				CornerPoints = FASTdetector(intensity, FAST_radius, FAST_S, FAST_threshold)
+				CornerPoints = cleanSides(intensity, CornerPoints, windowSize)
+				CornerPoints = (CornerPoints[1], CornerPoints[0])
 		
 		elif implemented == 'ToolBox':
 			Ix, Iy = derivatives(intensity, shift, 0)
@@ -55,7 +54,7 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 
 	if descriptorType == 'RGB':
 		print("Computing RGB descriptor")
-		desc = descripter_funct(CornerPoints, image, windowSize, 0)
+		desc = rgb(CornerPoints, image, windowSize, 0)
 
 	elif descriptorType == 'HOG':	
 		print("Computing histogram of gradient orientation")
@@ -120,9 +119,9 @@ def getImageIntensity(image):
 
 	# Autonomously find the size of the shift window adapted to the image
 	width, height = img.shape
-	shift_w = int(width/100)
-	shift_h = int(height/100)
-	shift = max(3, min(shift_h, shift_w)) # In case the image is smaller than 50x50, shift = 3
+	shift_w = int(width/150)
+	shift_h = int(height/150)
+	shift = max(5, min(shift_h, shift_w)) # In case the image is smaller than 50x50, shift = 3
 
 	return img, shift
 
@@ -231,8 +230,8 @@ def FASTdetector(image, radius, S, threshold):
 
 	cornerPoints = []
 
-	for i in wide[::2]:
-		for j in high[::2]:
+	for i in wide[::1]:
+		for j in high[::1]:
 			pixelI = image[i][j]
 			N = get_circle([i,j],radius)
 			N = list(set(N))
@@ -259,7 +258,7 @@ def FASTdetector(image, radius, S, threshold):
 	cornerPoints = np.asarray(cornerPoints)
 	cornerPointsX = cornerPoints[:][:,1]
 	cornerPointsY = cornerPoints[:][:,0]
-	CornerPoints = (np.asarray(cornerPointsX), np.asarray(cornerPointsY))
+	CornerPoints = (np.asarray(cornerPointsY), np.asarray(cornerPointsX))
 
 	plt.figure()
 	plt.imshow(image, cmap='gray')
@@ -336,7 +335,7 @@ def gaussian_window(Ix, Iy, sigma, shift):
 
 	return GIxx, GIyy, GIxy
 
-def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot):
+def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot, NN, perc):
 
 	# Function to calculate the locations of corners (and edges) in the image
 	# Both Harris corner detection and Tomasi and Shi methods are implemented
@@ -359,8 +358,6 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot):
 
 	# Based on each pixels value of R, determine if it is a corner or an edge
 	# or neither. 
-	NN = 50 # Number of Nearest Neighbour
-	perc = 98 # Percentage of value kept by the thresholding
 	halfShift = int(shift/2)
 	## Corners
 	# Threshold
@@ -466,7 +463,7 @@ def local_maxima(R, Points, NN):
 	return localMaxPoints
 
 # ------------------------- Descriptors --------------------------------
-def descripter_funct(Points, OriginalImage, buff, plot):
+def rgb(Points, OriginalImage, buff, plot):
 
 	# Finds simple descriptors based on the colours
 	# INPUTS: Coordinates of Interest Points, Original Image to store the RGB colors, size of the window
@@ -632,7 +629,7 @@ def knn(typeMat, img, mat, point, base, test, plot):
 	interestPointsTest = [[],[]]
 	interestPointsBase = [[],[]]
 
-	for i in range(len(pointBase[0])):#min(len(pointBase[0]),len(pointTest[0]))):
+	for i in range(30):#len(pointBase[0])):
 		# Looking for the index of the nearest neigbour (= minimal distance)
 		index = np.where(distanceNN == np.amin(distanceNN))
 		index = index[0][0]
@@ -660,7 +657,7 @@ def knn(typeMat, img, mat, point, base, test, plot):
 				  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white',
 				  'magenta', 'black','coral', 'orange', 'ivory',
 				  'salmon','silver','teal','orchid','plum']
-		idxplot = np.random.choice(len(interestPointsBase[0]), 20, 0)
+		idxplot = np.random.choice(len(interestPointsBase[0]), 10, 0)
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
 		for i in idxplot:
 			plt.plot(interestPointsBase[0][i], interestPointsBase[1][i], marker='+')
@@ -743,8 +740,10 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 
 	Homography_accuracy = np.mean(dist_diff_all)
 	HInv = np.linalg.inv(HBest)
-	im_dst = cv2.warpPerspective(img2, HInv, (height, width))
-	im_dst2 = cv2.warpPerspective(img1, HBest, (height2, width2))
+	im_desc = cv2.warpPerspective(img2, HInv, (height, width))
+	im_desc2 = cv2.warpPerspective(img1, HBest, (height2, width2))
+	im_rec = cv2.cvtColor(im_desc, cv2.COLOR_BGR2GRAY)
+	im_rec2 = cv2.cvtColor(im_desc2, cv2.COLOR_BGR2GRAY)
 
 	plt.figure(2)
 	plt.subplot(2,2,1), plt.imshow(img1)
@@ -752,10 +751,10 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 	plt.subplot(2,2,2), plt.imshow(img2)
 	plt.scatter(points_estimated_all[:,0], points_estimated_all[:,1], color='r')
 	plt.scatter(ImageB[:,0], ImageB[:,1], color='b', marker='+')
-	plt.subplot(2,2,3), plt.imshow(im_dst)
-	plt.subplot(2,2,4), plt.imshow(im_dst2)
+	plt.subplot(2,2,3), plt.imshow(im_desc)
+	plt.subplot(2,2,4), plt.imshow(im_desc2)
 
-	return ImageAfew, ImageBfew, H, Homography_accuracy
+	return ImageAfew, ImageBfew, H, Homography_accuracy, im_rec, im_rec2
 
 def findFundamental(Image1, Image2, ImageA, ImageB):
 
@@ -763,20 +762,22 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 	img2 = cv2.imread('Photos/' + Image2)
 	img1 = np.asarray(img1)
 	img2 = np.asarray(img2)
-	ImageA = np.asarray(ImageA).T
-	ImageB = np.asarray(ImageB).T
+	ImageA = np.asarray(ImageA)
+	ImageB = np.asarray(ImageB)
+	ImageA = np.transpose(ImageA)
+	ImageB = np.transpose(ImageB)
 	ImageA = np.concatenate((ImageA, np.ones((len(ImageA),1))), axis=1)
 	ImageB = np.concatenate((ImageB, np.ones((len(ImageB),1))), axis=1)
 
 	shape = img1.shape
 	K = int(0)
-	fundamentalAccuracyBest = int(100)
+	fundamentalAccuracyBest = int(100000)
 
 	while K < 500:
 
 		resTot = int(0)
 
-		fewPointsIdx = np.random.choice(len(ImageA), 15, 0)
+		fewPointsIdx = np.random.choice(len(ImageA), 8, 0)
 		ImageAfew = ImageA[fewPointsIdx,:]
 		ImageBfew = ImageB[fewPointsIdx,:]
 
@@ -788,25 +789,55 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 			chi[i][:] = [ImageAfew[i,0]*ImageBfew[i,0], ImageAfew[i,1]*ImageBfew[i,0], ImageBfew[i,0], ImageAfew[i,0]*ImageBfew[i,1], ImageAfew[i,1]*ImageBfew[i,1], ImageBfew[i,1], ImageAfew[i,0], ImageAfew[i,1], 1]
 
 		U, S, VT = np.linalg.svd(chi)
-
-		F = VT.T[:,-1].reshape(3,3)/V[-1][-1]
+		V = VT.T
+		F = V[:,-1].reshape(3,3)/V[-1][-1]
 		detF = np.linalg.det(F)
-		print(detF)
 
 		FU, FD, FVT = np.linalg.svd(F)
 		FV = FVT.T
 		FD = np.diagflat(FD)
-		FD[-1][-1] = 0
+		FD[-1] = 0
 		F = np.dot(FU, np.dot(FD,FV.T))
+		resMin = []
+		resMinIdx = []
+		distMin = []
+		distMinIdx = []
+		distanceTotal = int(0)
 
 		for i in range(len(ImageA)):
 
-			res = np.dot(ImageA[i,:].T,np.dot(F,ImageB[i,:]))
-			resTot += abs(res)
+		# 	res = np.dot(ImageA[i,:].T,np.dot(F,ImageB[i,:]))
+		# 	resTot += abs(res)
 
-		fundamentalAccuracy = resTot/len(ImageA)
-		if abs(fundamentalAccuracy) < fundamentalAccuracyBest:
-			fundamentalAccuracyBest = abs(fundamentalAccuracy)
+		# 	if i < 6:
+		# 		resMinIdx.append(i)
+		# 		resMin.append(res)
+		# 	elif res < np.amax(resMin):
+		# 		maxidx = np.where(resMin == np.amax(resMin))
+		# 		resMinIdx[maxidx[0][0]] = i
+		# 		resMin[maxidx[0][0]] = res
+		# 		
+		# fundamentalAccuracy = resTot/len(ImageA)
+		
+			# Finding epipolar line on image 2
+			Epipolar = np.dot(F, np.transpose(ImageA[i,:]))
+			dist = ((Epipolar[0]*ImageB[i,0] + Epipolar[1]*ImageB[i,1] + Epipolar[2])**2)**(1/2)/np.sqrt(Epipolar[0]**2 + Epipolar[1]**2)
+			distanceTotal += dist
+
+			if i < 6:
+				distMinIdx.append(i)
+				distMin.append(dist)
+			elif dist < np.amax(distMin):
+				maxidx = np.where(distMin == np.amax(distMin))
+				distMinIdx[maxidx[0][0]] = i
+				distMin[maxidx[0][0]] = dist
+
+		fundamentalAccuracy = distanceTotal/len(ImageA)
+
+		if fundamentalAccuracy < fundamentalAccuracyBest:
+			fundamentalAccuracyBest = fundamentalAccuracy
+			distBestIdx = distMinIdx
+			distBest = distMin
 			FBest = F
 			FVBest = FV
 
@@ -816,7 +847,12 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 	plt.subplot(1,2,1), plt.imshow(img1)
 	plt.subplot(1,2,2), plt.imshow(img2)
 
-	for i in range(len(ImageA)):
+	colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
+		  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white',
+		  'magenta', 'black','coral', 'orange', 'ivory',
+		  'salmon','silver','teal','orchid','plum']
+
+	for i, j in zip(distBestIdx, range(6)):
 
 		# Finding epipolar line on image 1
 		epipole1 = FVBest.T[:,-1]
@@ -825,19 +861,77 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		epipole_y = ImageA[i,1] + (epipole_x - ImageA[i,0])*(epipole1[1]-ImageA[i,1])/(epipole1[0]-ImageA[i,0])
 
 		# Finding epipolar line on image 2
-		Epipolar = np.dot(FBest, ImageA[i,:].T)
+		Epipolar = np.dot(FBest, np.transpose(ImageA[i,:]))
 		Epipolar_x = np.arange(2*shape[0])
 		Epipolar_y = (-Epipolar[2] - Epipolar[0]*Epipolar_x)/Epipolar[1]
 
 		# Plotting epipolar lines onto images
-		plt.subplot(1,2,1), plt.plot(ImageA[i,0], ImageA[i,1], '+')
-		plt.plot(epipole_x, epipole_y)
+		plt.subplot(1,2,1), plt.plot(ImageA[i,0], ImageA[i,1], '+', color=colors[j])
+		plt.plot(epipole_x, epipole_y, color=colors[j])
 		plt.axis([0, shape[1], shape[0], 0])
-		plt.subplot(1,2,2), plt.plot(ImageB[i,0], ImageB[i,1], '+')
-		plt.plot(Epipolar_x, Epipolar_y)
+		plt.subplot(1,2,2), plt.plot(ImageB[i,0], ImageB[i,1], '+', color=colors[j])
+		plt.plot(Epipolar_x, Epipolar_y, color=colors[j])
 		plt.axis([0, shape[1], shape[0], 0])
 
 	return fundamentalAccuracy
+
+def dispMap(Image1, Image2, windowSize):
+
+	shift = 8
+	# Load images in grayscale
+	img1 = cv2.imread('Photos/' + Image1,0)
+	img1 = np.asarray(img1)
+	Ix1, Iy1 = derivatives(img1, shift, 0)
+	img1 = Iy1*Ix1
+	# img2 = cv2.imread(Image2,0)
+	# img2 = np.asarray(img2)
+	img2 = Image2
+	print(type(img2))
+	print(img2.shape)
+	Ix2, Iy2 = derivatives(img2, shift, 0)
+	img2 = Iy2*Ix2
+
+	# Initialisation
+	halfWS = int((windowSize-1)/2)
+	disparityMap = np.zeros(img1.shape)
+	height, width = img1.shape
+	disparityRange = 50 #int(min(width, height)/10)
+
+	# Looping
+	for i in range(height):
+		minH = max(0, i-halfWS)
+		maxH = min(height, i+halfWS)
+		for j in range(width):
+			minW = max(0, j-halfWS)
+			maxW = min(width, j+halfWS)
+			minD = max(-disparityRange, -minW)
+			# minD = 0
+			maxD = min(disparityRange, width - maxW)
+			# Select the reference block from img1
+			# template = img1[minW:maxW, minH:maxH]
+			template = img2[minH:maxH, minW:maxW]
+			# Get the number of blocks in this search.
+			numBlocks = maxD - minD
+			# Create a vector to hold the block differences.
+			blockDiffs = np.zeros((numBlocks, 1))
+			for k in range(minD,maxD):
+				block = img1[minH:maxH, minW+k:maxW+k]	
+				blockIndex = k - minD
+				blockDiffs[blockIndex] = np.sum(abs(template - block))
+			bestMatchDisp = np.amin(blockDiffs)
+			bestMatchIdx = np.where(blockDiffs == np.amin(blockDiffs))
+			bestMatchIdx = bestMatchIdx[0][0]
+
+			if bestMatchIdx == 0 or bestMatchIdx == numBlocks - 1:
+				disparityMap[i,j] = bestMatchIdx + minD
+			else:
+				C1 = blockDiffs[bestMatchIdx-1]
+				C2 = bestMatchDisp
+				C3 = blockDiffs[bestMatchIdx+1]
+				disparityMap[i,j] = bestMatchIdx + minD - 0.5*(C3-C1)/(C1-2*C2+C3)
+			del blockDiffs
+	return disparityMap
+
 
 # ------------------------- Others --------------------------------
 def rad(degree):

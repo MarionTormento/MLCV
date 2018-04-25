@@ -19,7 +19,9 @@ Test_images = (['img1.jpg','img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6
 
 Quick1 = (['chess.png', 'chess2.png', 'chess3.png'])
 Quick2 = (['chess.png', 'chess.jpg'])
-Jennas = (['jennas1.jpg','jennas2.jpg','jennas3.jpg'])
+JBL = (['JBL1.jpg','JBL2.jpg','JBL3.jpg','JBL4.jpg'])
+Map = (['map1.jpg','map2.jpg','map3.jpg','map4.jpg'])
+
 
 findPoints = 'Auto' #'Auto' or 'Manual' 
 descriptorType = 'RGB' #'RGB' or 'HOG'
@@ -28,17 +30,27 @@ ImplementedOrToolBox = 'Implemented' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
 allDesc = []
-test = Test_images
+test = Map
 
-alpha = 0.02
-windowSize = 15 #WARNING : Must be uneven
+#FAST Parameters
+FAST_radius = 2
+FAST_S = 5
+FAST_threshold = 50
 
-for i in [1,2]:
+#Harris/Shi-Tomasi Parameters
+alpha = 0.04
+Maxima_NN = 50 # Number of Nearest Neighbour
+Maxima_perc = 99 # Percentage of value kept by the thresholding
+
+# Gerenal Parameters
+windowSize = 17 #WARNING : Must be uneven
+
+for i in [0,1]:
 
 	print("New image")
 	image = test[i]
 
-	desc, intensity, CornerPoints = getCornerPoints(image, i, alpha, findPoints, ImplementedOrToolBox, cornerDetectionType, descriptorType, windowSize)
+	desc, intensity, CornerPoints = getCornerPoints(image, i, alpha, findPoints, ImplementedOrToolBox, cornerDetectionType, descriptorType, windowSize, FAST_S, FAST_radius, FAST_threshold,  Maxima_NN, Maxima_perc)
 
 	print("Saving all values")
 	allDesc.append(desc)
@@ -48,9 +60,14 @@ for i in [1,2]:
 print("Looking for matching descriptors")
 indexNN, corrBasePoints, corrTestPoints = knn(descriptorType, allIntensity, allDesc, allPoints, 0, 1, 1)
 
-ImageAgood, ImageBgood, H, acc_homog = findHomography(test[1], test[2], corrBasePoints, corrTestPoints, 4)
+ImageAgood, ImageBgood, H, acc_homog, im_rec, im_rec2 = findHomography(test[0], test[1], corrBasePoints, corrTestPoints, 4)
 
-acc_fund = findFundamental(test[1], test[2], corrBasePoints, corrTestPoints)
+disparityMap = dispMap(test[0], im_rec, 7)
+dispplot, ax = plt.figure(6)
+disparityplot = ax.imshow(disparityMap, interpolation='nearest', cmap='gray')
+dispplot.colorbar(disparityplot)
+
+acc_fund = findFundamental(test[0], test[1], corrBasePoints, corrTestPoints)
 
 print(acc_homog)
 print(acc_fund)

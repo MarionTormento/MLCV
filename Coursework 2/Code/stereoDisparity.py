@@ -11,13 +11,20 @@ from PIL import ImageTk, Image
 import os
 from math import atan2
 from itertools import groupby
+from functionsCW2 import *
 
 def dispMap(Image1, Image2, windowSize):
+
+	shift = 8
 	# Load images in grayscale
 	img1 = cv2.imread('Photos/' + Image1,0)
 	img1 = np.asarray(img1)
+	Ix1, Iy1 = derivatives(img1, shift, 0)
+	img1 = Iy1*Ix1
 	img2 = cv2.imread('Photos/' + Image2,0)
 	img2 = np.asarray(img2)
+	Ix2, Iy2 = derivatives(img2, shift, 0)
+	img2 = Iy2*Ix2
 
 	# Initialisation
 	halfWS = int((windowSize-1)/2)
@@ -60,7 +67,7 @@ def dispMap(Image1, Image2, windowSize):
 			del blockDiffs
 	return disparityMap
 
-resultat = dispMap('left.png', 'right.png', 3)
+resultat = dispMap('Tsukuba1.jpg', 'Tsukuba2.jpg', 7)
 print(resultat)
 plt.figure()
 plt.imshow(resultat, interpolation='nearest', cmap='gray')
