@@ -23,17 +23,17 @@ Jennas = (['jennas1.jpg','jennas2.jpg','jennas3.jpg'])
 
 findPoints = 'Auto' #'Auto' or 'Manual' 
 descriptorType = 'RGB' #'RGB' or 'HOG'
-cornerDetectionType = 'FAST' #'FAST' or 'Harris'
+cornerDetectionType = 'Harris' #'FAST' or 'Harris'
 ImplementedOrToolBox = 'Implemented' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
 allDesc = []
-test = Art
+test = Test_images
 
-alpha = 0.04
-windowSize = 21 #WARNING : Must be uneven
+alpha = 0.02
+windowSize = 15 #WARNING : Must be uneven
 
-for i in [0,1]:
+for i in [1,2]:
 
 	print("New image")
 	image = test[i]
@@ -48,11 +48,11 @@ for i in [0,1]:
 print("Looking for matching descriptors")
 indexNN, corrBasePoints, corrTestPoints = knn(descriptorType, allIntensity, allDesc, allPoints, 0, 1, 1)
 
-ImageAgood, ImageBgood, H, acc_homog = findHomography(test[0], test[1], corrBasePoints, corrTestPoints, 5)
+ImageAgood, ImageBgood, H, acc_homog = findHomography(test[1], test[2], corrBasePoints, corrTestPoints, 4)
 
-acc_fund = findFundamental(test[0], test[1], ImageAgood, ImageBgood)
+acc_fund = findFundamental(test[1], test[2], corrBasePoints, corrTestPoints)
 
-print('Homography Accuracy = %1.2f' % acc_homog)
-print('Fundamental Accuracy = %1.2f' % acc_fund)
+print(acc_homog)
+print(acc_fund)
 
 plt.show()

@@ -24,6 +24,7 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 	
 	if method == 'Manual':
 		print("Manually find interest Points")
+		Ix, Iy = derivatives(intensity, shift, 0)
 		CornerPoints = manualCornerPoints(image, i)
 
 	elif method == 'Auto':
@@ -41,15 +42,16 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 
 			elif cornerDetectionType == 'FAST':
 				print("Computing 'FAST' Corner Detector")
-				Ix, Iy = derivatives(intensity, shift, 0)
-				radius = 3
-				S = 8
-				threshold = 50
+				Ix, Iy = derivatives(intensity, shift, 1)
+				radius = 2
+				S = 5
+				threshold = 40
 				CornerPoints = FASTdetector(intensity, radius, S, threshold)
 		
 		elif implemented == 'ToolBox':
 			Ix, Iy = derivatives(intensity, shift, 0)
 			CornerPoints = CornerTB(image, cornerDetectionType, alpha)
+			CornerPoints = cleanSides(intensity, CornerPoints, windowSize)
 
 	if descriptorType == 'RGB':
 		print("Computing RGB descriptor")
@@ -59,8 +61,19 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 		print("Computing histogram of gradient orientation")
 		desc = hog(intensity, Ix, Iy, CornerPoints, windowSize, 0)
 
-	elif descriptorType == 'SIFT':
-			print("Computing SIFT")
+	elif descriptorType == 'RGBHOG':
+		print("Computing RGB histogram of gradient orientation")
+		desc = np.zeros((len(CornerPoints[0]), 108))
+		img = cv2.imread('Photos/' + image)
+		red = img[:,:,2]
+		green = img[:,:,1]
+		blue = img[:,:,0]
+		count = 0
+		for j in [blue, green, red]:
+			Ix, Iy = derivatives(j, shift, 0)
+			desccol = hog(j, Ix, Iy, CornerPoints, windowSize, 0)
+			desc[:,36*count:36*(count+1)] = desccol
+			count += 1
 
 	return desc, intensity, CornerPoints
 
@@ -102,7 +115,7 @@ def CornerTB(image, type, alpha):
 def getImageIntensity(image):
 
 	# Load an color image in grayscale
-	img = cv2.imread('Photos/' + image,0)
+	img = cv2.imread('Photos/' + image, 0)
 	img = np.asarray(img)
 
 	# Autonomously find the size of the shift window adapted to the image
@@ -333,7 +346,8 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot):
 
 	## Compute R
 	# Harris Corner detection method
-	R = (GIxx)*(GIyy) - GIxy**2 - alpha*(GIxx + GIyy)**2
+	# R = (GIxx)*(GIyy) - GIxy**2 - alpha*(GIxx + GIyy)**2
+	R = (GIxx*GIyy - GIxy**2)/(GIxx+GIyy+2**(-52))
 	# Tomasi and Shi method
 	# R = np.zeros(GIxx.shape)
 	# endX, endY = GIxx.shape
@@ -346,7 +360,7 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot):
 	# Based on each pixels value of R, determine if it is a corner or an edge
 	# or neither. 
 	NN = 50 # Number of Nearest Neighbour
-	perc = 99 # Percentage of value kept by the thresholding
+	perc = 98 # Percentage of value kept by the thresholding
 	halfShift = int(shift/2)
 	## Corners
 	# Threshold
@@ -444,7 +458,7 @@ def local_maxima(R, Points, NN):
 		else:
 			distance = np.linalg.norm((localMaxPointsX-Xmax, localMaxPointsY-Ymax), axis=0)
 			distance = np.amin(distance)
-			if distance > 10.0:
+			if distance > 0:
 				localMaxPointsX.append(Xmax)
 				localMaxPointsY.append(Ymax)
 
@@ -507,6 +521,7 @@ def hog(img, Ix, Iy, Points, buff, plot):
 	
 	# Compute the orientation of the gradient
 	endX, endY = Ix.shape
+	print(endX, endY)
 	gradOrientation = np.zeros((endX,endY))
 	for i in range(endX):
 		for j in range(endY):
@@ -530,16 +545,23 @@ def hog(img, Ix, Iy, Points, buff, plot):
 	histOrientGrad = np.zeros((len(Points[0]),nbBin))
 	lengthA = (buff-1)//2
 	lengthB = (buff+1)//2
+	print(len(Points[0]))
 
 	for i in range(len(Points[0])):
 	# 1 - Extract the buff x buff submatrix of magnitude and orientation
 		boxMagn = gradMagnitude[Points[1][i]-lengthA:Points[1][i]+lengthB][:,Points[0][i]-lengthA:Points[0][i]+lengthB]
 		boxOrient = gradOrientation[Points[1][i]-lengthA:Points[1][i]+lengthB][:,Points[0][i]-lengthA:Points[0][i]+lengthB]
+		print(boxMagn.shape, boxOrient.shape)
 	# 2 - Compute the nbBin histogram for the buff x buff submatrix (0: 0, 1:1*sizeBin, ...)
 		for j in range(buff):
 			for k in range(buff):
 				# Save the magnitude and orientation of each point in the buff x buff submatrix
-				magn = boxMagn[j][k]
+				try:
+					magn = boxMagn[j][k]
+				except:
+					print(Points[0][i])
+					print(Points[1][i])
+
 				orient = boxOrient[j][k]
 				# Find the corresponding indices in the histogram for the point orientation
 				idxMin = np.mod(int(orient/(rad(sizeBin)) + nbBin/2), nbBin)
@@ -583,7 +605,7 @@ def knn(typeMat, img, mat, point, base, test, plot):
 	indexNN = []
 	distanceNN = []
 		
-	if typeMat == "HOG":
+	if typeMat == "HOG" or typeMat == "RGBHOG":
 		for i in range(len(matTest)):
 			# Store the hog of the descriptor we want to compare
 			distance = np.linalg.norm(matBase-matTest[i], axis=1)
@@ -603,8 +625,10 @@ def knn(typeMat, img, mat, point, base, test, plot):
 			index = np.where(distance == np.amin(distance))
 			indexNN.append(index[0][0])
 			distanceNN.append(distance[index[0][0]])
+
 	# Looking for the best matching descriptors
 	distanceMax = np.amax(distanceNN)
+	distanceMin = np.amin(imgBase.shape)/20
 	interestPointsTest = [[],[]]
 	interestPointsBase = [[],[]]
 
@@ -614,27 +638,42 @@ def knn(typeMat, img, mat, point, base, test, plot):
 		index = index[0][0]
 		# Set its distance to max distance so it is not taken twice for a neighbour
 		distanceNN[index] = distanceMax
-		# Saves its indices
-		interestPointsTest[0].append(pointTest[0][index])
-		interestPointsTest[1].append(pointTest[1][index])
-		interestPointsBase[0].append(pointBase[0][indexNN[index]])
-		interestPointsBase[1].append(pointBase[1][indexNN[index]])
+		
+		if i == 0:
+			# Saves its indices
+			interestPointsTest[0].append(pointTest[0][index])
+			interestPointsTest[1].append(pointTest[1][index])
+			interestPointsBase[0].append(pointBase[0][indexNN[index]])
+			interestPointsBase[1].append(pointBase[1][indexNN[index]])
+		else:
+			distance = np.linalg.norm((interestPointsBase[0]-pointBase[0][indexNN[index]], interestPointsBase[1]-pointBase[1][indexNN[index]]), axis=0)
+			distance = np.amin(distance)
+			if distance > distanceMin:
+				interestPointsTest[0].append(pointTest[0][index])
+				interestPointsTest[1].append(pointTest[1][index])
+				interestPointsBase[0].append(pointBase[0][indexNN[index]])
+				interestPointsBase[1].append(pointBase[1][indexNN[index]])
 
 	if plot == 1:
 		# Plot the best matching descriptors
-		# colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
-		# 		  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white',
-		# 		  'magenta', 'black','coral', 'orange', 'ivory',
-		# 		  'salmon','silver','teal','orchid','plum']
+		colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
+				  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white',
+				  'magenta', 'black','coral', 'orange', 'ivory',
+				  'salmon','silver','teal','orchid','plum']
+		idxplot = np.random.choice(len(interestPointsBase[0]), 20, 0)
 		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
-		for i in range(len(interestPointsBase[0])):
+		for i in idxplot:
 			plt.plot(interestPointsBase[0][i], interestPointsBase[1][i], marker='+')
 		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
-		for i in range(len(interestPointsTest[0])):
+		for i in idxplot:
 			plt.plot(interestPointsTest[0][i], interestPointsTest[1][i], marker='+')
+		plt.figure()
 
 	interestPointsBase = (np.asarray(interestPointsBase[0]), np.asarray(interestPointsBase[1]))
 	interestPointsTest = (np.asarray(interestPointsTest[0]), np.asarray(interestPointsTest[1]))
+
+	# img3 = cv2.drawMatches(imgBase,interestPointsBase,imgTest,interestPointsTest, index,None,flags=0)
+	# plt.imshow(img3)
 
 	return indexNN, interestPointsBase, interestPointsTest
 
@@ -647,20 +686,19 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 	width, height, channels = img1.shape
 	width2, height2, channels = img2.shape
 
-	fewPointsIdx = np.random.choice(6, selection, 0)
-	print(fewPointsIdx)
 	ImageA = np.asarray(ImageA).T
 	ImageB = np.asarray(ImageB).T
-	ImageAfew = ImageA[fewPointsIdx,:]
-	ImageBfew = ImageB[fewPointsIdx,:]
 	K = int(0)
 	goodPercent = int(0)
+	goodPercentBest = int(0)
 
-	while K < 6 and goodPercent < 0.60:
+	while K < 500:
 
-		#set length of P matrix
+		fewPointsIdx = np.random.choice(len(ImageA), 8, 0)
+		ImageAfew = ImageA[fewPointsIdx,:]
+		ImageBfew = ImageB[fewPointsIdx,:]
+
 		nbPoints = len(ImageAfew)
-		print(nbPoints)
 		nbPoints_all = len(ImageA)
 
 		P = np.zeros((2*nbPoints + 1, 9))
@@ -689,23 +727,31 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 		points_estimated_all = (point_estimated_prime_all[:][:,0:2].T / point_estimated_prime_all[:][:,-1]).T
 		dist_diff_all = np.linalg.norm(ImageB-points_estimated_all, axis=1)
 		
-		acceptableIdx = np.where(dist_diff_all < 5)
-		ImageAfew = ImageA[acceptableIdx[0]]
-		ImageBfew = ImageB[acceptableIdx[0]]
+		acceptableIdx = np.where(dist_diff_all < 8)
 		goodPercent = len(acceptableIdx[0])/len(ImageA)
+		if goodPercent > goodPercentBest:
+			HBest = H
+			goodPercentBest = goodPercent
+		if goodPercent > 0.8:
+			break
 		K += 1
 		
-	Homography_accuracy = np.mean(dist_diff)
-	HInv = np.linalg.inv(H)
+	pointsImageA_all = np.concatenate((ImageA, np.ones((nbPoints_all,1))), axis = 1)
+	point_estimated_prime_all = np.dot(HBest, pointsImageA_all.T).T
+	points_estimated_all = (point_estimated_prime_all[:][:,0:2].T / point_estimated_prime_all[:][:,-1]).T
+	dist_diff_all = np.linalg.norm(ImageB-points_estimated_all, axis=1)
+
+	Homography_accuracy = np.mean(dist_diff_all)
+	HInv = np.linalg.inv(HBest)
 	im_dst = cv2.warpPerspective(img2, HInv, (height, width))
-	im_dst2 = cv2.warpPerspective(img1, H, (height2, width2))
+	im_dst2 = cv2.warpPerspective(img1, HBest, (height2, width2))
 
 	plt.figure(2)
 	plt.subplot(2,2,1), plt.imshow(img1)
-	plt.scatter(ImageAfew[:,0], ImageAfew[:,1], color='b', marker='+')
+	plt.scatter(ImageA[:,0], ImageA[:,1], color='b', marker='+')
 	plt.subplot(2,2,2), plt.imshow(img2)
-	plt.scatter(points_estimated[:,0], points_estimated[:,1], color='r')
-	plt.scatter(ImageBfew[:,0], ImageBfew[:,1], color='b', marker='+')
+	plt.scatter(points_estimated_all[:,0], points_estimated_all[:,1], color='r')
+	plt.scatter(ImageB[:,0], ImageB[:,1], color='b', marker='+')
 	plt.subplot(2,2,3), plt.imshow(im_dst)
 	plt.subplot(2,2,4), plt.imshow(im_dst2)
 
@@ -717,70 +763,79 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 	img2 = cv2.imread('Photos/' + Image2)
 	img1 = np.asarray(img1)
 	img2 = np.asarray(img2)
-	print(ImageA)
-	ImageA = np.asarray(ImageA)
-	ImageB = np.asarray(ImageB)
+	ImageA = np.asarray(ImageA).T
+	ImageB = np.asarray(ImageB).T
 	ImageA = np.concatenate((ImageA, np.ones((len(ImageA),1))), axis=1)
 	ImageB = np.concatenate((ImageB, np.ones((len(ImageB),1))), axis=1)
 
 	shape = img1.shape
+	K = int(0)
+	fundamentalAccuracyBest = int(100)
 
-	nbPoints = len(ImageA)
-	chi = np.zeros((nbPoints, 9))
+	while K < 500:
 
-	#populate chi matrix
-	for i in range(0,nbPoints):
-		chi[i][:] = [ImageA[i,0]*ImageB[i,0], ImageA[i,1]*ImageB[i,0], ImageB[i,0], ImageA[i,0]*ImageB[i,1], ImageA[i,1]*ImageB[i,1], ImageB[i,1], ImageA[i,0], ImageA[i,1], 1]
+		resTot = int(0)
 
-	U, S, V = np.linalg.svd(chi)
-	F = V.T[:,-1].reshape(3,3)/V[-1][-1]
-	detF = np.linalg.det(F)
+		fewPointsIdx = np.random.choice(len(ImageA), 15, 0)
+		ImageAfew = ImageA[fewPointsIdx,:]
+		ImageBfew = ImageB[fewPointsIdx,:]
 
-	FU, FD, FV = np.linalg.svd(F)
-	FV = FV.T
-	FD = np.diagflat(FD)
-	FD[-1][-1] = 0
-	F = np.dot(FU, np.dot(FD,FV.T))
+		nbPoints = len(ImageAfew)
+		chi = np.zeros((nbPoints, 9))
+
+		#populate chi matrix
+		for i in range(0,nbPoints):
+			chi[i][:] = [ImageAfew[i,0]*ImageBfew[i,0], ImageAfew[i,1]*ImageBfew[i,0], ImageBfew[i,0], ImageAfew[i,0]*ImageBfew[i,1], ImageAfew[i,1]*ImageBfew[i,1], ImageBfew[i,1], ImageAfew[i,0], ImageAfew[i,1], 1]
+
+		U, S, VT = np.linalg.svd(chi)
+
+		F = VT.T[:,-1].reshape(3,3)/V[-1][-1]
+		detF = np.linalg.det(F)
+		print(detF)
+
+		FU, FD, FVT = np.linalg.svd(F)
+		FV = FVT.T
+		FD = np.diagflat(FD)
+		FD[-1][-1] = 0
+		F = np.dot(FU, np.dot(FD,FV.T))
+
+		for i in range(len(ImageA)):
+
+			res = np.dot(ImageA[i,:].T,np.dot(F,ImageB[i,:]))
+			resTot += abs(res)
+
+		fundamentalAccuracy = resTot/len(ImageA)
+		if abs(fundamentalAccuracy) < fundamentalAccuracyBest:
+			fundamentalAccuracyBest = abs(fundamentalAccuracy)
+			FBest = F
+			FVBest = FV
+
+		K += 1
 
 	plt.figure(3)
-	plt.subplot(2,1,1), plt.imshow(img1)
-	plt.subplot(2,1,2), plt.imshow(img2)
-
-	colour = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
-			  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white',
-			  'magenta', 'black','coral', 'orange', 'ivory',
-			  'salmon','silver','teal','orchid','plum',
-			  'goldenrod','green','lightgreen','lavendar','lime']
-
-	distanceTotal = 0
+	plt.subplot(1,2,1), plt.imshow(img1)
+	plt.subplot(1,2,2), plt.imshow(img2)
 
 	for i in range(len(ImageA)):
 
 		# Finding epipolar line on image 1
-		epipole1 = FV.T[:,-1]
+		epipole1 = FVBest.T[:,-1]
 		epipole1 = epipole1/epipole1[-1]
 		epipole_x = np.arange(2*shape[0])
 		epipole_y = ImageA[i,1] + (epipole_x - ImageA[i,0])*(epipole1[1]-ImageA[i,1])/(epipole1[0]-ImageA[i,0])
 
 		# Finding epipolar line on image 2
-		Epipolar = np.dot(F, ImageA[i,:].T)
+		Epipolar = np.dot(FBest, ImageA[i,:].T)
 		Epipolar_x = np.arange(2*shape[0])
 		Epipolar_y = (-Epipolar[2] - Epipolar[0]*Epipolar_x)/Epipolar[1]
 
-		# Calculate Accuracy
-		dist = ((Epipolar[0]*ImageB[i,0] + Epipolar[1]*ImageB[i,1] + Epipolar[2])**2)**(1/2)/np.sqrt(Epipolar[0]**2 + Epipolar[1]**2)
-		distanceTotal += dist
-
-		print(i, len(ImageA), ImageA.shape)
 		# Plotting epipolar lines onto images
-		plt.subplot(2,1,1), plt.plot(ImageA[i,0], ImageA[i,1], '+')
+		plt.subplot(1,2,1), plt.plot(ImageA[i,0], ImageA[i,1], '+')
 		plt.plot(epipole_x, epipole_y)
 		plt.axis([0, shape[1], shape[0], 0])
-		plt.subplot(2,1,2), plt.plot(ImageB[i,0], ImageB[i,1], '+')
+		plt.subplot(1,2,2), plt.plot(ImageB[i,0], ImageB[i,1], '+')
 		plt.plot(Epipolar_x, Epipolar_y)
 		plt.axis([0, shape[1], shape[0], 0])
-
-	fundamentalAccuracy = distanceTotal / len(ImageA)
 
 	return fundamentalAccuracy
 
