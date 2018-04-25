@@ -11,6 +11,7 @@ from PIL import ImageTk, Image
 import os
 from math import atan2
 from itertools import groupby
+from matplotlib.patches import ConnectionPatch
 
 # -------------------- Aggregated Functions -----------------------
 
@@ -655,18 +656,24 @@ def knn(typeMat, img, mat, point, base, test, plot):
 
 	if plot == 1:
 		# Plot the best matching descriptors
+		fig = plt.figure(7)
 		colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
 				  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white',
 				  'magenta', 'black','coral', 'orange', 'ivory',
 				  'salmon','silver','teal','orchid','plum']
 		idxplot = np.random.choice(len(interestPointsBase[0]), 10, 0)
-		plt.subplot(121), plt.imshow(imgBase, cmap='gray')
+		ax1 = fig.add_subplot(121)
+		plt.imshow(imgBase, cmap='gray')
+		ax2 = fig.add_subplot(122)
+		plt.imshow(imgTest, cmap='gray')
 		for i in idxplot:
-			plt.plot(interestPointsBase[0][i], interestPointsBase[1][i], marker='+')
-		plt.subplot(122), plt.imshow(imgTest, cmap='gray')
-		for i in idxplot:
-			plt.plot(interestPointsTest[0][i], interestPointsTest[1][i], marker='+')
-		plt.figure()
+			ax1.plot(interestPointsBase[0][i], interestPointsBase[1][i], marker='+', markersize='40', color=colors[i])
+			ax2.plot(interestPointsTest[0][i], interestPointsTest[1][i], marker='+', markersize='40', color=colors[i])
+			xy2 = (interestPointsBase[0][i], interestPointsBase[1][i])
+			xy1 = (interestPointsTest[0][i], interestPointsTest[1][i])
+			con = ConnectionPatch(xyA=xy1, xyB=xy2, coordsA="data", coordsB="data",
+		                     	  axesA=ax2, axesB=ax1, color=colors[i])
+			ax2.add_artist(con)
 
 	interestPointsBase = (np.asarray(interestPointsBase[0]), np.asarray(interestPointsBase[1]))
 	interestPointsTest = (np.asarray(interestPointsTest[0]), np.asarray(interestPointsTest[1]))
@@ -680,10 +687,10 @@ def knn(typeMat, img, mat, point, base, test, plot):
 
 def findHomography(Image1, Image2, ImageA, ImageB, selection):
 
-	img1 = cv2.imread('Photos/' + Image1)
-	img2 = cv2.imread('Photos/' + Image2)
-	width, height, channels = img1.shape
-	width2, height2, channels = img2.shape
+	img1 = cv2.imread('Photos/' + Image1,0)
+	img2 = cv2.imread('Photos/' + Image2,0)
+	width, height = img1.shape
+	width2, height2 = img2.shape
 
 	ImageA = np.asarray(ImageA).T
 	ImageB = np.asarray(ImageB).T
@@ -731,6 +738,7 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 		if goodPercent > goodPercentBest:
 			HBest = H
 			goodPercentBest = goodPercent
+			fewPointsIdxBest = fewPointsIdx
 		if goodPercent > 0.8:
 			break
 		K += 1
@@ -744,24 +752,24 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 	HInv = np.linalg.inv(HBest)
 	im_desc = cv2.warpPerspective(img2, HInv, (height, width))
 	im_desc2 = cv2.warpPerspective(img1, HBest, (height2, width2))
-	im_rec = cv2.cvtColor(im_desc, cv2.COLOR_BGR2GRAY)
-	im_rec2 = cv2.cvtColor(im_desc2, cv2.COLOR_BGR2GRAY)
 
 	plt.figure(2)
-	plt.subplot(2,2,1), plt.imshow(img1)
-	plt.scatter(ImageA[:,0], ImageA[:,1], color='b', marker='+')
-	plt.subplot(2,2,2), plt.imshow(img2)
-	plt.scatter(points_estimated_all[:,0], points_estimated_all[:,1], color='r')
-	plt.scatter(ImageB[:,0], ImageB[:,1], color='b', marker='+')
-	plt.subplot(2,2,3), plt.imshow(im_desc)
-	plt.subplot(2,2,4), plt.imshow(im_desc2)
+	plt.subplot(2,2,1), plt.imshow(img1, cmap='gray')
+	plt.scatter(ImageA[:,0], ImageA[:,1], color='b', marker='+', s=40)
+	plt.scatter(ImageA[fewPointsIdxBest,0], ImageA[fewPointsIdxBest,1], color='y', marker='*', s=40)
+	plt.subplot(2,2,2), plt.imshow(img2, cmap='gray')
+	plt.scatter(points_estimated_all[:,0], points_estimated_all[:,1], color='r', marker='o')
+	plt.scatter(ImageB[:,0], ImageB[:,1], color='b', marker='+', s=40)
+	plt.scatter(ImageB[fewPointsIdxBest,0], ImageB[fewPointsIdxBest,1], color='y', marker='*', s=40)
+	plt.subplot(2,2,3), plt.imshow(im_desc, cmap='gray')
+	plt.subplot(2,2,4), plt.imshow(im_desc2, cmap='gray')
 
-	return ImageAfew, ImageBfew, H, Homography_accuracy, im_rec, im_rec2
+	return ImageAfew, ImageBfew, H, Homography_accuracy, im_desc, im_desc2
 
 def findFundamental(Image1, Image2, ImageA, ImageB):
 
-	img1 = cv2.imread('Photos/' + Image1)
-	img2 = cv2.imread('Photos/' + Image2)
+	img1 = cv2.imread('Photos/' + Image1,0)
+	img2 = cv2.imread('Photos/' + Image2,0)
 	img1 = np.asarray(img1)
 	img2 = np.asarray(img2)
 	ImageA = np.asarray(ImageA)
@@ -868,10 +876,10 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		Epipolar_y = (-Epipolar[2] - Epipolar[0]*Epipolar_x)/Epipolar[1]
 
 		# Plotting epipolar lines onto images
-		plt.subplot(1,2,1), plt.plot(ImageA[i,0], ImageA[i,1], '+', color=colors[j])
+		plt.subplot(1,2,1), plt.plot(ImageA[i,0], ImageA[i,1], 'o', markersize=6, color=colors[j])
 		plt.plot(epipole_x, epipole_y, color=colors[j])
 		plt.axis([0, shape[1], shape[0], 0])
-		plt.subplot(1,2,2), plt.plot(ImageB[i,0], ImageB[i,1], '+', color=colors[j])
+		plt.subplot(1,2,2), plt.plot(ImageB[i,0], ImageB[i,1], 'o', markersize=6, color=colors[j])
 		plt.plot(Epipolar_x, Epipolar_y, color=colors[j])
 		plt.axis([0, shape[1], shape[0], 0])
 
