@@ -257,7 +257,7 @@ def FASTdetector(image, radius, S, threshold):
 			consecLT = getConsec(LTmatrix)
 			if consecGT > S or consecLT > S:
 				cornerPoints.append([i, j])
-	print(len(N))
+
 	cornerPoints = np.asarray(cornerPoints)
 	cornerPointsX = cornerPoints[:][:,1]
 	cornerPointsY = cornerPoints[:][:,0]
@@ -521,7 +521,6 @@ def hog(img, Ix, Iy, Points, buff, plot):
 	
 	# Compute the orientation of the gradient
 	endX, endY = Ix.shape
-	print(endX, endY)
 	gradOrientation = np.zeros((endX,endY))
 	for i in range(endX):
 		for j in range(endY):
@@ -547,23 +546,16 @@ def hog(img, Ix, Iy, Points, buff, plot):
 	histOrientGrad = np.zeros((len(Points[0]),nbBin))
 	lengthA = (buff-1)//2
 	lengthB = (buff+1)//2
-	print(len(Points[0]))
 
 	for i in range(len(Points[0])):
 	# 1 - Extract the buff x buff submatrix of magnitude and orientation
 		boxMagn = gradMagnitude[Points[1][i]-lengthA:Points[1][i]+lengthB][:,Points[0][i]-lengthA:Points[0][i]+lengthB]
 		boxOrient = gradOrientation[Points[1][i]-lengthA:Points[1][i]+lengthB][:,Points[0][i]-lengthA:Points[0][i]+lengthB]
-		print(boxMagn.shape, boxOrient.shape)
 	# 2 - Compute the nbBin histogram for the buff x buff submatrix (0: 0, 1:1*sizeBin, ...)
 		for j in range(buff):
 			for k in range(buff):
 				# Save the magnitude and orientation of each point in the buff x buff submatrix
-				try:
-					magn = boxMagn[j][k]
-				except:
-					print(Points[0][i])
-					print(Points[1][i])
-
+				magn = boxMagn[j][k]
 				orient = boxOrient[j][k]
 				# Find the corresponding indices in the histogram for the point orientation
 				idxMin = np.mod(int(orient/(rad(sizeBin)) + nbBin/2), nbBin)
@@ -790,7 +782,6 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 
 		resTot = int(0)
 
-		print(len(ImageA))
 		fewPointsIdx = np.random.choice(len(ImageA), 8, 0)
 		ImageAfew = ImageA[fewPointsIdx,:]
 		ImageBfew = ImageB[fewPointsIdx,:]
@@ -907,6 +898,7 @@ def dispMap(Image1, Image2, windowSize):
 	# Initialisation
 	halfWS = int((windowSize-1)/2)
 	disparityMap = np.zeros(img1.shape)
+	depthMap = np.zeros(img1.shape)
 	height, width = img1.shape
 	disparityRange = 50 #int(min(width, height)/10)
 
@@ -937,13 +929,17 @@ def dispMap(Image1, Image2, windowSize):
 
 			if bestMatchIdx == 0 or bestMatchIdx == numBlocks - 1:
 				disparityMap[i,j] = bestMatchIdx + minD
+				if disparityMap[i,j] != 0:
+					depthMap[i,j] = 1/disparityMap[i,j]
 			else:
 				C1 = blockDiffs[bestMatchIdx-1]
 				C2 = bestMatchDisp
 				C3 = blockDiffs[bestMatchIdx+1]
 				disparityMap[i,j] = bestMatchIdx + minD - 0.5*(C3-C1)/(C1-2*C2+C3)
+				if disparityMap[i,j] != 0:
+					depthMap[i,j] = 1/disparityMap[i,j]
 			del blockDiffs
-	return disparityMap
+	return disparityMap, depthMap
 
 
 # ------------------------- Others --------------------------------

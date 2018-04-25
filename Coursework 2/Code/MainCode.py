@@ -30,7 +30,7 @@ ImplementedOrToolBox = 'Implemented' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
 allDesc = []
-test = Test_images
+test = Tsukuba
 
 #FAST Parameters
 FAST_radius = 2
@@ -62,11 +62,12 @@ indexNN, corrBasePoints, corrTestPoints = knn(descriptorType, allIntensity, allD
 
 ImageAgood, ImageBgood, H, acc_homog, im_rec, im_rec2 = findHomography(test[0], test[1], corrBasePoints, corrTestPoints, 4)
 
-# disparityMap = dispMap(test[0], im_rec, 7)
-# # disparityMap = cv2.applyColorMap(disparityMap, cv2.COLORMAP_JET)
-# plt.figure(6)
-# plt.imshow(disparityMap, interpolation='nearest')
-# # plt.colorbar()
+disparityMap, depth = dispMap(test[0], im_rec, 7)
+# disparityMap = cv2.applyColorMap(disparityMap, cv2.COLORMAP_JET)
+plt.figure(6)
+plt.subplot(121), plt.imshow(disparityMap, interpolation='nearest')
+plt.subplot(122), plt.imshow(255*depth, interpolation='nearest')
+# plt.colorbar()
 
 acc_fund = findFundamental(test[0], im_rec, corrBasePoints, corrTestPoints)
 

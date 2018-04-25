@@ -21,6 +21,7 @@ def dispMap(Image1, Image2, windowSize):
 	img1 = np.asarray(img1)
 	Ix1, Iy1 = derivatives(img1, shift, 0)
 	img1 = Iy1*Ix1
+
 	img2 = cv2.imread('Photos/' + Image2,0)
 	img2 = np.asarray(img2)
 	Ix2, Iy2 = derivatives(img2, shift, 0)
@@ -40,7 +41,6 @@ def dispMap(Image1, Image2, windowSize):
 			minW = max(0, j-halfWS)
 			maxW = min(width, j+halfWS)
 			minD = max(-disparityRange, -minW)
-			# minD = 0
 			maxD = min(disparityRange, width - maxW)
 			# Select the reference block from img1
 			# template = img1[minW:maxW, minH:maxH]
@@ -67,9 +67,11 @@ def dispMap(Image1, Image2, windowSize):
 			del blockDiffs
 	return disparityMap
 
-resultat = dispMap('Tsukuba1.jpg', 'Tsukuba2.jpg', 7)
-resultat = resultat.astype("float")
-print(resultat)
+disp = dispMap('left.png', 'right.png', 3)
+# resultat = resultat.astype("float")
+print(disp)
+print(depth)
 plt.figure()
-plt.imshow(resultat, interpolation='nearest', cmap='gray')
+plt.subplot(211), plt.imshow(disp, interpolation='nearest', cmap='gray')
+# plt.subplot(212), plt.imshow(depth, interpolation='nearest', cmap='gray')
 plt.show()
