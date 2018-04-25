@@ -25,7 +25,7 @@ Map = (['map1.jpg','map2.jpg','map3.jpg','map4.jpg'])
 
 findPoints = 'Auto' #'Auto' or 'Manual' 
 descriptorType = 'RGB' #'RGB' or 'HOG'
-cornerDetectionType = 'Harris' #'FAST' or 'Harris'
+cornerDetectionType = 'Harris' #'FAST' or 'Harris' or 'ST'
 ImplementedOrToolBox = 'Implemented' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
@@ -63,9 +63,8 @@ indexNN, corrBasePoints, corrTestPoints = knn(descriptorType, allIntensity, allD
 ImageAgood, ImageBgood, H, acc_homog, im_rec, im_rec2 = findHomography(test[0], test[1], corrBasePoints, corrTestPoints, 4)
 
 disparityMap = dispMap(test[0], im_rec, 7)
-dispplot, ax = plt.figure(6)
-disparityplot = ax.imshow(disparityMap, interpolation='nearest', cmap='gray')
-dispplot.colorbar(disparityplot)
+plt.figure(6)
+plt.imshow(disparityMap, interpolation='nearest', cmap='gray')
 
 acc_fund = findFundamental(test[0], test[1], corrBasePoints, corrTestPoints)
 

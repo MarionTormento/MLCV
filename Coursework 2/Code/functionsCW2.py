@@ -71,7 +71,7 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 		for j in [blue, green, red]:
 			Ix, Iy = derivatives(j, shift, 0)
 			desccol = hog(j, Ix, Iy, CornerPoints, windowSize, 0)
-			desc[:,36*count:36*(count+1)] = desccol
+			desc[:,18*count:18*(count+1)] = desccol
 			count += 1
 
 	return desc, intensity, CornerPoints
@@ -523,6 +523,8 @@ def hog(img, Ix, Iy, Points, buff, plot):
 	for i in range(endX):
 		for j in range(endY):
 			gradOrientation[i][j] = np.arctan2(Iy[i][j],Ix[i][j])
+			if gradOrientation[i][j] < 0:
+				gradOrientation[i][j] + np.pi
 			
 	# Plotting
 	if plot == 1:
@@ -537,8 +539,8 @@ def hog(img, Ix, Iy, Points, buff, plot):
 	# https://www.learnopencv.com/histogram-of-oriented-gradients/
 	
 	# 0 - Initialisation
-	nbBin = 36
-	sizeBin = 360/nbBin
+	nbBin = 18
+	sizeBin = 180/nbBin
 	histOrientGrad = np.zeros((len(Points[0]),nbBin))
 	lengthA = (buff-1)//2
 	lengthB = (buff+1)//2

@@ -68,6 +68,7 @@ def dispMap(Image1, Image2, windowSize):
 	return disparityMap
 
 resultat = dispMap('Tsukuba1.jpg', 'Tsukuba2.jpg', 7)
+resultat = resultat.astype("float")
 print(resultat)
 plt.figure()
 plt.imshow(resultat, interpolation='nearest', cmap='gray')
