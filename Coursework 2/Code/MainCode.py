@@ -43,7 +43,7 @@ Maxima_NN = 50 # Number of Nearest Neighbour
 Maxima_perc = 99 # Percentage of value kept by the thresholding
 
 # Gerenal Parameters
-windowSize = 17 #WARNING : Must be uneven
+windowSize = 21 #WARNING : Must be uneven
 
 for i in [0,1]:
 
@@ -62,13 +62,13 @@ indexNN, corrBasePoints, corrTestPoints = knn(descriptorType, allIntensity, allD
 
 ImageAgood, ImageBgood, H, acc_homog, im_rec, im_rec2 = findHomography(test[0], test[1], corrBasePoints, corrTestPoints, 4)
 
-disparityMap = dispMap(test[0], im_rec, 7)
-# disparityMap = cv2.applyColorMap(disparityMap, cv2.COLORMAP_JET)
-plt.figure(6)
-plt.imshow(disparityMap, interpolation='nearest')
-# plt.colorbar()
+# disparityMap = dispMap(test[0], im_rec, 7)
+# # disparityMap = cv2.applyColorMap(disparityMap, cv2.COLORMAP_JET)
+# plt.figure(6)
+# plt.imshow(disparityMap, interpolation='nearest')
+# # plt.colorbar()
 
-acc_fund = findFundamental(test[0], test[1], corrBasePoints, corrTestPoints)
+acc_fund = findFundamental(test[0], im_rec, corrBasePoints, corrTestPoints)
 
 print(acc_homog)
 print(acc_fund)
