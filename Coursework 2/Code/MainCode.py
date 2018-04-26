@@ -13,24 +13,24 @@ Tsukuba = (['Tsukuba1.jpg', 'Tsukuba2.jpg', 'Tsukuba3.jpg', 'Tsukuba4.jpg', 'Tsu
 
 Art = (['Art1.png', 'Art2.png', 'Art3.png', 'Art4.png', 'Art5.png', 'Art6.png', 'Art7.png'])
 
-NakedMan = (['IMG_1362.jpg', 'IMG_1361.jpg', 'IMG_1360.jpg'])
+NakedMan = (['img_1360.jpg', 'img_1361.jpg', 'img_1362.jpg'])
 
 Test_images = (['img1.jpg','img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg', 'img0.jpg'])
 
 Quick1 = (['chess.png', 'chess2.png', 'chess3.png'])
 Quick2 = (['chess.png', 'chess.jpg'])
-JBL = (['JBL1.jpg','JBL2.jpg','JBL3.jpg','JBL4.jpg'])
+JBL = (['jbl1.jpg','jbl2.jpg','jbl3.jpg','jbl4.jpg'])
 Map = (['map1.jpg','map2.jpg','map3.jpg','map4.jpg'])
 
 
 findPoints = 'Auto' #'Auto' or 'Manual' 
-descriptorType = 'RGB' #'RGB' or 'HOG' or 'RGBHOG'
-cornerDetectionType = 'ST' #'FAST' or 'Harris' or 'ST'
+descriptorType = 'HOG' #'RGB' or 'HOG' or 'RGBHOG'
+cornerDetectionType = 'Harris' #'FAST' or 'Harris' or 'ST'
 ImplementedOrToolBox = 'ToolBox' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
 allDesc = []
-test = Map
+test = NakedMan
 
 #FAST Parameters
 FAST_radius = 3
