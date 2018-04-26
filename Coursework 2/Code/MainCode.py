@@ -24,20 +24,22 @@ Map = (['map1.jpg','map2.jpg','map3.jpg','map4.jpg'])
 
 compRoom = (['comproom.jpg', 'comproom1.jpg'])
 
+livingRoom = (['LivingRoom1.jpg', 'LivingRoom2.jpg'])
+
 
 findPoints = 'Auto' #'Auto' or 'Manual' 
 descriptorType = 'RGB' #'RGB' or 'HOG' or 'RGBHOG'
-cornerDetectionType = 'FAST' #'FAST' or 'Harris' or 'ST'
-ImplementedOrToolBox = 'Implemented' #'Implemented' or 'ToolBox'
+cornerDetectionType = 'Harris' #'FAST' or 'Harris' or 'ST'
+ImplementedOrToolBox = 'ToolBox' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
 allDesc = []
-test = Tsukuba
+test = livingRoom
 
 #FAST Parameters
 FAST_radius = 4
-FAST_S = 12
-FAST_threshold = 40
+FAST_S = 15
+FAST_threshold = 50
 
 #Harris/Shi-Tomasi Parameters
 alpha = 0.04
@@ -84,7 +86,7 @@ K = np.array([[f, 0, ]])
 
 # stereoRectification(test[0], test[1], corrBasePoints, corrTestPoints, T, R, f)
 
-disparityMap, depthMap = dispMap(test[0], im_rec, 15)
+disparityMap, depthMap = dispMap(test[0], im_rec, 5)
 # disparityMap = cv2.applyColorMap(disparityMap, cv2.COLORMAP_JET)
 plt.figure(6)
 plt.subplot(121), plt.imshow(disparityMap, interpolation='nearest')

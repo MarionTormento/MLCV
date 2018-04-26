@@ -234,8 +234,8 @@ def FASTdetector(image, radius, S, threshold):
 
 	cornerPoints = []
 
-	for i in wide[::40]:
-		for j in high[::40]:
+	for i in wide[::1]:
+		for j in high[::1]:
 			testpoints = []
 			pixelI = image[i][j]
 			N = get_circle([i,j],radius)
@@ -248,18 +248,21 @@ def FASTdetector(image, radius, S, threshold):
 			sortedIdx = np.argsort(angles)
 			N = N[sortedIdx]
 			zN = list(zip(*N))
-			testpoints.append((zN[0][0], zN[1][0]))
-			testpoints.append((zN[0][5], zN[1][5]))
-			testpoints.append((zN[0][10], zN[1][10]))
-			testpoints.append((zN[0][15], zN[1][15]))
-			print(testpoints)
-			print(image[np.asarray(testpoints)])
-			break
-			if (image[zN[0][0], zN[1][0]] > pixelI - threshold and image[zN[0][0], zN[1][0]] < pixelI + threshold):
-				if (image[zN[0][10], zN[1][10]] > pixelI - threshold and image[zN[0][10], zN[1][10]] < pixelI + threshold):
-					break
-			TP = np.logical_and(image[testpoints] > pixelI - threshold, image[testpoints] < pixelI - threshold)
-			
+
+			# if (pixelI + threshold > image[(zN[0][0], zN[1][0])] > pixelI - threshold and 
+			# 	pixelI + threshold > image[(zN[0][10], zN[1][10])] > pixelI - threshold):
+			# 		break
+
+			# testpoints.append((zN[0][0], zN[1][0]))
+			# testpoints.append((zN[0][5], zN[1][5]))
+			# testpoints.append((zN[0][10], zN[1][10]))
+			# testpoints.append((zN[0][15], zN[1][15]))
+			# testpoints = list(zip(*testpoints))
+			# TP = np.logical_and(image[testpoints] > pixelI - threshold, image[testpoints] < pixelI - threshold)
+			# TP = TP.astype(int)
+			# if np.sum(TP) > 2:
+			# 	break
+
 			CircleInt = image[zN]
 			greaterThan = CircleInt > pixelI + threshold
 			lessThan = CircleInt < pixelI - threshold
@@ -928,7 +931,7 @@ def dispMap(Image1, Image2, windowSize):
 	disparityMap = np.zeros(img1.shape)
 	depthMap = np.zeros(img1.shape)
 	height, width = img1.shape
-	disparityRange = 15 #int(min(width, height)/10)
+	disparityRange = 25 #int(min(width, height)/10)
 
 	# Looping
 	for i in range(height):
