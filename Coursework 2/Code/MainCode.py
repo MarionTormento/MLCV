@@ -25,7 +25,7 @@ Map = (['map1.jpg','map2.jpg','map3.jpg','map4.jpg'])
 
 findPoints = 'Auto' #'Auto' or 'Manual' 
 descriptorType = 'RGB' #'RGB' or 'HOG' or 'RGBHOG'
-cornerDetectionType = 'Harris' #'FAST' or 'Harris' or 'ST'
+cornerDetectionType = 'ST' #'FAST' or 'Harris' or 'ST'
 ImplementedOrToolBox = 'ToolBox' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
@@ -45,7 +45,7 @@ Maxima_perc = 99 # Percentage of value kept by the thresholding
 # Gerenal Parameters
 windowSize = 21 #WARNING : Must be uneven
 
-for i in [0,2]:
+for i in [0,1]:
 
 	print("New image")
 	image = test[i]
@@ -72,7 +72,7 @@ print(rotAngle)
 print('Translation = ')
 print(T)
 
-ImageAgood, ImageBgood, H, acc_homog, acc_homog_norm, im_rec = findHomography(test[0], test[2], corrBasePoints, corrTestPoints, 4)
+ImageAgood, ImageBgood, H, acc_homog, acc_homog_norm, im_rec, im_rec_points = findHomography(test[0], test[1], corrBasePoints, corrTestPoints, 4)
 
 # theta = 10*np.pi/180
 # T0 = [10*np.cos(theta), 10*np.sin(theta), 0]
@@ -90,13 +90,13 @@ ImageAgood, ImageBgood, H, acc_homog, acc_homog_norm, im_rec = findHomography(te
 # plt.imshow(disparityMap, interpolation='nearest')
 # # plt.colorbar()
  
-acc_fund, acc_fund_norm = findFundamental(test[0], test[2], corrBasePoints, corrTestPoints)
+acc_fund, acc_fund_norm = findFundamental(test[0], test[1], corrBasePoints, corrTestPoints)
 
 print('Homography Accuracy = %1.2f' % acc_homog)
 print('Normalised Homography Accuracy = %1.2f' % acc_homog_norm)
 print('Fundamental Accuracy = %1.2f' % acc_fund)
 print('Normalised Fundamental Accuracy = %1.2f' % acc_fund_norm)
 
-acc_fund = findFundamental(test[0], im_rec, corrBasePoints, corrTestPoints)
+acc_fund = findFundamental(test[0], im_rec, corrBasePoints, im_rec_points)
 
 plt.show()

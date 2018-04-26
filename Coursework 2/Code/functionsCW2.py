@@ -764,7 +764,7 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 	scaleFactor = min(width/width2, height/height2)
 	Homography_accuracy_norm = Homography_accuracy/scaleFactor
 
-	return ImageAfew, ImageBfew, H, Homography_accuracy, Homography_accuracy_norm, im_rec
+	return ImageAfew, ImageBfew, H, Homography_accuracy, Homography_accuracy_norm, im_rec, points_estimated_all.T
 
 def findFundamental(Image1, Image2, ImageA, ImageB):
 
@@ -781,6 +781,9 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 	ImageA = np.concatenate((ImageA, np.ones((len(ImageA),1))), axis=1)
 	ImageB = np.concatenate((ImageB, np.ones((len(ImageB),1))), axis=1)
 
+	print(ImageA)
+	print(ImageB)
+
 	shape = img1.shape
 	shape2 = img2.shape
 
@@ -790,7 +793,7 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 	while K < 500:
 
 		resTot = int(0)
-		fewPointsIdx = np.random.choice(len(ImageA), 15, 0)
+		fewPointsIdx = np.random.choice(len(ImageA), 20, 0)
 		ImageAfew = ImageA[fewPointsIdx,:]
 		ImageBfew = ImageB[fewPointsIdx,:]
 
