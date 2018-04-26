@@ -35,17 +35,17 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 		print("Computing Intensity derivatives")
 
 		if implemented == 'Implemented':
-			if cornerDetectionType == 'Harris':
+			if cornerDetectionType == 'Harris' or cornerDetectionType == 'TS':
 				print("Computing Harris Corner Detector")
 				Ix, Iy = derivatives(intensity, shift, 0)
 				sigma = 1.6*shift
 				GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
 				print("Identifying corners and edges")
-				CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, windowSize, 0, maxima_NN, maxima_perc)
+				CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, windowSize, 0, maxima_NN, maxima_perc, cornerDetectionType)
 
 			elif cornerDetectionType == 'FAST':
 				print("Computing 'FAST' Corner Detector")
-				Ix, Iy = derivatives(intensity, shift, 1)
+				Ix, Iy = derivatives(intensity, shift, 0)
 				CornerPoints = FASTdetector(intensity, FAST_radius, FAST_S, FAST_threshold)
 				CornerPoints = cleanSides(intensity, CornerPoints, windowSize)
 				CornerPoints = (CornerPoints[1], CornerPoints[0])
@@ -257,7 +257,6 @@ def FASTdetector(image, radius, S, threshold):
 			consecLT = getConsec(LTmatrix)
 			if consecGT > S or consecLT > S:
 				cornerPoints.append([i, j])
-
 	cornerPoints = np.asarray(cornerPoints)
 	cornerPointsX = cornerPoints[:][:,1]
 	cornerPointsY = cornerPoints[:][:,0]
@@ -338,7 +337,7 @@ def gaussian_window(Ix, Iy, sigma, shift):
 
 	return GIxx, GIyy, GIxy
 
-def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot, NN, perc):
+def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot, NN, perc, cornerDetectionType):
 
 	# Function to calculate the locations of corners (and edges) in the image
 	# Both Harris corner detection and Tomasi and Shi methods are implemented
@@ -347,17 +346,19 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot, NN, 
 	# PLOT: Location of computed interest points on the image
 
 	## Compute R
-	# Harris Corner detection method
-	# R = (GIxx)*(GIyy) - GIxy**2 - alpha*(GIxx + GIyy)**2
-	R = (GIxx*GIyy - GIxy**2)/(GIxx+GIyy+2**(-52))
-	# Tomasi and Shi method
-	# R = np.zeros(GIxx.shape)
-	# endX, endY = GIxx.shape
-	# for i in range(endX):
-	# 	for j in range(endY):
-	# 		M = np.array([[GIxx[i][j], GIxy[i][j]],[GIxy[i][j], GIyy[i][j]]])
-	# 		eigVals = np.linalg.eigh(M)
-	# 		R[i][j]  = np.amin(eigVals[0])
+	if cornerDetectionType == "Harris":
+		# Harris Corner detection method
+		# R = (GIxx)*(GIyy) - GIxy**2 - alpha*(GIxx + GIyy)**2
+		R = (GIxx*GIyy - GIxy**2)/(GIxx+GIyy+2**(-52))
+	elif cornerDetectionType == "TS":
+		# Tomasi and Shi method
+		R = np.zeros(GIxx.shape)
+		endX, endY = GIxx.shape
+		for i in range(endX):
+			for j in range(endY):
+				M = np.array([[GIxx[i][j], GIxy[i][j]],[GIxy[i][j], GIyy[i][j]]])
+				eigVals = np.linalg.eigh(M)
+				R[i][j]  = np.amin(eigVals[0])
 
 	# Based on each pixels value of R, determine if it is a corner or an edge
 	# or neither. 
@@ -546,7 +547,7 @@ def hog(img, Ix, Iy, Points, buff, plot):
 	histOrientGrad = np.zeros((len(Points[0]),nbBin))
 	lengthA = (buff-1)//2
 	lengthB = (buff+1)//2
-
+	
 	for i in range(len(Points[0])):
 	# 1 - Extract the buff x buff submatrix of magnitude and orientation
 		boxMagn = gradMagnitude[Points[1][i]-lengthA:Points[1][i]+lengthB][:,Points[0][i]-lengthA:Points[0][i]+lengthB]
@@ -626,7 +627,7 @@ def knn(typeMat, img, mat, point, base, test, plot):
 	interestPointsTest = [[],[]]
 	interestPointsBase = [[],[]]
 
-	for i in range(len(pointBase[0])):
+	for i in range(len(pointBase[0])): #range(30):
 		# Looking for the index of the nearest neigbour (= minimal distance)
 		index = np.where(distanceNN == np.amin(distanceNN))
 		index = index[0][0]
@@ -760,29 +761,36 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 	plt.subplot(2,2,3), plt.imshow(im_desc, cmap='gray')
 	plt.subplot(2,2,4), plt.imshow(im_desc2, cmap='gray')
 
-	return ImageAfew, ImageBfew, H, Homography_accuracy, im_rec, im_rec2
+	scaleFactor = min(width/width2, height/height2)
+	Homography_accuracy_norm = Homography_accuracy/scaleFactor
+
+	return ImageAfew, ImageBfew, H, Homography_accuracy, Homography_accuracy_norm, im_rec
 
 def findFundamental(Image1, Image2, ImageA, ImageB):
 
 	img1 = cv2.imread('Photos/' + Image1)
-	#img2 = cv2.imread('Photos/' + Image2)
 	img1 = np.asarray(img1)
-	#img2 = np.asarray(img2)
-	img2 = Image2
+	try:
+		img2 = cv2.imread('Photos/' + Image2)
+		img2 = np.asarray(img2)
+	except:
+		img2 = Image2.T
+
 	ImageA = np.asarray(ImageA).T
 	ImageB = np.asarray(ImageB).T
 	ImageA = np.concatenate((ImageA, np.ones((len(ImageA),1))), axis=1)
 	ImageB = np.concatenate((ImageB, np.ones((len(ImageB),1))), axis=1)
 
 	shape = img1.shape
+	shape2 = img2.shape
+
 	K = int(0)
 	fundamentalAccuracyBest = int(100000)
 
 	while K < 500:
 
 		resTot = int(0)
-
-		fewPointsIdx = np.random.choice(len(ImageA), 8, 0)
+		fewPointsIdx = np.random.choice(len(ImageA), 15, 0)
 		ImageAfew = ImageA[fewPointsIdx,:]
 		ImageBfew = ImageB[fewPointsIdx,:]
 
@@ -849,7 +857,7 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 
 		K += 1
 
-	plt.figure(3)
+	plt.figure()
 	plt.subplot(1,2,1), plt.imshow(img1)
 	plt.subplot(1,2,2), plt.imshow(img2)
 
@@ -879,7 +887,10 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		plt.plot(Epipolar_x, Epipolar_y, color=colors[j])
 		plt.axis([0, shape[1], shape[0], 0])
 
-	return fundamentalAccuracy
+	scaleFactor = min(shape[0]/shape2[0], shape[1]/shape2[1])
+	fundAccNorm = fundamentalAccuracyBest/scaleFactor
+
+	return fundamentalAccuracyBest, fundAccNorm
 
 def dispMap(Image1, Image2, windowSize):
 
@@ -898,7 +909,6 @@ def dispMap(Image1, Image2, windowSize):
 	# Initialisation
 	halfWS = int((windowSize-1)/2)
 	disparityMap = np.zeros(img1.shape)
-	depthMap = np.zeros(img1.shape)
 	height, width = img1.shape
 	disparityRange = 50 #int(min(width, height)/10)
 
@@ -929,17 +939,58 @@ def dispMap(Image1, Image2, windowSize):
 
 			if bestMatchIdx == 0 or bestMatchIdx == numBlocks - 1:
 				disparityMap[i,j] = bestMatchIdx + minD
-				if disparityMap[i,j] != 0:
-					depthMap[i,j] = 1/disparityMap[i,j]
 			else:
 				C1 = blockDiffs[bestMatchIdx-1]
 				C2 = bestMatchDisp
 				C3 = blockDiffs[bestMatchIdx+1]
 				disparityMap[i,j] = bestMatchIdx + minD - 0.5*(C3-C1)/(C1-2*C2+C3)
-				if disparityMap[i,j] != 0:
-					depthMap[i,j] = 1/disparityMap[i,j]
 			del blockDiffs
-	return disparityMap, depthMap
+	return disparityMap
+
+def stereoRectification(Image1, Image2, ImageA, ImageB, T0, R, f):
+	img1 = cv2.imread('Photos/' + Image1,0)
+	img1 = np.asarray(img1)
+	width, height = img1.shape
+	img2 = cv2.imread('Photos/' + Image2,0)
+	img2 = np.asarray(img2)
+	width2, height2 = img2.shape
+
+	# Step 1
+	e1 = T0/np.linalg.norm(T0)
+	t2 = -T0[1], T0[0], T0[2]
+	t2 = np.asarray([t2])
+	t2 = t2.T
+	e2 = 1/np.linalg.norm(T0)*t2
+	e2 = e2[0]
+	e3 = np.cross(e1.T, e2.T).T
+	Rrect = np.concatenate((np.concatenate((e1.T, e2.T), axis=0), e3.T), axis=0)
+
+	# Step 2
+	Rleft = Rrect
+	Rright = np.dot(R,Rrect)
+
+	# Step 3
+	ImageA = np.asarray(ImageA).T
+	ImageA = np.concatenate((ImageA, f*np.ones((len(ImageA),1))), axis = 1).T
+	ImageB = np.asarray(ImageB).T
+	ImageB = np.concatenate((ImageB, f*np.ones((len(ImageB),1))), axis = 1).T
+	points_estimatedA = np.dot(Rleft,ImageA)
+	points_estimatedA = f/points_estimatedA[2]*points_estimatedA
+	points_estimatedB = np.dot(Rright,ImageB)
+	points_estimatedB = f/points_estimatedB[2]*points_estimatedB
+
+	im_desc = cv2.warpPerspective(img2, Rright, (height, width))
+	im_desc2 = cv2.warpPerspective(img1, Rleft, (height2, width2))
+	print(ImageA[0,:])
+	plt.figure(1)
+	plt.subplot(2,2,1), plt.imshow(img1, cmap='gray')
+	plt.scatter(ImageA[0,:], ImageA[1,:], color='b', marker='+', s=40)
+	plt.subplot(2,2,3), plt.imshow(im_desc, cmap='gray')
+	plt.scatter(points_estimatedB[0,:],points_estimatedB[1,:], color='r', marker='o', s=40 )
+	plt.subplot(2,2,2), plt.imshow(img2, cmap='gray')
+	plt.scatter(ImageB[0,:], ImageB[1,:], color='b', marker='+', s=40)
+	plt.subplot(2,2,4), plt.imshow(im_desc2, cmap='gray')
+	plt.scatter(points_estimatedA[0,:],points_estimatedA[1,:], color='r', marker='o', s=40 )
 
 
 # ------------------------- Others --------------------------------
@@ -957,3 +1008,48 @@ def second_smallest(numbers):
         elif x < m2:
             m2 = x
     return m2
+
+def rigid_transform_3D(A, B):
+
+	A = np.asarray(A).T
+	B = np.asarray(B).T
+	A = np.concatenate((A, np.ones((len(A),1))), axis=1)
+	B = np.concatenate((B, np.ones((len(B),1))), axis=1)
+
+	A = A[1:5,:]
+	B = B[1:5,:]
+
+	print(A,B)
+
+	assert len(A) == len(B)
+
+	N = A.shape[0]; # total points
+
+	centroid_A = np.mean(A, axis=0)
+	centroid_B = np.mean(B, axis=0)
+
+	# centre the points
+	AA = A - np.tile(centroid_A, (N, 1))
+	BB = B - np.tile(centroid_B, (N, 1))
+
+	# dot is matrix multiplication for array
+	H = np.dot(np.transpose(AA), BB)
+
+	U, S, Vt = np.linalg.svd(H)
+
+	R = np.dot(Vt.T,U.T)
+
+	# special reflection case
+	if np.linalg.det(R) < 0:
+		Vt[-1,:] *= -1
+		R = np.dot(Vt.T,U.T)
+
+	print('Rotation = ')
+	print(R)
+
+	t = -np.dot(R,centroid_A.T) + centroid_B.T
+
+	print('Translation = ')
+	print(t)
+
+	return R, t

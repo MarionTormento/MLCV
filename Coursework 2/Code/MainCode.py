@@ -24,18 +24,18 @@ Map = (['map1.jpg','map2.jpg','map3.jpg','map4.jpg'])
 
 
 findPoints = 'Auto' #'Auto' or 'Manual' 
-descriptorType = 'RGB' #'RGB' or 'HOG'
+descriptorType = 'RGB' #'RGB' or 'HOG' or 'RGBHOG'
 cornerDetectionType = 'Harris' #'FAST' or 'Harris' or 'ST'
-ImplementedOrToolBox = 'Implemented' #'Implemented' or 'ToolBox'
+ImplementedOrToolBox = 'ToolBox' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
 allDesc = []
-test = Tsukuba
+test = Map
 
 #FAST Parameters
-FAST_radius = 2
-FAST_S = 5
-FAST_threshold = 50
+FAST_radius = 3
+FAST_S = 9
+FAST_threshold = 40
 
 #Harris/Shi-Tomasi Parameters
 alpha = 0.04
@@ -60,18 +60,39 @@ for i in [0,1]:
 print("Looking for matching descriptors")
 indexNN, corrBasePoints, corrTestPoints = knn(descriptorType, allIntensity, allDesc, allPoints, 0, 1, 1)
 
-ImageAgood, ImageBgood, H, acc_homog, im_rec, im_rec2 = findHomography(test[0], test[1], corrBasePoints, corrTestPoints, 4)
+R, T = rigid_transform_3D(corrBasePoints, corrBasePoints)
 
-disparityMap, depth = dispMap(test[0], im_rec, 7)
-# disparityMap = cv2.applyColorMap(disparityMap, cv2.COLORMAP_JET)
-plt.figure(6)
-plt.subplot(121), plt.imshow(disparityMap, interpolation='nearest')
-plt.subplot(122), plt.imshow(255*depth, interpolation='nearest')
-# plt.colorbar()
+print('Rotation = ')
+print(R)
+
+print('Translation = ')
+print(T)
+
+ImageAgood, ImageBgood, H, acc_homog, acc_homog_norm, im_rec = findHomography(test[0], test[1], corrBasePoints, corrTestPoints, 4)
+
+# theta = 10*np.pi/180
+# T0 = [10*np.cos(theta), 10*np.sin(theta), 0]
+# T0 = np.asarray([T0])
+# T0 = T0.T
+# R = [[np.cos(theta), -np.sin(theta), 0],
+# 	[np.sin(theta), np.cos(theta), 0],
+# 	[0, 0, 1]]
+# f = 20
+# stereoRectification(test[0], test[1], corrBasePoints, corrTestPoints, T0, R, f)
+
+# disparityMap = dispMap(test[0], im_rec, 7)
+# # disparityMap = cv2.applyColorMap(disparityMap, cv2.COLORMAP_JET)
+# plt.figure(6)
+# plt.imshow(disparityMap, interpolation='nearest')
+# # plt.colorbar()
+ 
+acc_fund, acc_fund_norm = findFundamental(test[0], test[1], corrBasePoints, corrTestPoints)
+
+print('Homography Accuracy = %1.2f' % acc_homog)
+print('Normalised Homography Accuracy = %1.2f' % acc_homog_norm)
+print('Fundamental Accuracy = %1.2f' % acc_fund)
+print('Normalised Fundamental Accuracy = %1.2f' % acc_fund_norm)
 
 acc_fund = findFundamental(test[0], im_rec, corrBasePoints, corrTestPoints)
-
-print(acc_homog)
-print(acc_fund)
 
 plt.show()

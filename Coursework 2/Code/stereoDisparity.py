@@ -13,7 +13,7 @@ from math import atan2
 from itertools import groupby
 from functionsCW2 import *
 
-def dispMap(Image1, Image2, windowSize):
+def dispMap(Image1, Image2):
 
 	shift = 8
 	# Load images in grayscale
@@ -28,6 +28,10 @@ def dispMap(Image1, Image2, windowSize):
 	img2 = Iy2*Ix2
 
 	# Initialisation
+	windowSize = int(min(img1.shape)/20)
+	if np.mod(windowSize,2) == 0:
+		windowSize += 1
+	print(windowSize)
 	halfWS = int((windowSize-1)/2)
 	disparityMap = np.zeros(img1.shape)
 	height, width = img1.shape
@@ -67,10 +71,10 @@ def dispMap(Image1, Image2, windowSize):
 			del blockDiffs
 	return disparityMap
 
-disp = dispMap('left.png', 'right.png', 3)
+disp = dispMap('left.png', 'right.png')
 # resultat = resultat.astype("float")
 print(disp)
-print(depth)
+# print(depth)
 plt.figure()
 plt.subplot(211), plt.imshow(disp, interpolation='nearest', cmap='gray')
 # plt.subplot(212), plt.imshow(depth, interpolation='nearest', cmap='gray')
