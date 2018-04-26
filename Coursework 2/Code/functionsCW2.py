@@ -35,7 +35,7 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 		print("Computing Intensity derivatives")
 
 		if implemented == 'Implemented':
-			if cornerDetectionType == 'Harris' or cornerDetectionType == 'TS':
+			if cornerDetectionType == 'Harris' or cornerDetectionType == 'ST':
 				print("Computing Harris Corner Detector")
 				Ix, Iy = derivatives(intensity, shift, 0)
 				sigma = 1.6*shift
@@ -54,6 +54,7 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 			Ix, Iy = derivatives(intensity, shift, 0)
 			CornerPoints = CornerTB(image, cornerDetectionType, alpha)
 			CornerPoints = cleanSides(intensity, CornerPoints, windowSize)
+			CornerPoints = (CornerPoints[1], CornerPoints[0])
 
 	if descriptorType == 'RGB':
 		print("Computing RGB descriptor")
@@ -100,7 +101,7 @@ def CornerTB(image, type, alpha):
 	cornerPointsY1 = np.asarray(corners[:,:,1])
 	cornerPointsX = np.asarray(cornerPointsX1[:,0])
 	cornerPointsY = np.asarray(cornerPointsY1[:,0])
-	CornerPoints = (cornerPointsX, cornerPointsY)
+	CornerPoints = (cornerPointsY, cornerPointsX)
 
 	for i in corners:
 	    x,y = i.ravel()
@@ -260,7 +261,7 @@ def FASTdetector(image, radius, S, threshold):
 	cornerPoints = np.asarray(cornerPoints)
 	cornerPointsX = cornerPoints[:][:,1]
 	cornerPointsY = cornerPoints[:][:,0]
-	CornerPoints = (np.asarray(cornerPointsY), np.asarray(cornerPointsX))
+	CornerPoints = (np.asarray(cornerPointsX), np.asarray(cornerPointsY))
 
 	plt.figure()
 	plt.imshow(image, cmap='gray')
@@ -350,7 +351,7 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot, NN, 
 		# Harris Corner detection method
 		# R = (GIxx)*(GIyy) - GIxy**2 - alpha*(GIxx + GIyy)**2
 		R = (GIxx*GIyy - GIxy**2)/(GIxx+GIyy+2**(-52))
-	elif cornerDetectionType == "TS":
+	elif cornerDetectionType == "ST":
 		# Tomasi and Shi method
 		R = np.zeros(GIxx.shape)
 		endX, endY = GIxx.shape
@@ -695,7 +696,7 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 
 	while K < 500:
 
-		fewPointsIdx = np.random.choice(len(ImageA), 4, 0)
+		fewPointsIdx = np.random.choice(len(ImageA), selection, 0)
 		ImageAfew = ImageA[fewPointsIdx,:]
 		ImageBfew = ImageB[fewPointsIdx,:]
 
@@ -912,8 +913,9 @@ def dispMap(Image1, Image2, windowSize):
 	# Initialisation
 	halfWS = int((windowSize-1)/2)
 	disparityMap = np.zeros(img1.shape)
+	depthMap = np.zeros(img1.shape)
 	height, width = img1.shape
-	disparityRange = 50 #int(min(width, height)/10)
+	disparityRange = 15 #int(min(width, height)/10)
 
 	# Looping
 	for i in range(height):
@@ -942,13 +944,17 @@ def dispMap(Image1, Image2, windowSize):
 
 			if bestMatchIdx == 0 or bestMatchIdx == numBlocks - 1:
 				disparityMap[i,j] = bestMatchIdx + minD
+				if disparityMap[i,j] != 0:
+					depthMap[i,j] = 1000/disparityMap[i,j]
 			else:
 				C1 = blockDiffs[bestMatchIdx-1]
 				C2 = bestMatchDisp
 				C3 = blockDiffs[bestMatchIdx+1]
 				disparityMap[i,j] = bestMatchIdx + minD - 0.5*(C3-C1)/(C1-2*C2+C3)
+				if disparityMap[i,j] != 0:
+					depthMap[i,j] = 1000/disparityMap[i,j]
 			del blockDiffs
-	return disparityMap
+	return disparityMap, depthMap
 
 def stereoRectification(Image1, Image2, ImageA, ImageB, T0, R, f):
 	img1 = cv2.imread('Photos/' + Image1,0)
@@ -984,14 +990,18 @@ def stereoRectification(Image1, Image2, ImageA, ImageB, T0, R, f):
 
 	im_desc = cv2.warpPerspective(img2, Rright, (height, width))
 	im_desc2 = cv2.warpPerspective(img1, Rleft, (height2, width2))
-	print(ImageA[0,:])
+	# im_rec = cv2.cvtColor(im_desc, cv2.COLOR_BGR2GRAY)
+	# im_rec2 = cv2.cvtColor(im_desc2, cv2.COLOR_BGR2GRAY)
+
 	plt.figure(1)
 	plt.subplot(2,2,1), plt.imshow(img1, cmap='gray')
 	plt.scatter(ImageA[0,:], ImageA[1,:], color='b', marker='+', s=40)
+	# plt.scatter(points_estimatedB[0,:],points_estimatedB[1,:], color='r', marker='o', s=40 )
 	plt.subplot(2,2,3), plt.imshow(im_desc, cmap='gray')
 	plt.scatter(points_estimatedB[0,:],points_estimatedB[1,:], color='r', marker='o', s=40 )
 	plt.subplot(2,2,2), plt.imshow(img2, cmap='gray')
 	plt.scatter(ImageB[0,:], ImageB[1,:], color='b', marker='+', s=40)
+	# plt.scatter(points_estimatedA[0,:],points_estimatedA[1,:], color='r', marker='o', s=40 )
 	plt.subplot(2,2,4), plt.imshow(im_desc2, cmap='gray')
 	plt.scatter(points_estimatedA[0,:],points_estimatedA[1,:], color='r', marker='o', s=40 )
 
