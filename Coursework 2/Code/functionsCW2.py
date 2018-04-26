@@ -234,8 +234,9 @@ def FASTdetector(image, radius, S, threshold):
 
 	cornerPoints = []
 
-	for i in wide[::1]:
-		for j in high[::1]:
+	for i in wide[::40]:
+		for j in high[::40]:
+			testpoints = []
 			pixelI = image[i][j]
 			N = get_circle([i,j],radius)
 			N = list(set(N))
@@ -247,6 +248,18 @@ def FASTdetector(image, radius, S, threshold):
 			sortedIdx = np.argsort(angles)
 			N = N[sortedIdx]
 			zN = list(zip(*N))
+			testpoints.append((zN[0][0], zN[1][0]))
+			testpoints.append((zN[0][5], zN[1][5]))
+			testpoints.append((zN[0][10], zN[1][10]))
+			testpoints.append((zN[0][15], zN[1][15]))
+			print(testpoints)
+			print(image[np.asarray(testpoints)])
+			break
+			if (image[zN[0][0], zN[1][0]] > pixelI - threshold and image[zN[0][0], zN[1][0]] < pixelI + threshold):
+				if (image[zN[0][10], zN[1][10]] > pixelI - threshold and image[zN[0][10], zN[1][10]] < pixelI + threshold):
+					break
+			TP = np.logical_and(image[testpoints] > pixelI - threshold, image[testpoints] < pixelI - threshold)
+			
 			CircleInt = image[zN]
 			greaterThan = CircleInt > pixelI + threshold
 			lessThan = CircleInt < pixelI - threshold
@@ -262,6 +275,9 @@ def FASTdetector(image, radius, S, threshold):
 	cornerPointsX = cornerPoints[:][:,1]
 	cornerPointsY = cornerPoints[:][:,0]
 	CornerPoints = (np.asarray(cornerPointsX), np.asarray(cornerPointsY))
+
+	print(len(N))
+	print(N)
 
 	plt.figure()
 	plt.imshow(image, cmap='gray')
@@ -782,9 +798,6 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 	ImageA = np.concatenate((ImageA, np.ones((len(ImageA),1))), axis=1)
 	ImageB = np.concatenate((ImageB, np.ones((len(ImageB),1))), axis=1)
 
-	print(ImageA)
-	print(ImageB)
-
 	shape = img1.shape
 	shape2 = img2.shape
 
@@ -951,12 +964,21 @@ def dispMap(Image1, Image2, windowSize):
 				C2 = bestMatchDisp
 				C3 = blockDiffs[bestMatchIdx+1]
 				disparityMap[i,j] = bestMatchIdx + minD - 0.5*(C3-C1)/(C1-2*C2+C3)
-				if disparityMap[i,j] != 0:
-					depthMap[i,j] = 1000/disparityMap[i,j]
+				depthMap[i,j] = 1/(disparityMap[i,j] + 2**(-52))
 			del blockDiffs
+
+	# for i in range(height):
+	# 	for j in range(width):
+	# 		disparityMap = - np.amin(disparityMap) + disparityMap*255/(np.amax(depthMap) - np.amin(depthMap))
+	# 		depthMap[i,j] = 1/(disparityMap[i,j] + 2**(-52))
+
+	print(np.amin(disparityMap), np.amax(disparityMap))	
+	print(depthMap)
+	print(np.amin(depthMap), np.amax(depthMap))
 	return disparityMap, depthMap
 
 def stereoRectification(Image1, Image2, ImageA, ImageB, T0, R, f):
+
 	img1 = cv2.imread('Photos/' + Image1,0)
 	img1 = np.asarray(img1)
 	width, height = img1.shape
@@ -966,17 +988,18 @@ def stereoRectification(Image1, Image2, ImageA, ImageB, T0, R, f):
 
 	# Step 1
 	e1 = T0/np.linalg.norm(T0)
-	t2 = -T0[1], T0[0], T0[2]
+	print(e1)
+	t2 = [-T0[1], T0[0], T0[2]]
 	t2 = np.asarray([t2])
 	t2 = t2.T
 	e2 = 1/np.linalg.norm(T0)*t2
 	e2 = e2[0]
 	e3 = np.cross(e1.T, e2.T).T
 	Rrect = np.concatenate((np.concatenate((e1.T, e2.T), axis=0), e3.T), axis=0)
-
+	
 	# Step 2
 	Rleft = Rrect
-	Rright = np.dot(R,Rrect)
+	Rright = np.dot(R,Rrect).T
 
 	# Step 3
 	ImageA = np.asarray(ImageA).T
@@ -990,10 +1013,12 @@ def stereoRectification(Image1, Image2, ImageA, ImageB, T0, R, f):
 
 	im_desc = cv2.warpPerspective(img2, Rright, (height, width))
 	im_desc2 = cv2.warpPerspective(img1, Rleft, (height2, width2))
-	# im_rec = cv2.cvtColor(im_desc, cv2.COLOR_BGR2GRAY)
-	# im_rec2 = cv2.cvtColor(im_desc2, cv2.COLOR_BGR2GRAY)
 
-	plt.figure(1)
+	plt.figure(11)
+	plt.subplot(211), plt.imshow(im_desc)
+	plt.subplot(212), plt.imshow(im_desc2)
+
+	plt.figure(12)
 	plt.subplot(2,2,1), plt.imshow(img1, cmap='gray')
 	plt.scatter(ImageA[0,:], ImageA[1,:], color='b', marker='+', s=40)
 	# plt.scatter(points_estimatedB[0,:],points_estimatedB[1,:], color='r', marker='o', s=40 )
@@ -1032,8 +1057,6 @@ def rigid_transform_3D(A, B):
 	A = A[1:5,:]
 	B = B[1:5,:]
 
-	print(A,B)
-
 	assert len(A) == len(B)
 
 	N = A.shape[0]; # total points
@@ -1054,7 +1077,7 @@ def rigid_transform_3D(A, B):
 
 	# special reflection case
 	if np.linalg.det(R) < 0:
-		Vt[-1,:] *= -1
+		Vt[2,:] *= -1
 		R = np.dot(Vt.T,U.T)
 
 	t = -np.dot(R,centroid_A.T) + centroid_B.T

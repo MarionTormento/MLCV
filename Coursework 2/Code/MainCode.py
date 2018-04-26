@@ -22,19 +22,21 @@ Quick2 = (['chess.png', 'chess.jpg'])
 JBL = (['jbl1.jpg','jbl2.jpg','jbl3.jpg','jbl4.jpg'])
 Map = (['map1.jpg','map2.jpg','map3.jpg','map4.jpg'])
 
+compRoom = (['comproom.jpg', 'comproom1.jpg'])
+
 
 findPoints = 'Auto' #'Auto' or 'Manual' 
 descriptorType = 'RGB' #'RGB' or 'HOG' or 'RGBHOG'
-cornerDetectionType = 'Harris' #'FAST' or 'Harris' or 'ST'
-ImplementedOrToolBox = 'ToolBox' #'Implemented' or 'ToolBox'
+cornerDetectionType = 'FAST' #'FAST' or 'Harris' or 'ST'
+ImplementedOrToolBox = 'Implemented' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
 allDesc = []
 test = Tsukuba
 
 #FAST Parameters
-FAST_radius = 3
-FAST_S = 9
+FAST_radius = 4
+FAST_S = 12
 FAST_threshold = 40
 
 #Harris/Shi-Tomasi Parameters
@@ -74,19 +76,20 @@ print(T)
 
 ImageAgood, ImageBgood, H, acc_homog, acc_homog_norm, im_rec, im_rec_points = findHomography(test[0], test[1], corrBasePoints, corrTestPoints, 4)
 
-# T = np.asarray([T])
-# T = T.T
-# print(T)
+T = np.asarray([T])
+T = T.T
 # R = np.eye(3)
-# f = 1
+f = 1
+K = np.array([[f, 0, ]])
+
 # stereoRectification(test[0], test[1], corrBasePoints, corrTestPoints, T, R, f)
 
-disparityMap, depthMap = dispMap(test[0], im_rec, 7)
+disparityMap, depthMap = dispMap(test[0], im_rec, 15)
 # disparityMap = cv2.applyColorMap(disparityMap, cv2.COLORMAP_JET)
-# plt.figure(6)
-# plt.subplot(121), plt.imshow(disparityMap, interpolation='nearest')
-# plt.subplot(122), plt.imshow(depthMap, interpolation='nearest')
-ax = sns.heatmap(disparityMap, linewidth=0.5)
+plt.figure(6)
+plt.subplot(121), plt.imshow(disparityMap, interpolation='nearest')
+plt.subplot(122), plt.imshow(depthMap, interpolation='nearest')
+# ax = sns.heatmap(disparityMap, linewidth=0.5)
 # plt.colorbar()
  
 acc_fund, acc_fund_norm = findFundamental(test[0], test[1], corrBasePoints, corrTestPoints)
@@ -96,6 +99,6 @@ print('Normalised Homography Accuracy = %1.2f' % acc_homog_norm)
 print('Fundamental Accuracy = %1.2f' % acc_fund)
 print('Normalised Fundamental Accuracy = %1.2f' % acc_fund_norm)
 
-# acc_fund = findFundamental(test[0], im_rec, corrBasePoints, im_rec_points)
+acc_fund = findFundamental(test[0], im_rec, corrBasePoints, im_rec_points)
 
 plt.show()
