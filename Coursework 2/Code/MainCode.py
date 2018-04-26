@@ -45,7 +45,7 @@ Maxima_perc = 99 # Percentage of value kept by the thresholding
 # Gerenal Parameters
 windowSize = 21 #WARNING : Must be uneven
 
-for i in [0,1]:
+for i in [0,2]:
 
 	print("New image")
 	image = test[i]
@@ -60,15 +60,19 @@ for i in [0,1]:
 print("Looking for matching descriptors")
 indexNN, corrBasePoints, corrTestPoints = knn(descriptorType, allIntensity, allDesc, allPoints, 0, 1, 1)
 
-R, T = rigid_transform_3D(corrBasePoints, corrBasePoints)
+R, T = rigid_transform_3D(corrBasePoints, corrTestPoints)
 
 print('Rotation = ')
 print(R)
+scale2 = np.linalg.det(R[0:2,0:2])
+print(scale2, np.sqrt(scale2))
+rotAngle = 180*acos(R[0,0])/np.pi
+print(rotAngle)
 
 print('Translation = ')
 print(T)
 
-ImageAgood, ImageBgood, H, acc_homog, acc_homog_norm, im_rec = findHomography(test[0], test[1], corrBasePoints, corrTestPoints, 4)
+ImageAgood, ImageBgood, H, acc_homog, acc_homog_norm, im_rec = findHomography(test[0], test[2], corrBasePoints, corrTestPoints, 4)
 
 # theta = 10*np.pi/180
 # T0 = [10*np.cos(theta), 10*np.sin(theta), 0]
@@ -86,7 +90,7 @@ ImageAgood, ImageBgood, H, acc_homog, acc_homog_norm, im_rec = findHomography(te
 # plt.imshow(disparityMap, interpolation='nearest')
 # # plt.colorbar()
  
-acc_fund, acc_fund_norm = findFundamental(test[0], test[1], corrBasePoints, corrTestPoints)
+acc_fund, acc_fund_norm = findFundamental(test[0], test[2], corrBasePoints, corrTestPoints)
 
 print('Homography Accuracy = %1.2f' % acc_homog)
 print('Normalised Homography Accuracy = %1.2f' % acc_homog_norm)

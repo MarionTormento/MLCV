@@ -9,7 +9,7 @@ import random
 import tkinter as tk
 from PIL import ImageTk, Image
 import os
-from math import atan2
+from math import atan2, acos
 from itertools import groupby
 from matplotlib.patches import ConnectionPatch
 
@@ -774,7 +774,7 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		img2 = cv2.imread('Photos/' + Image2)
 		img2 = np.asarray(img2)
 	except:
-		img2 = Image2.T
+		img2 = Image2
 
 	ImageA = np.asarray(ImageA).T
 	ImageB = np.asarray(ImageB).T
@@ -1044,12 +1044,6 @@ def rigid_transform_3D(A, B):
 		Vt[-1,:] *= -1
 		R = np.dot(Vt.T,U.T)
 
-	print('Rotation = ')
-	print(R)
-
 	t = -np.dot(R,centroid_A.T) + centroid_B.T
-
-	print('Translation = ')
-	print(t)
 
 	return R, t
