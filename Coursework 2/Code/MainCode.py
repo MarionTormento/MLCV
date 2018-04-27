@@ -16,7 +16,7 @@ Art = (['Art1.png', 'Art2.png', 'Art3.png', 'Art4.png', 'Art5.png', 'Art6.png', 
 NakedMan = (['img_1360.jpg', 'img_1361.jpg', 'img_1362.jpg'])
 
 Test_images = (['img1.jpg','img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6.jpg', 'img0.jpg'])
-
+#
 Quick1 = (['chess.png', 'chess2.png', 'chess3.png'])
 Quick2 = (['chess.png', 'chess.jpg'])
 JBL = (['jbl1.jpg','jbl2.jpg','jbl3.jpg','jbl4.jpg'])
@@ -26,15 +26,14 @@ compRoom = (['comproom.jpg', 'comproom1.jpg'])
 
 livingRoom = (['LivingRoom1.jpg', 'LivingRoom2.jpg'])
 
-
 findPoints = 'Auto' #'Auto' or 'Manual' 
 descriptorType = 'RGB' #'RGB' or 'HOG' or 'RGBHOG'
-cornerDetectionType = 'Harris' #'FAST' or 'Harris' or 'ST'
+cornerDetectionType = 'ST' #'FAST' or 'Harris' or 'ST'
 ImplementedOrToolBox = 'ToolBox' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
 allDesc = []
-test = livingRoom
+test = Tsukuba
 
 #FAST Parameters
 FAST_radius = 4
@@ -47,7 +46,8 @@ Maxima_NN = 50 # Number of Nearest Neighbour
 Maxima_perc = 15 # Percentage of value kept by the thresholding
 
 # Gerenal Parameters
-windowSize = 31 #WARNING : Must be uneven
+windowSize = 21 #WARNING : Must be uneven
+derivative = 'No' # 'Yes' or 'No'
 
 for i in [0,1]:
 
@@ -86,13 +86,13 @@ K = np.array([[f, 0, ]])
 
 # stereoRectification(test[0], test[1], corrBasePoints, corrTestPoints, T, R, f)
 
-disparityMap, depthMap = dispMap(test[0], im_rec, 5)
-# disparityMap = cv2.applyColorMap(disparityMap, cv2.COLORMAP_JET)
-plt.figure(6)
-plt.subplot(121), plt.imshow(disparityMap, interpolation='nearest')
-plt.subplot(122), plt.imshow(depthMap, interpolation='nearest')
-# ax = sns.heatmap(disparityMap, linewidth=0.5)
-# plt.colorbar()
+# disparityMap, depthMap = dispMap(test[0], test[1], 9, derivative)
+# # disparityMap = cv2.applyColorMap(disparityMap, cv2.COLORMAP_JET)
+# plt.figure(6)
+# plt.subplot(121), plt.imshow(disparityMap, interpolation='nearest')
+# plt.subplot(122), plt.imshow(depthMap, interpolation='nearest')
+# # ax = sns.heatmap(disparityMap, linewidth=0.5)
+# # plt.colorbar()
  
 acc_fund, acc_fund_norm = findFundamental(test[0], test[1], corrBasePoints, corrTestPoints)
 

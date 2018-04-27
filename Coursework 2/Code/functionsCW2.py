@@ -17,7 +17,7 @@ from matplotlib.patches import ConnectionPatch
 
 def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, descriptorType, windowSize, FAST_S, FAST_radius, FAST_threshold, maxima_NN, maxima_perc):
 
-	intensity, shift = getImageIntensity(image)
+	intensity, imgPlot, shift = getImageIntensity(image)
 
 	allIntensity = []
 	allPoints = []
@@ -41,12 +41,12 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 				sigma = 1.6*shift
 				GIxx, GIyy, GIxy = gaussian_window(Ix, Iy, sigma, shift)
 				print("Identifying corners and edges")
-				CornerPoints = cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, windowSize, 0, maxima_NN, maxima_perc, cornerDetectionType)
+				CornerPoints = cornerness_funct(intensity, imgPlot, GIxx, GIyy, GIxy, shift, alpha, windowSize, 1, maxima_NN, maxima_perc, cornerDetectionType)
 
 			elif cornerDetectionType == 'FAST':
 				print("Computing 'FAST' Corner Detector")
 				Ix, Iy = derivatives(intensity, shift, 0)
-				CornerPoints = FASTdetector(intensity, FAST_radius, FAST_S, FAST_threshold)
+				CornerPoints = FASTdetector(intensity, imgPlot, FAST_radius, FAST_S, FAST_threshold)
 				CornerPoints = cleanSides(intensity, CornerPoints, windowSize)
 				CornerPoints = (CornerPoints[1], CornerPoints[0])
 		
@@ -86,6 +86,7 @@ def CornerTB(image, type, alpha):
 
 	img = cv2.imread('Photos/' + image)
 	gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+	img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
 
 	# Inputs - image, number of corners to detect, quality of coners, min dist between corners 
 	if type == 'Harris':
@@ -109,7 +110,10 @@ def CornerTB(image, type, alpha):
 
 	plt.figure()
 	plt.imshow(img)
-	plt.title("Inbuilt Shi-Tomasi: Detection of Corners and Edges")
+	if type == 'Harris':
+		plt.title("Inbuilt Harris: Detection of Corners and Edges")
+	elif type == 'ST':
+		plt.title("Inbuilt Shi-Tomasi: Detection of Corners and Edges")
 	plt.show()
 
 	return CornerPoints
@@ -118,7 +122,9 @@ def CornerTB(image, type, alpha):
 def getImageIntensity(image):
 
 	# Load an color image in grayscale
-	img = cv2.imread('Photos/' + image, 0)
+	img = cv2.imread('Photos/' + image)
+	imgPlot = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+	img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 	img = np.asarray(img)
 
 	# Autonomously find the size of the shift window adapted to the image
@@ -127,7 +133,7 @@ def getImageIntensity(image):
 	shift_h = int(height/100)
 	shift = max(5, min(shift_h, shift_w)) # In case the image is smaller than 50x50, shift = 3
 
-	return img, shift
+	return img, imgPlot, shift
 
 def getConsec(arr):
  
@@ -225,7 +231,7 @@ def manualCornerPoints(image, i):
 
 	return CornerPoints
 
-def FASTdetector(image, radius, S, threshold):
+def FASTdetector(image, imgPlot, radius, S, threshold):
 
 	width, height = image.shape
 
@@ -240,6 +246,7 @@ def FASTdetector(image, radius, S, threshold):
 			pixelI = image[i][j]
 			N = get_circle([i,j],radius)
 			N = list(set(N))
+			testparam = len(N)//4
 			N = np.asarray(N)
 			angles = []
 			for n in range(0,len(N)):
@@ -249,19 +256,19 @@ def FASTdetector(image, radius, S, threshold):
 			N = N[sortedIdx]
 			zN = list(zip(*N))
 
-			# if (pixelI + threshold > image[(zN[0][0], zN[1][0])] > pixelI - threshold and 
-			# 	pixelI + threshold > image[(zN[0][10], zN[1][10])] > pixelI - threshold):
-			# 		break
+			if (pixelI + threshold > image[(zN[0][0], zN[1][0])] > pixelI - threshold and 
+				pixelI + threshold > image[(zN[0][2*testparam], zN[1][2*testparam])] > pixelI - threshold):
+					continue
 
-			# testpoints.append((zN[0][0], zN[1][0]))
-			# testpoints.append((zN[0][5], zN[1][5]))
-			# testpoints.append((zN[0][10], zN[1][10]))
-			# testpoints.append((zN[0][15], zN[1][15]))
-			# testpoints = list(zip(*testpoints))
-			# TP = np.logical_and(image[testpoints] > pixelI - threshold, image[testpoints] < pixelI - threshold)
-			# TP = TP.astype(int)
-			# if np.sum(TP) > 2:
-			# 	break
+			testpoints.append((zN[0][0], zN[1][0]))
+			testpoints.append((zN[0][testparam], zN[1][testparam]))
+			testpoints.append((zN[0][2*testparam], zN[1][2*testparam]))
+			testpoints.append((zN[0][3*testparam], zN[1][3*testparam]))
+			testpoints = list(zip(*testpoints))
+			TP = np.logical_and(image[testpoints] > pixelI - threshold, image[testpoints] < pixelI - threshold)
+			TP = TP.astype(int)
+			if np.sum(TP) > 2:
+				continue
 
 			CircleInt = image[zN]
 			greaterThan = CircleInt > pixelI + threshold
@@ -279,11 +286,8 @@ def FASTdetector(image, radius, S, threshold):
 	cornerPointsY = cornerPoints[:][:,0]
 	CornerPoints = (np.asarray(cornerPointsX), np.asarray(cornerPointsY))
 
-	print(len(N))
-	print(N)
-
 	plt.figure()
-	plt.imshow(image, cmap='gray')
+	plt.imshow(imgPlot)
 	plt.scatter(cornerPointsX, cornerPointsY, marker='+', color='red')	# plt.scatter(edgePoints[0], edgePoints[1], color='g', marker='+')
 	plt.title("Detection of Corners and Edges")
 	plt.show()
@@ -357,7 +361,7 @@ def gaussian_window(Ix, Iy, sigma, shift):
 
 	return GIxx, GIyy, GIxy
 
-def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot, NN, perc, cornerDetectionType):
+def cornerness_funct(intensity, imgPlot, GIxx, GIyy, GIxy, shift, alpha, buff, plot, NN, perc, cornerDetectionType):
 
 	# Function to calculate the locations of corners (and edges) in the image
 	# Both Harris corner detection and Tomasi and Shi methods are implemented
@@ -403,7 +407,7 @@ def cornerness_funct(intensity, GIxx, GIyy, GIxy, shift, alpha, buff, plot, NN, 
 	# Plot
 	if plot == 1:
 		plt.figure()
-		plt.imshow(intensity, cmap='gray')
+		plt.imshow(imgPlot)
 		plt.scatter(cornerPoints[0], cornerPoints[1], color='r', marker='+')
 		# plt.scatter(edgePoints[0], edgePoints[1], color='g', marker='+')
 		plt.title("Detection of Corners and Edges")
@@ -676,12 +680,12 @@ def knn(typeMat, img, mat, point, base, test, plot):
 				  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white',
 				  'magenta', 'black','coral', 'orange', 'ivory',
 				  'salmon','silver','teal','orchid','plum']
-		idxplot = np.random.choice(len(interestPointsBase[0]), 8, 0)
+		idxplot = np.random.choice(len(interestPointsBase[0]), 15, 0)
 		ax1 = fig.add_subplot(121)
 		plt.imshow(imgBase, cmap='gray')
 		ax2 = fig.add_subplot(122)
 		plt.imshow(imgTest, cmap='gray')
-		for i, j in zip(idxplot, range(8)):
+		for i, j in zip(idxplot, range(15)):
 			ax1.plot(interestPointsBase[0][i], interestPointsBase[1][i], marker='+', markersize='40', color=colors[j])
 			ax2.plot(interestPointsTest[0][i], interestPointsTest[1][i], marker='+', markersize='40', color=colors[j])
 			xy2 = (interestPointsBase[0][i], interestPointsBase[1][i])
@@ -703,7 +707,9 @@ def knn(typeMat, img, mat, point, base, test, plot):
 def findHomography(Image1, Image2, ImageA, ImageB, selection):
 
 	img1 = cv2.imread('Photos/' + Image1)
+	img1Plot = cv2.cvtColor(img1,cv2.COLOR_BGR2RGB)
 	img2 = cv2.imread('Photos/' + Image2)
+	img2Plot = cv2.cvtColor(img2,cv2.COLOR_BGR2RGB)
 	width, height, channels = img1.shape
 	width2, height2, channels = img2.shape
 
@@ -765,16 +771,17 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 
 	Homography_accuracy = np.mean(dist_diff_all)
 	HInv = np.linalg.inv(HBest)
-	im_desc = cv2.warpPerspective(img2, HInv, (height, width))
-	im_desc2 = cv2.warpPerspective(img1, HBest, (height2, width2))
-	im_rec = cv2.cvtColor(im_desc, cv2.COLOR_BGR2GRAY)
-	im_rec2 = cv2.cvtColor(im_desc2, cv2.COLOR_BGR2GRAY)
+	im_desc = cv2.warpPerspective(img2Plot, HInv, (height, width))
+	im_desc2 = cv2.warpPerspective(img1Plot, HBest, (height2, width2))
+
+	im_rec = cv2.cvtColor(im_desc, cv2.COLOR_RGB2GRAY)
+	im_rec2 = cv2.cvtColor(im_desc2, cv2.COLOR_RGB2GRAY)
 
 	plt.figure(2)
-	plt.subplot(2,2,1), plt.imshow(img1, cmap='gray')
+	plt.subplot(2,2,1), plt.imshow(img1Plot)
 	plt.scatter(ImageA[:,0], ImageA[:,1], color='b', marker='+', s=40)
 	plt.scatter(ImageA[fewPointsIdxBest,0], ImageA[fewPointsIdxBest,1], color='y', marker='*', s=40)
-	plt.subplot(2,2,2), plt.imshow(img2, cmap='gray')
+	plt.subplot(2,2,2), plt.imshow(img2Plot, cmap='gray')
 	plt.scatter(points_estimated_all[:,0], points_estimated_all[:,1], color='r', marker='o')
 	plt.scatter(ImageB[:,0], ImageB[:,1], color='b', marker='+', s=40)
 	plt.scatter(ImageB[fewPointsIdxBest,0], ImageB[fewPointsIdxBest,1], color='y', marker='*', s=40)
@@ -789,12 +796,15 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 def findFundamental(Image1, Image2, ImageA, ImageB):
 
 	img1 = cv2.imread('Photos/' + Image1)
+	img1Plot = cv2.cvtColor(img1,cv2.COLOR_BGR2RGB)
 	img1 = np.asarray(img1)
 	try:
 		img2 = cv2.imread('Photos/' + Image2)
+		img2Plot = cv2.cvtColor(img2,cv2.COLOR_BGR2RGB)
 		img2 = np.asarray(img2)
 	except:
 		img2 = Image2
+		img2Plot = img2
 
 	ImageA = np.asarray(ImageA).T
 	ImageB = np.asarray(ImageB).T
@@ -878,8 +888,8 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		K += 1
 
 	plt.figure()
-	plt.subplot(1,2,1), plt.imshow(img1)
-	plt.subplot(1,2,2), plt.imshow(img2)
+	plt.subplot(1,2,1), plt.imshow(img1Plot)
+	plt.subplot(1,2,2), plt.imshow(img2Plot)
 
 	colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
 		  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white',
@@ -912,19 +922,24 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 
 	return fundamentalAccuracyBest, fundAccNorm
 
-def dispMap(Image1, Image2, windowSize):
+def dispMap(Image1, Image2, windowSize, derivative):
 
 	shift = 8
 	# Load images in grayscale
 	img1 = cv2.imread('Photos/' + Image1,0)
 	img1 = np.asarray(img1)
-	Ix1, Iy1 = derivatives(img1, shift, 0)
-	img1 = Iy1*Ix1
-	# img2 = cv2.imread(Image2,0)
-	# img2 = np.asarray(img2)
-	img2 = Image2
-	Ix2, Iy2 = derivatives(img2, shift, 0)
-	img2 = Iy2*Ix2
+
+	try:
+		img2 = cv2.imread('Photos/' + Image2, 0)
+		img2 = np.asarray(img2)
+	except:
+		img2 = Image2
+
+	if derivative == 'Yes':
+		Ix1, Iy1 = derivatives(img1, shift, 0)
+		img1 = Iy1*Ix1
+		Ix2, Iy2 = derivatives(img2, shift, 0)
+		img2 = Iy2*Ix2
 
 	# Initialisation
 	halfWS = int((windowSize-1)/2)
