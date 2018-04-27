@@ -21,6 +21,7 @@ Quick1 = (['chess.png', 'chess2.png', 'chess3.png'])
 Quick2 = (['chess.png', 'chess.jpg'])
 JBL = (['jbl1.jpg','jbl2.jpg','jbl3.jpg','jbl4.jpg'])
 Map = (['map1.jpg','map2.jpg','map3.jpg','map4.jpg'])
+MapRot = (['RotMap2.jpg', 'RotMap3.jpg', 'RotMap1.jpg', 'RotMap4.jpg'])
 
 compRoom = (['comproom.jpg', 'comproom1.jpg'])
 
@@ -28,22 +29,22 @@ livingRoom = (['LivingRoom1.jpg', 'LivingRoom2.jpg'])
 
 findPoints = 'Auto' #'Auto' or 'Manual' 
 descriptorType = 'RGB' #'RGB' or 'HOG' or 'RGBHOG'
-cornerDetectionType = 'ST' #'FAST' or 'Harris' or 'ST'
-ImplementedOrToolBox = 'ToolBox' #'Implemented' or 'ToolBox'
+cornerDetectionType = 'FAST' #'FAST' or 'Harris' or 'ST'
+ImplementedOrToolBox = 'Implemented' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
 allDesc = []
-test = Tsukuba
+test = MapRot
 
 #FAST Parameters
-FAST_radius = 4
-FAST_S = 15
-FAST_threshold = 50
+FAST_radius = 3
+FAST_S = 9
+FAST_threshold = 30
 
 #Harris/Shi-Tomasi Parameters
 alpha = 0.04
 Maxima_NN = 50 # Number of Nearest Neighbour
-Maxima_perc = 15 # Percentage of value kept by the thresholding
+Maxima_perc = 98 # Percentage of value kept by the thresholding
 
 # Gerenal Parameters
 windowSize = 21 #WARNING : Must be uneven

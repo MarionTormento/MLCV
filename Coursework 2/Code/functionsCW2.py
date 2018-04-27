@@ -52,7 +52,7 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 		
 		elif implemented == 'ToolBox':
 			Ix, Iy = derivatives(intensity, shift, 0)
-			CornerPoints = CornerTB(image, cornerDetectionType, alpha)
+			CornerPoints = CornerTB(image, cornerDetectionType, alpha, FAST_threshold)
 			CornerPoints = cleanSides(intensity, CornerPoints, windowSize)
 			CornerPoints = (CornerPoints[1], CornerPoints[0])
 
@@ -82,7 +82,7 @@ def getCornerPoints(image, i, alpha, method, implemented, cornerDetectionType, d
 
 # ---------------------- Toolbox Functions -----------------------
 
-def CornerTB(image, type, alpha):
+def CornerTB(image, type, alpha, FAST_threshold):
 
 	img = cv2.imread('Photos/' + image)
 	gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -95,6 +95,20 @@ def CornerTB(image, type, alpha):
 	elif type == 'ST':
 		print("Computing ToolBox Shi-Tomasi Corner Detector")
 		corners = cv2.goodFeaturesToTrack(gray,100,0.04,10)
+	elif type == 'FAST':
+		print("Computing ToolBox FAST Corner Detector")
+		# Initiate FAST object with default values
+		corners = []
+		fast = cv2.FastFeatureDetector_create(threshold=FAST_threshold)
+		# find and draw the keypoints
+		kp = fast.detect(img,None)
+		print("Threshold: ", fast.getThreshold())
+		print("nonmaxSuppression: ", fast.getNonmaxSuppression())
+		print("neighborhood: ", fast.getType())
+		print("Total Keypoints with nonmaxSuppression: ", len(kp))
+		# Rearrange the value to fit our syntax
+		for i in range(len(kp)):
+			corners.append([np.asarray(kp[i].pt)])
 
 	corners = np.int0(corners)
 
@@ -114,7 +128,6 @@ def CornerTB(image, type, alpha):
 		plt.title("Inbuilt Harris: Detection of Corners and Edges")
 	elif type == 'ST':
 		plt.title("Inbuilt Shi-Tomasi: Detection of Corners and Edges")
-	plt.show()
 
 	return CornerPoints
 
@@ -680,7 +693,7 @@ def knn(typeMat, img, mat, point, base, test, plot):
 				  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white',
 				  'magenta', 'black','coral', 'orange', 'ivory',
 				  'salmon','silver','teal','orchid','plum']
-		idxplot = np.random.choice(len(interestPointsBase[0]), 15, 0)
+		idxplot = np.random.choice(len(interestPointsBase[0]), 10, 0)
 		ax1 = fig.add_subplot(121)
 		plt.imshow(imgBase, cmap='gray')
 		ax2 = fig.add_subplot(122)
