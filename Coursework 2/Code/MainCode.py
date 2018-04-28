@@ -27,14 +27,16 @@ compRoom = (['comproom.jpg', 'comproom1.jpg'])
 
 livingRoom = (['LivingRoom1.jpg', 'LivingRoom2.jpg'])
 
+final = (['Final1.jpg', 'Final2.jpg'])
+
 findPoints = 'Auto' #'Auto' or 'Manual' 
 descriptorType = 'RGB' #'RGB' or 'HOG' or 'RGBHOG'
-cornerDetectionType = 'FAST' #'FAST' or 'Harris' or 'ST'
+cornerDetectionType = 'Harris' #'FAST' or 'Harris' or 'ST'
 ImplementedOrToolBox = 'Implemented' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
 allDesc = []
-test = MapRot
+test = final
 
 #FAST Parameters
 FAST_radius = 3
@@ -87,21 +89,30 @@ K = np.array([[f, 0, ]])
 
 # stereoRectification(test[0], test[1], corrBasePoints, corrTestPoints, T, R, f)
 
-# disparityMap, depthMap = dispMap(test[0], test[1], 9, derivative)
-# # disparityMap = cv2.applyColorMap(disparityMap, cv2.COLORMAP_JET)
-# plt.figure(6)
-# plt.subplot(121), plt.imshow(disparityMap, interpolation='nearest')
-# plt.subplot(122), plt.imshow(depthMap, interpolation='nearest')
-# # ax = sns.heatmap(disparityMap, linewidth=0.5)
-# # plt.colorbar()
- 
-acc_fund, acc_fund_norm = findFundamental(test[0], test[1], corrBasePoints, corrTestPoints)
+disparityMap, depthMap = dispMap(test[0], im_rec, 5, derivative)
+# disparityMap = cv2.applyColorMap(disparityMap, cv2.COLORMAP_JET)
+plt.figure(6)
+plt.subplot(121), plt.imshow(disparityMap, interpolation='nearest', cmap='gray')
+plt.subplot(122), plt.imshow(depthMap, interpolation='nearest', cmap='gray')#, norm=NoNorm())
+# ax = sns.heatmap(disparityMap, linewidth=0.5)
+plt.colorbar(orientation='horizontal')
+
+X,Y = np.meshgrid(np.arange(depthMap.shape[1]), np.arange(depthMap.shape[0]))
+
+fig = plt.figure(15)
+ax = fig.gca(projection='3d')
+surf = ax.plot_surface(X,Y,depthMap, cmap='gray')# vmin = np.amin(depthMap), vmax = np.amax(depthMap))
+fig2 = plt.figure(16)
+ax2 = fig2.gca(projection='3d')
+scatter = ax2.scatter(X, Y, Z, c=z, cmap = 'gray')
+
+acc_fund, acc_fund_norm = findFundamental(test[0], im_rec, corrBasePoints, corrTestPoints)
 
 print('Homography Accuracy = %1.2f' % acc_homog)
 print('Normalised Homography Accuracy = %1.2f' % acc_homog_norm)
 print('Fundamental Accuracy = %1.2f' % acc_fund)
 print('Normalised Fundamental Accuracy = %1.2f' % acc_fund_norm)
 
-acc_fund = findFundamental(test[0], im_rec, corrBasePoints, im_rec_points)
+acc_fund = findFundamental(test[0], test[1], corrBasePoints, im_rec_points)
 
 plt.show()

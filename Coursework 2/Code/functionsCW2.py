@@ -2,6 +2,7 @@
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
+from matplotlib.colors import NoNorm
 from scipy import ndimage
 from scipy import signal
 import time
@@ -12,6 +13,8 @@ import os
 from math import atan2, acos
 from itertools import groupby
 from matplotlib.patches import ConnectionPatch
+import pylab
+from mpl_toolkits.mplot3d import Axes3D
 
 # -------------------- Aggregated Functions -----------------------
 
@@ -91,10 +94,10 @@ def CornerTB(image, type, alpha, FAST_threshold):
 	# Inputs - image, number of corners to detect, quality of coners, min dist between corners 
 	if type == 'Harris':
 		print("Computing ToolBox Harris Corner Detector")
-		corners = cv2.goodFeaturesToTrack(gray,100,0.04,10, useHarrisDetector=True, k=alpha)
+		corners = cv2.goodFeaturesToTrack(gray,1000,0.04,10, useHarrisDetector=True, k=alpha)
 	elif type == 'ST':
 		print("Computing ToolBox Shi-Tomasi Corner Detector")
-		corners = cv2.goodFeaturesToTrack(gray,100,0.04,10)
+		corners = cv2.goodFeaturesToTrack(gray,1000,0.04,10)
 	elif type == 'FAST':
 		print("Computing ToolBox FAST Corner Detector")
 		# Initiate FAST object with default values
@@ -767,12 +770,13 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 		points_estimated_all = (point_estimated_prime_all[:][:,0:2].T / point_estimated_prime_all[:][:,-1]).T
 		dist_diff_all = np.linalg.norm(ImageB-points_estimated_all, axis=1)
 		
-		acceptableIdx = np.where(dist_diff_all < 8)
+		acceptableIdx = np.where(dist_diff_all < 5)
 		goodPercent = len(acceptableIdx[0])/len(ImageA)
 		if goodPercent > goodPercentBest:
 			HBest = H
 			goodPercentBest = goodPercent
 			fewPointsIdxBest = fewPointsIdx
+			acceptableIdxBest = acceptableIdx
 		if goodPercent > 0.8:
 			break
 		K += 1
@@ -790,21 +794,72 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 	im_rec = cv2.cvtColor(im_desc, cv2.COLOR_RGB2GRAY)
 	im_rec2 = cv2.cvtColor(im_desc2, cv2.COLOR_RGB2GRAY)
 
+	scaleFactor = min(width2, height2)
+	Homography_accuracy_norm = Homography_accuracy/scaleFactor*100
+
+	print(HBest)
+
 	plt.figure(2)
-	plt.subplot(2,2,1), plt.imshow(img1Plot)
-	plt.scatter(ImageA[:,0], ImageA[:,1], color='b', marker='+', s=40)
-	plt.scatter(ImageA[fewPointsIdxBest,0], ImageA[fewPointsIdxBest,1], color='y', marker='*', s=40)
-	plt.subplot(2,2,2), plt.imshow(img2Plot, cmap='gray')
-	plt.scatter(points_estimated_all[:,0], points_estimated_all[:,1], color='r', marker='o')
-	plt.scatter(ImageB[:,0], ImageB[:,1], color='b', marker='+', s=40)
-	plt.scatter(ImageB[fewPointsIdxBest,0], ImageB[fewPointsIdxBest,1], color='y', marker='*', s=40)
-	plt.subplot(2,2,3), plt.imshow(im_desc, cmap='gray')
-	plt.subplot(2,2,4), plt.imshow(im_desc2, cmap='gray')
+	plt.suptitle('Noramlised Homography Accuracy (Automatic Detection) = %1.2f %%' % Homography_accuracy_norm, fontsize=12)
+	
+	ax1 = plt.subplot(2,2,1)
+	ax1.set_title('First Image: Interest Points', fontsize=12)
+	ax1.imshow(img1Plot)
+	ax1.scatter(ImageA[:,0], ImageA[:,1], color='b', marker='+', s=40)
+	ax1.scatter(ImageA[fewPointsIdxBest,0], ImageA[fewPointsIdxBest,1], color='y', marker='*', s=40)
+	plt.xlabel('Pixels', fontsize=12)
+	plt.ylabel('Pixels', fontsize=12)
 
-	scaleFactor = min(width/width2, height/height2)
-	Homography_accuracy_norm = Homography_accuracy/scaleFactor
+	ax2 = plt.subplot(2,2,2)
+	ax2.set_title('Second Image: Interest Points', fontsize=12)
+	ax2.imshow(img2Plot, cmap='gray')
+	ax2.scatter(points_estimated_all[:,0], points_estimated_all[:,1], color='b', marker='+')
+	ax2.scatter(ImageB[:,0], ImageB[:,1], color='r', marker='+', s=40)
+	ax2.scatter(ImageB[fewPointsIdxBest,0], ImageB[fewPointsIdxBest,1], color='y', marker='*', s=40)
+	plt.xlabel('Pixels', fontsize=12)
+	plt.ylabel('Pixels', fontsize=12)
 
-	return ImageAfew, ImageBfew, H, Homography_accuracy, Homography_accuracy_norm, im_rec, points_estimated_all.T
+	ax3 = plt.subplot(2,2,3)
+	ax3.set_title('Second Image Homography Adjusted', fontsize=12)
+	ax3.imshow(im_desc, cmap='gray')
+	plt.xlabel('Pixels', fontsize=12)
+	plt.ylabel('Pixels', fontsize=12)
+
+	ax4 = plt.subplot(2,2,4)
+	ax4.set_title('First Image Homography Adjusted', fontsize=12)
+	ax4.imshow(im_desc2, cmap='gray')
+	plt.xlabel('Pixels', fontsize=12)
+	plt.ylabel('Pixels', fontsize=12)
+
+	plt.figure()
+	plt.suptitle('Inliers/Outliers', fontsize=16)
+	idxplot = np.random.choice(len(ImageA), 12, 0)
+	ax1 = plt.subplot(121)
+	ax1.imshow(img1Plot, cmap='gray')
+	plt.xlabel('Pixels', fontsize=14)
+	plt.ylabel('Pixels', fontsize=14)
+	ax2 = plt.subplot(122)
+	ax2.imshow(img2Plot, cmap='gray')
+	plt.xlabel('Pixels', fontsize=14)
+	for i in idxplot:
+		if i in acceptableIdxBest[0]:
+			ax1.plot(ImageA[i][0], ImageA[i][1], marker='+', markersize='10', color='lightgreen')
+			ax2.plot(ImageB[i][0], ImageB[i][1], marker='+', markersize='10', color='lightgreen')
+			xy2 = (ImageA[i][0], ImageA[i][1])
+			xy1 = (ImageB[i][0], ImageB[i][1])
+			con = ConnectionPatch(xyA=xy1, xyB=xy2, coordsA="data", coordsB="data",
+		                     	  axesA=ax2, axesB=ax1, color='lightgreen')
+			ax2.add_artist(con)
+		else:
+			ax1.plot(ImageA[i][0], ImageA[i][1], marker='+', markersize='10', color='k')
+			ax2.plot(ImageB[i][0], ImageB[i][1], marker='+', markersize='10', color='k')
+			xy2 = (ImageA[i][0], ImageA[i][1])
+			xy1 = (ImageB[i][0], ImageB[i][1])
+			con = ConnectionPatch(xyA=xy1, xyB=xy2, coordsA="data", coordsB="data",
+		                     	  axesA=ax2, axesB=ax1, color='k')
+			ax2.add_artist(con)
+
+	return ImageAfew, ImageBfew, HBest, Homography_accuracy, Homography_accuracy_norm, im_rec, points_estimated_all.T
 
 def findFundamental(Image1, Image2, ImageA, ImageB):
 
@@ -937,7 +992,7 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 
 def dispMap(Image1, Image2, windowSize, derivative):
 
-	shift = 8
+	shift = 5
 	# Load images in grayscale
 	img1 = cv2.imread('Photos/' + Image1,0)
 	img1 = np.asarray(img1)
@@ -959,7 +1014,7 @@ def dispMap(Image1, Image2, windowSize, derivative):
 	disparityMap = np.zeros(img1.shape)
 	depthMap = np.zeros(img1.shape)
 	height, width = img1.shape
-	disparityRange = 25 #int(min(width, height)/10)
+	disparityRange = 16 #int(min(width, height)/10)
 
 	# Looping
 	for i in range(height):
@@ -995,17 +1050,19 @@ def dispMap(Image1, Image2, windowSize, derivative):
 				C2 = bestMatchDisp
 				C3 = blockDiffs[bestMatchIdx+1]
 				disparityMap[i,j] = bestMatchIdx + minD - 0.5*(C3-C1)/(C1-2*C2+C3)
-				depthMap[i,j] = 1/(disparityMap[i,j] + 2**(-52))
 			del blockDiffs
 
-	# for i in range(height):
-	# 	for j in range(width):
-	# 		disparityMap = - np.amin(disparityMap) + disparityMap*255/(np.amax(depthMap) - np.amin(depthMap))
-	# 		depthMap[i,j] = 1/(disparityMap[i,j] + 2**(-52))
+	disparityMapMin = np.amin(disparityMap)
+	disparityMapMax = np.amax(disparityMap)
+
+	for i in range(height):
+		for j in range(width):
+			disparityMap[i,j] = - disparityMapMin + disparityMap[i,j]*3/(disparityMapMax - disparityMapMin)
+			depthMap[i,j] = 15/(disparityMap[i,j])
 
 	print(np.amin(disparityMap), np.amax(disparityMap))	
-	print(depthMap)
 	print(np.amin(depthMap), np.amax(depthMap))
+
 	return disparityMap, depthMap
 
 def stereoRectification(Image1, Image2, ImageA, ImageB, T0, R, f):

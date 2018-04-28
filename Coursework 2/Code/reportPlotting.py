@@ -29,8 +29,7 @@ livingRoom = (['LivingRoom1.jpg', 'LivingRoom2.jpg'])
 
 findPoints = 'Auto' #'Auto' or 'Manual' 
 descriptorType = 'RGB' #'RGB' or 'HOG' or 'RGBHOG'
-cornerDetectionType = 'FAST' #'FAST' or 'Harris' or 'ST'
-ImplementedOrToolBox = 'Implemented' #'Implemented' or 'ToolBox'
+
 allIntensity = []
 allPoints = []
 allDesc = []
@@ -50,7 +49,9 @@ Maxima_perc = 99 # Percentage of value kept by the thresholding
 windowSize = 21 #WARNING : Must be uneven
 derivative = 'No' # 'Yes' or 'No'
 
-for i in [0]:
+plt.rc('legend',**{'fontsize':12})
+
+for i in [2]:
 
 	print("New image")
 	image = test[i]
@@ -68,21 +69,26 @@ for i in [0]:
 
 	cornerDetectionType = 'Harris'
 	CornerPointsHarris = cornerness_funct(intensity, imgPlot, GIxx, GIyy, GIxy, shift, alpha, windowSize, 0, Maxima_NN, Maxima_perc, cornerDetectionType)
+	print('Harris Implemented = %1.0f' % len(CornerPointsHarris[0]))
 
 	cornerDetectionType = 'ST'
 	CornerPointsST = cornerness_funct(intensity, imgPlot, GIxx, GIyy, GIxy, shift, alpha, windowSize, 0, Maxima_NN, Maxima_perc, cornerDetectionType)
+	print('ST Implemented = %1.0f' % len(CornerPointsST[0]))
 
 	cornerDetectionType = 'FAST'
 	CornerPointsFAST = 	FASTdetector(intensity, imgPlot, FAST_radius, FAST_S, FAST_threshold)
 	CornerPointsFAST = cleanSides(intensity, CornerPointsFAST, windowSize)
 	CornerPointsFAST = (CornerPointsFAST[0], CornerPointsFAST[1])
+	print('FAST Implemented = %1.0f' % len(CornerPointsFAST[0]))
 
 	plt.figure()
-	plt.title("Implemented Corner Detector Comparison")
+	plt.title("Implemented Corner Detector Comparison", fontsize=16)
 	plt.imshow(imgPlot)
 	Harris = plt.scatter(CornerPointsHarris[0], CornerPointsHarris[1], color='r', marker='o', facecolors='none', label="Harris")
-	ST = plt.scatter(CornerPointsST[0], CornerPointsST[1], color='g', marker='^', facecolors='none', label="Shi-Tomasi")
+	ST = plt.scatter(CornerPointsST[0], CornerPointsST[1], color='y', marker='^', facecolors='none', label="Shi-Tomasi")
 	FAST = plt.scatter(CornerPointsFAST[0], CornerPointsFAST[1], color='b', marker='s', facecolors='none', label="FAST")
+	plt.xlabel('Pixels', fontsize=14)
+	plt.ylabel('Pixels', fontsize=14)
 	plt.legend(handles=[Harris, ST, FAST], loc=4)
 
 	ImplementedOrToolBox = 'ToolBox'
@@ -91,42 +97,51 @@ for i in [0]:
 	CornerPointsHarrisTB = CornerTB(image, cornerDetectionType, alpha, FAST_threshold)
 	CornerPointsHarrisTB = cleanSides(intensity, CornerPointsHarrisTB, windowSize)
 	CornerPointsHarrisTB = (CornerPointsHarrisTB[1], CornerPointsHarrisTB[0])
+	print('Harris TB = %1.0f' % len(CornerPointsHarrisTB[0]))
 
 	cornerDetectionType = 'ST'
 	CornerPointsSTTB = CornerTB(image, cornerDetectionType, alpha, FAST_threshold)
 	CornerPointsSTTB = cleanSides(intensity, CornerPointsSTTB, windowSize)
 	CornerPointsSTTB = (CornerPointsSTTB[1], CornerPointsSTTB[0])
+	print('ST TB = %1.0f' % len(CornerPointsSTTB[0]))
 
 	cornerDetectionType = 'FAST'
 	CornerPointsFASTTB = CornerTB(image, cornerDetectionType, alpha, FAST_threshold)
 	CornerPointsFASTTB = cleanSides(intensity, CornerPointsFASTTB, windowSize)
 	CornerPointsFASTTB = (CornerPointsFASTTB[1], CornerPointsFASTTB[0])
+	print('FAST TB = %1.0f' % len(CornerPointsFASTTB[0]))
 
 	# plt.figure()
 	# plt.suptitle("Inbuilt vs Implemented Corner Detector Comparison")
 
 	#ax1 = plt.subplot(131)
 	plt.figure()
-	plt.title("Harris Corner Detectors")
+	plt.title("Harris Corner Detectors", fontsize=16)
 	plt.imshow(imgPlot)
+	ToolBox = plt.scatter(CornerPointsHarrisTB[0], CornerPointsHarrisTB[1], color='y', marker='^', facecolors='none', label="Toolbox")
 	Implemented = plt.scatter(CornerPointsHarris[0], CornerPointsHarris[1], color='r', marker='s', facecolors='none', label="Implemented")
-	ToolBox = plt.scatter(CornerPointsHarrisTB[0], CornerPointsHarrisTB[1], color='g', marker='^', facecolors='none', label="Toolbox")
+	plt.xlabel('Pixels', fontsize=14)
+	plt.ylabel('Pixels', fontsize=14)
 	plt.legend(handles=[Implemented,ToolBox], loc=4)
 
 	#ax2 = plt.subplot(132)
 	plt.figure()
-	plt.title("Shi-Tomasi Corner Detectors")
+	plt.title("Shi-Tomasi Corner Detectors", fontsize=16)
 	plt.imshow(imgPlot)
+	ToolBox = plt.scatter(CornerPointsSTTB[0], CornerPointsSTTB[1], color='y', marker='^', facecolors='none', label="Toolbox")
 	Implemented = plt.scatter(CornerPointsST[0], CornerPointsST[1], color='r', marker='s', facecolors='none', label="Implemented")
-	ToolBox = plt.scatter(CornerPointsSTTB[0], CornerPointsSTTB[1], color='g', marker='^', facecolors='none', label="Toolbox")
+	plt.xlabel('Pixels', fontsize=14)
+	plt.ylabel('Pixels', fontsize=14)
 	plt.legend(handles=[Implemented,ToolBox], loc=4)
 
 	#ax3 = plt.subplot(133)
 	plt.figure()
-	plt.title("Fast Corner Detectors")
+	plt.title("Fast Corner Detectors", fontsize=16)
 	plt.imshow(imgPlot)
+	ToolBox = plt.scatter(CornerPointsFASTTB[0], CornerPointsFASTTB[1], color='y', marker='^', facecolors='none', label="Toolbox")
 	Implemented = plt.scatter(CornerPointsFAST[0], CornerPointsFAST[1], color='r', marker='s', facecolors='none', label="Implemented")
-	ToolBox = plt.scatter(CornerPointsFASTTB[0], CornerPointsFASTTB[1], color='g', marker='^', facecolors='none', label="Toolbox")
+	plt.xlabel('Pixels', fontsize=14)
+	plt.ylabel('Pixels', fontsize=14)
 	plt.legend(handles=[Implemented,ToolBox], loc=4)
 
 	plt.show()
