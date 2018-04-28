@@ -20,7 +20,7 @@ Test_images = (['img1.jpg','img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg', 'img6
 Quick1 = (['chess.png', 'chess2.png', 'chess3.png'])
 Quick2 = (['chess.png', 'chess.jpg'])
 JBL = (['jbl1.jpg','jbl2.jpg','jbl3.jpg','jbl4.jpg'])
-Map = (['map1.jpg','map2.jpg','map3.jpg','map4.jpg'])
+Map = (['map1.jpg','mabp2.jpg','map3.jpg','map4.jpg'])
 MapRot = (['RotMap2.jpg', 'RotMap3.jpg', 'RotMap1.jpg', 'RotMap4.jpg'])
 
 compRoom = (['comproom.jpg', 'comproom1.jpg'])
@@ -36,7 +36,7 @@ ImplementedOrToolBox = 'Implemented' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
 allDesc = []
-test = final
+test = Tsukuba
 
 #FAST Parameters
 FAST_radius = 3
@@ -104,7 +104,7 @@ ax = fig.gca(projection='3d')
 surf = ax.plot_surface(X,Y,depthMap, cmap='gray')# vmin = np.amin(depthMap), vmax = np.amax(depthMap))
 fig2 = plt.figure(16)
 ax2 = fig2.gca(projection='3d')
-scatter = ax2.scatter(X, Y, Z, c=z, cmap = 'gray')
+scatter = ax2.scatter(X, Y, depthMap, cmap = 'gray')
 
 acc_fund, acc_fund_norm = findFundamental(test[0], im_rec, corrBasePoints, corrTestPoints)
 
