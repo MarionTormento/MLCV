@@ -10,7 +10,7 @@ import random
 import tkinter as tk
 from PIL import ImageTk, Image
 import os
-from math import atan2, acos
+from math import *
 from itertools import groupby
 from matplotlib.patches import ConnectionPatch
 import pylab
@@ -791,8 +791,10 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 	im_desc = cv2.warpPerspective(img2Plot, HInv, (height, width))
 	im_desc2 = cv2.warpPerspective(img1Plot, HBest, (height2, width2))
 
-	im_rec = cv2.cvtColor(im_desc, cv2.COLOR_RGB2GRAY)
-	im_rec2 = cv2.cvtColor(im_desc2, cv2.COLOR_RGB2GRAY)
+	# im_rec = cv2.cvtColor(im_desc, cv2.COLOR_RGB2GRAY)
+	# im_rec2 = cv2.cvtColor(im_desc2, cv2.COLOR_RGB2GRAY)
+	im_rec = im_desc
+	im_rec2 = im_desc2
 
 	scaleFactor = min(width2, height2)
 	Homography_accuracy_norm = Homography_accuracy/scaleFactor*100
@@ -952,23 +954,43 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 			distBest = distMin
 			FBest = F
 			FVBest = FV
+			FUBest = FU
 
 		K += 1
 
-	plt.figure()
-	plt.subplot(1,2,1), plt.imshow(img1Plot)
-	plt.subplot(1,2,2), plt.imshow(img2Plot)
+	epipole1 = FVBest.T[:,-1]
+	epipole1 = epipole1/epipole1[-1]
+	epipole1 = np.round(epipole1,2)
+	TE1 = str(epipole1)
+	print(TE1)
 
-	colors = ['yellow', 'red','gold', 'chartreuse', 'lightseagreen', 
+	epipole2 = FUBest[:,-1]
+	epipole2 = epipole2/epipole2[-1]
+	epipole2 = np.round(epipole2,2)
+	TE2 = str(epipole2)
+	print(TE2)
+
+	plt.figure()
+	plt.suptitle("Epipolar Geometry", fontsize=14)
+	ax1 = plt.subplot(1,2,1)
+	ax1.set_title('First Image', fontsize=14)
+	plt.xlabel('Pixels', fontsize=14)
+	plt.ylabel('Pixels', fontsize=14)
+	ax1.imshow(img1Plot)
+	ax2 = plt.subplot(1,2,2)
+	ax2.set_title('Second Image', fontsize=14)
+	plt.xlabel('Pixels', fontsize=14)
+	plt.ylabel('Pixels', fontsize=14)
+	ax2.imshow(img2Plot)
+
+	colors = ['yellow', 'red','magenta', 'black', 'blue', 
 		  'darkturquoise', 'navy', 'mediumpurple', 'darkorchid', 'white',
-		  'magenta', 'black','coral', 'orange', 'ivory',
-		  'salmon','silver','teal','orchid','plum']
+		  'salmon', 'chartreuse','coral', 'orange', 'ivory',
+		  'gold','silver','teal','orchid','plum']
 
 	for i, j in zip(distBestIdx, range(6)):
 
 		# Finding epipolar line on image 1
-		epipole1 = FVBest.T[:,-1]
-		epipole1 = epipole1/epipole1[-1]
 		epipole_x = np.arange(2*shape[0])
 		epipole_y = ImageA[i,1] + (epipole_x - ImageA[i,0])*(epipole1[1]-ImageA[i,1])/(epipole1[0]-ImageA[i,0])
 
@@ -990,7 +1012,7 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 
 	return fundamentalAccuracyBest, fundAccNorm
 
-def dispMap(Image1, Image2, windowSize, derivative):
+def dispMap(Image1, Image2, windowSize, derivative, T):
 
 	shift = 5
 	# Load images in grayscale
@@ -1014,12 +1036,13 @@ def dispMap(Image1, Image2, windowSize, derivative):
 	disparityMap = np.zeros(img1.shape)
 	depthMap = np.zeros(img1.shape)
 	height, width = img1.shape
-	disparityRange = 16 #int(min(width, height)/10)
+	print(T[0])
+	disparityRange = int(T[0]) + 5 #int(min(width, height)/10)
 
 	# Looping
 	for i in range(height):
-		minH = max(0, i-halfWS)
-		maxH = min(height, i+halfWS)
+		minH = max(0, i-halfWS+ceil(T[1]))
+		maxH = min(height, i+halfWS-ceil(T[1]))
 		for j in range(width):
 			minW = max(0, j-halfWS)
 			maxW = min(width, j+halfWS)
@@ -1034,7 +1057,7 @@ def dispMap(Image1, Image2, windowSize, derivative):
 			# Create a vector to hold the block differences.
 			blockDiffs = np.zeros((numBlocks, 1))
 			for k in range(minD,maxD):
-				block = img1[minH:maxH, minW+k:maxW+k]	
+				block = img1[minH+ceil(T[1]):maxH+ceil(T[1]), minW+k:maxW+k]	
 				blockIndex = k - minD
 				blockDiffs[blockIndex] = np.sum(abs(template - block))
 			bestMatchDisp = np.amin(blockDiffs)

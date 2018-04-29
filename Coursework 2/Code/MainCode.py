@@ -36,12 +36,12 @@ ImplementedOrToolBox = 'Implemented' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
 allDesc = []
-test = Tsukuba
+test = final
 
 #FAST Parameters
 FAST_radius = 3
 FAST_S = 9
-FAST_threshold = 30
+FAST_threshold = 60
 
 #Harris/Shi-Tomasi Parameters
 alpha = 0.04
@@ -89,7 +89,7 @@ K = np.array([[f, 0, ]])
 
 # stereoRectification(test[0], test[1], corrBasePoints, corrTestPoints, T, R, f)
 
-disparityMap, depthMap = dispMap(test[0], im_rec, 5, derivative)
+disparityMap, depthMap = dispMap(test[0], test[1], 5, derivative, T)
 # disparityMap = cv2.applyColorMap(disparityMap, cv2.COLORMAP_JET)
 plt.figure(6)
 plt.subplot(121), plt.imshow(disparityMap, interpolation='nearest', cmap='gray')
@@ -97,22 +97,25 @@ plt.subplot(122), plt.imshow(depthMap, interpolation='nearest', cmap='gray')#, n
 # ax = sns.heatmap(disparityMap, linewidth=0.5)
 plt.colorbar(orientation='horizontal')
 
-X,Y = np.meshgrid(np.arange(depthMap.shape[1]), np.arange(depthMap.shape[0]))
+# X,Y = np.meshgrid(np.arange(depthMap.shape[1]), np.arange(depthMap.shape[0]))
 
-fig = plt.figure(15)
-ax = fig.gca(projection='3d')
-surf = ax.plot_surface(X,Y,depthMap, cmap='gray')# vmin = np.amin(depthMap), vmax = np.amax(depthMap))
-fig2 = plt.figure(16)
-ax2 = fig2.gca(projection='3d')
-scatter = ax2.scatter(X, Y, depthMap, cmap = 'gray')
+# fig = plt.figure(15)
+# ax = fig.gca(projection='3d')
+# surf = ax.plot_surface(X,Y,depthMap, cmap='gray')# vmin = np.amin(depthMap), vmax = np.amax(depthMap))
+# fig2 = plt.figure(16)
+# ax2 = fig2.gca(projection='3d')
+# scatter = ax2.scatter(X, Y, depthMap, cmap = 'gray')
 
-acc_fund, acc_fund_norm = findFundamental(test[0], im_rec, corrBasePoints, corrTestPoints)
+acc_fund, acc_fund_norm = findFundamental(test[0], test[1], corrBasePoints, corrTestPoints)
 
 print('Homography Accuracy = %1.2f' % acc_homog)
 print('Normalised Homography Accuracy = %1.2f' % acc_homog_norm)
 print('Fundamental Accuracy = %1.2f' % acc_fund)
 print('Normalised Fundamental Accuracy = %1.2f' % acc_fund_norm)
 
-acc_fund = findFundamental(test[0], test[1], corrBasePoints, im_rec_points)
+acc_fund_rec, acc_fund_norm_rec = findFundamental(test[0], im_rec, corrBasePoints, im_rec_points)
+
+print('Im Rec Fundamental Accuracy = %1.2f' % acc_fund_rec)
+print('Im Rec Normalised Fundamental Accuracy = %1.2f' % acc_fund_norm_rec)
 
 plt.show()
