@@ -791,10 +791,10 @@ def findHomography(Image1, Image2, ImageA, ImageB, selection):
 	im_desc = cv2.warpPerspective(img2Plot, HInv, (height, width))
 	im_desc2 = cv2.warpPerspective(img1Plot, HBest, (height2, width2))
 
-	# im_rec = cv2.cvtColor(im_desc, cv2.COLOR_RGB2GRAY)
-	# im_rec2 = cv2.cvtColor(im_desc2, cv2.COLOR_RGB2GRAY)
-	im_rec = im_desc
-	im_rec2 = im_desc2
+	im_rec = cv2.cvtColor(im_desc, cv2.COLOR_RGB2GRAY)
+	im_rec2 = cv2.cvtColor(im_desc2, cv2.COLOR_RGB2GRAY)
+	# im_rec = im_desc
+	# im_rec2 = im_desc2
 
 	scaleFactor = min(width2, height2)
 	Homography_accuracy_norm = Homography_accuracy/scaleFactor*100
@@ -1007,8 +1007,10 @@ def findFundamental(Image1, Image2, ImageA, ImageB):
 		plt.plot(Epipolar_x, Epipolar_y, color=colors[j])
 		plt.axis([0, shape[1], shape[0], 0])
 
-	scaleFactor = min(shape[0]/shape2[0], shape[1]/shape2[1])
-	fundAccNorm = fundamentalAccuracyBest/scaleFactor
+	# scaleFactor = min(shape[0]/shape2[0], shape[1]/shape2[1])
+	scaleFactor = min(shape2[0], shape2[1])
+	fundAccNorm = fundamentalAccuracyBest/scaleFactor*100
+
 
 	return fundamentalAccuracyBest, fundAccNorm
 
@@ -1035,20 +1037,26 @@ def dispMap(Image1, Image2, windowSize, derivative, T):
 	halfWS = int((windowSize-1)/2)
 	disparityMap = np.zeros(img1.shape)
 	depthMap = np.zeros(img1.shape)
+	depthMap1 = np.zeros(img1.shape)
 	height, width = img1.shape
-	print(T[0])
-	disparityRange = int(T[0]) + 5 #int(min(width, height)/10)
-
+	disparityRange = 45 #int(min(width, height)/10)
+	CD = int(5)
+	IZ = 1/CD
+	SS = 0.035
+	FL = 0.07
+	IA = 0.05
+	PW = SS/width
+	A = FL * IA / PW
 	# Looping
 	for i in range(height):
-		minH = max(0, i-halfWS+ceil(T[1]))
-		maxH = min(height, i+halfWS-ceil(T[1]))
+		minH = max(0, i-halfWS)
+		maxH = min(height, i+halfWS)
 		for j in range(width):
 			minW = max(0, j-halfWS)
 			maxW = min(width, j+halfWS)
-			minD = max(-disparityRange, -minW)
-			# minD = 0
-			maxD = min(disparityRange, width - maxW)
+			# minD = max(-disparityRange, -minW)
+			minD = max(-1, -minW)
+			maxD = min(-1 + disparityRange, width - maxW)
 			# Select the reference block from img1
 			# template = img1[minW:maxW, minH:maxH]
 			template = img2[minH:maxH, minW:maxW]
@@ -1057,7 +1065,7 @@ def dispMap(Image1, Image2, windowSize, derivative, T):
 			# Create a vector to hold the block differences.
 			blockDiffs = np.zeros((numBlocks, 1))
 			for k in range(minD,maxD):
-				block = img1[minH+ceil(T[1]):maxH+ceil(T[1]), minW+k:maxW+k]	
+				block = img1[minH:maxH, minW+k:maxW+k]	
 				blockIndex = k - minD
 				blockDiffs[blockIndex] = np.sum(abs(template - block))
 			bestMatchDisp = np.amin(blockDiffs)
@@ -1066,27 +1074,29 @@ def dispMap(Image1, Image2, windowSize, derivative, T):
 
 			if bestMatchIdx == 0 or bestMatchIdx == numBlocks - 1:
 				disparityMap[i,j] = bestMatchIdx + minD
-				if disparityMap[i,j] != 0:
-					depthMap[i,j] = 1000/disparityMap[i,j]
 			else:
 				C1 = blockDiffs[bestMatchIdx-1]
 				C2 = bestMatchDisp
 				C3 = blockDiffs[bestMatchIdx+1]
 				disparityMap[i,j] = bestMatchIdx + minD - 0.5*(C3-C1)/(C1-2*C2+C3)
+				#disparityMap[i,j] = -2*disparityMap[i,j] / A
+				#depthMap[i,j] = 1/(IZ - disparityMap[i,j])
+				depthMap[i,j] =20/(disparityMap[i,j] + 2**(-52))
+				depthMap1[i,j] =30/(disparityMap[i,j] + 2**(-52))
 			del blockDiffs
 
 	disparityMapMin = np.amin(disparityMap)
 	disparityMapMax = np.amax(disparityMap)
 
-	for i in range(height):
-		for j in range(width):
-			disparityMap[i,j] = - disparityMapMin + disparityMap[i,j]*3/(disparityMapMax - disparityMapMin)
-			depthMap[i,j] = 15/(disparityMap[i,j])
+	# for i in range(height):
+	# 	for j in range(width):
+	# 		disparityMap[i,j] = - disparityMapMin + disparityMap[i,j]*3/(disparityMapMax - disparityMapMin)
+	# 		depthMap[i,j] = 15/(disparityMap[i,j])
 
 	print(np.amin(disparityMap), np.amax(disparityMap))	
 	print(np.amin(depthMap), np.amax(depthMap))
 
-	return disparityMap, depthMap
+	return disparityMap, depthMap, depthMap1
 
 def stereoRectification(Image1, Image2, ImageA, ImageB, T0, R, f):
 

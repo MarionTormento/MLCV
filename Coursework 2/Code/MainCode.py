@@ -36,7 +36,7 @@ ImplementedOrToolBox = 'Implemented' #'Implemented' or 'ToolBox'
 allIntensity = []
 allPoints = []
 allDesc = []
-test = final
+test = final 
 
 #FAST Parameters
 FAST_radius = 3
@@ -85,17 +85,105 @@ T = np.asarray([T])
 T = T.T
 # R = np.eye(3)
 f = 1
-K = np.array([[f, 0, ]])
+K = np.array([[f, 0, ]]) 
 
 # stereoRectification(test[0], test[1], corrBasePoints, corrTestPoints, T, R, f)
 
-disparityMap, depthMap = dispMap(test[0], test[1], 5, derivative, T)
+disparityMap, depthMap, depthMap1 = dispMap(test[1], test[0], 7, derivative, T)
 # disparityMap = cv2.applyColorMap(disparityMap, cv2.COLORMAP_JET)
-plt.figure(6)
-plt.subplot(121), plt.imshow(disparityMap, interpolation='nearest', cmap='gray')
-plt.subplot(122), plt.imshow(depthMap, interpolation='nearest', cmap='gray')#, norm=NoNorm())
-# ax = sns.heatmap(disparityMap, linewidth=0.5)
-plt.colorbar(orientation='horizontal')
+
+# plt.figure(10)
+# stereo = cv2.createStereoBM(numDisparities=16, blockSize=15)
+# disparity = stereo.compute(allIntensity[0], allIntensity[1])
+# plt.imshow(disparity,'gray')
+# plt.show()
+
+# Define the gaussian window of size shift x shift
+shift = 5
+sigma = 1.6*shift
+m0 = -(shift-1)/2
+m = []
+n = []
+for i in range(0, shift):
+	m.append(m0+i)
+for i in range(0,shift-1):
+	n.append(m0+i)
+h1, h2 = np.meshgrid(m,n)
+gauss = np.exp(-(h1 ** 2 + h2 ** 2)/(2*sigma**2))
+sumtot = np.sum(gauss)
+gauss = gauss/sumtot
+
+# Convolution of the Intensity matrix and the gaussian window
+disparityGauss = signal.convolve2d(disparityMap, gauss, 'same')
+width, height = disparityGauss.shape
+disparityMapMin = np.amin(disparityGauss)
+disparityMapMax = np.amax(disparityGauss)
+depthGauss = np.zeros(disparityGauss.shape)
+
+for i in range(height):
+	for j in range(width):
+		# disparityGauss[j,i] = - disparityMapMin + disparityGauss[j,i]*3/(disparityMapMax - disparityMapMin)
+		depthGauss[j,i] = 20/disparityGauss[j,i]
+
+disparityMapMin = np.amin(disparityMap)
+disparityMapMax = np.amax(disparityMap)
+bounds = range(disparityMapMin, disparityMapMax, (disparityMapMax-disparityMapMin)//5)
+disparityMapMin1 = np.amin(depthMap)
+disparityMapMax1 = np.amax(depthMap)
+bounds1 = range(disparityMapMin1, disparityMapMax1, (disparityMapMax1-disparityMapMin1)//5)
+disparityMapMin3 = np.amin(depthGauss)
+disparityMapMax3 = np.amax(depthGauss)
+bounds3 = range(disparityMapMin3, disparityMapMax3, (disparityMapMax3-disparityMapMin3)//5)
+disparityMapMin2 = np.amin(depthMap1)
+disparityMapMax2 = np.amax(depthMap1)
+bounds2 = range(disparityMapMin2, disparityMapMax2, (disparityMapMax2-disparityMapMin2)//5)
+
+fig11 = plt.figure()
+plt.suptitle('Depth and Disparity', fontsize=12)
+
+ax1 = plt.subplot(221)
+ax1.set_title('Disparity Map', fontsize=12)
+im1 = ax1.imshow(disparityMap, interpolation='nearest', cmap='gray')
+CB1 = fig11.colorbar(im1, orientation='horizontal', ticks=bounds, spacing='uniform')
+CB1.set_label('Distance (pixels)', fontsize=12)
+plt.xlabel('Pixels', fontsize=12)
+plt.ylabel('Pixels', fontsize=12)
+ax2 = plt.subplot(222)
+ax2.set_title('Depth Map', fontsize=12)
+im2 = ax2.imshow(depthMap, interpolation='nearest', cmap='gray', norm=NoNorm())
+CB2 = fig11.colorbar(im2, orientation='horizontal', ticks=bounds1, spacing='uniform')
+CB2.set_label('Distance (cm)', fontsize=12)
+plt.xlabel('Pixels', fontsize=12)
+plt.ylabel('Pixels', fontsize=12)
+ax3 = plt.subplot(223)
+ax3.set_title('Disparity Map (Focal Increase)', fontsize=12)
+im3 = ax3.imshow(depthMap1, interpolation='nearest', cmap='gray', norm=NoNorm())
+CB3 = fig11.colorbar(im3, orientation='horizontal', ticks=bounds2, spacing='uniform')
+plt.xlabel('Pixels', fontsize=12)
+plt.ylabel('Pixels', fontsize=12)
+ax4 = plt.subplot(224)
+ax4.set_title('Depth Map (Noisey)', fontsize=12)
+im4 = ax4.imshow(depthGauss, interpolation='nearest', cmap='gray', norm=NoNorm())
+CB4 = fig11.colorbar(im4, orientation='horizontal', ticks=bounds3, spacing='uniform')
+CB4.set_label('Distance (cm)', fontsize=12)
+plt.xlabel('Pixels', fontsize=12)
+plt.ylabel('Pixels', fontsize=12)
+
+fig22 = plt.figure()
+plt.suptitle('Disparity and depth ', fontsize=12)
+
+ax3 = plt.subplot(121)
+ax3.set_title('Disparity Map (Noisey)', fontsize=12)
+im3 = ax3.imshow(disparityGauss, interpolation='nearest', cmap='gray')
+fig22.colorbar(im3, orientation='horizontal')
+plt.xlabel('Pixels', fontsize=12)
+plt.ylabel('Pixels', fontsize=12)
+ax4 = plt.subplot(122)
+ax4.set_title('Depth Map (Noisey)', fontsize=12)
+im4 = ax4.imshow(depthGauss, interpolation='nearest', cmap='gray', norm=NoNorm())
+fig22.colorbar(im4, orientation='horizontal')
+plt.xlabel('Pixels', fontsize=12)
+plt.ylabel('Pixels', fontsize=12)
 
 # X,Y = np.meshgrid(np.arange(depthMap.shape[1]), np.arange(depthMap.shape[0]))
 
