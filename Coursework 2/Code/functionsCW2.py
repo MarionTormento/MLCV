@@ -1040,7 +1040,6 @@ def dispMap(Image1, Image2, windowSize, derivative, T):
 	depthMap = np.zeros(img1.shape)
 	depthMap1 = np.zeros(img1.shape)
 	height, width = img1.shape
-<<<<<<< HEAD
 	disparityRange = 45 #int(min(width, height)/10)
 	CD = int(5)
 	IZ = 1/CD
@@ -1049,10 +1048,8 @@ def dispMap(Image1, Image2, windowSize, derivative, T):
 	IA = 0.05
 	PW = SS/width
 	A = FL * IA / PW
-=======
 	disparityRange = int(T[0]) #int(min(width, height)/10)
 
->>>>>>> 7c64695a0e5ef0b852b3330129ac5850df9be582
 	# Looping
 	for i in range(height):
 		minH = max(0, i-halfWS)
