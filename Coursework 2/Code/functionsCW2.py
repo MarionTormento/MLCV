@@ -1024,6 +1024,7 @@ def dispMap(Image1, Image2, windowSize, derivative, T):
 		img2 = np.asarray(img2)
 	except:
 		img2 = Image2
+		img2 = cv2.cvtColor(img2,cv2.COLOR_RGB2GRAY)
 
 	if derivative == 'Yes':
 		Ix1, Iy1 = derivatives(img1, shift, 0)
@@ -1036,13 +1037,12 @@ def dispMap(Image1, Image2, windowSize, derivative, T):
 	disparityMap = np.zeros(img1.shape)
 	depthMap = np.zeros(img1.shape)
 	height, width = img1.shape
-	print(T[0])
-	disparityRange = int(T[0]) + 5 #int(min(width, height)/10)
+	disparityRange = int(T[0]) #int(min(width, height)/10)
 
 	# Looping
 	for i in range(height):
-		minH = max(0, i-halfWS+ceil(T[1]))
-		maxH = min(height, i+halfWS-ceil(T[1]))
+		minH = max(0, i-halfWS)
+		maxH = min(height, i+halfWS)
 		for j in range(width):
 			minW = max(0, j-halfWS)
 			maxW = min(width, j+halfWS)
@@ -1057,7 +1057,7 @@ def dispMap(Image1, Image2, windowSize, derivative, T):
 			# Create a vector to hold the block differences.
 			blockDiffs = np.zeros((numBlocks, 1))
 			for k in range(minD,maxD):
-				block = img1[minH+ceil(T[1]):maxH+ceil(T[1]), minW+k:maxW+k]	
+				block = img1[minH:maxH, minW+k:maxW+k]	
 				blockIndex = k - minD
 				blockDiffs[blockIndex] = np.sum(abs(template - block))
 			bestMatchDisp = np.amin(blockDiffs)
@@ -1066,8 +1066,6 @@ def dispMap(Image1, Image2, windowSize, derivative, T):
 
 			if bestMatchIdx == 0 or bestMatchIdx == numBlocks - 1:
 				disparityMap[i,j] = bestMatchIdx + minD
-				if disparityMap[i,j] != 0:
-					depthMap[i,j] = 1000/disparityMap[i,j]
 			else:
 				C1 = blockDiffs[bestMatchIdx-1]
 				C2 = bestMatchDisp
@@ -1080,8 +1078,8 @@ def dispMap(Image1, Image2, windowSize, derivative, T):
 
 	for i in range(height):
 		for j in range(width):
-			disparityMap[i,j] = - disparityMapMin + disparityMap[i,j]*3/(disparityMapMax - disparityMapMin)
-			depthMap[i,j] = 15/(disparityMap[i,j])
+			disparityMap[i,j] = - disparityMapMin + disparityMap[i,j]*6/(disparityMapMax - disparityMapMin)
+			depthMap[i,j] = 30/(disparityMap[i,j])
 
 	print(np.amin(disparityMap), np.amax(disparityMap))	
 	print(np.amin(depthMap), np.amax(depthMap))
