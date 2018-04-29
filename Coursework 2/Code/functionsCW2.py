@@ -1026,6 +1026,7 @@ def dispMap(Image1, Image2, windowSize, derivative, T):
 		img2 = np.asarray(img2)
 	except:
 		img2 = Image2
+		img2 = cv2.cvtColor(img2,cv2.COLOR_RGB2GRAY)
 
 	if derivative == 'Yes':
 		Ix1, Iy1 = derivatives(img1, shift, 0)
@@ -1039,6 +1040,7 @@ def dispMap(Image1, Image2, windowSize, derivative, T):
 	depthMap = np.zeros(img1.shape)
 	depthMap1 = np.zeros(img1.shape)
 	height, width = img1.shape
+<<<<<<< HEAD
 	disparityRange = 45 #int(min(width, height)/10)
 	CD = int(5)
 	IZ = 1/CD
@@ -1047,6 +1049,10 @@ def dispMap(Image1, Image2, windowSize, derivative, T):
 	IA = 0.05
 	PW = SS/width
 	A = FL * IA / PW
+=======
+	disparityRange = int(T[0]) #int(min(width, height)/10)
+
+>>>>>>> 7c64695a0e5ef0b852b3330129ac5850df9be582
 	# Looping
 	for i in range(height):
 		minH = max(0, i-halfWS)
@@ -1088,10 +1094,17 @@ def dispMap(Image1, Image2, windowSize, derivative, T):
 	disparityMapMin = np.amin(disparityMap)
 	disparityMapMax = np.amax(disparityMap)
 
+<<<<<<< HEAD
 	# for i in range(height):
 	# 	for j in range(width):
 	# 		disparityMap[i,j] = - disparityMapMin + disparityMap[i,j]*3/(disparityMapMax - disparityMapMin)
 	# 		depthMap[i,j] = 15/(disparityMap[i,j])
+=======
+	for i in range(height):
+		for j in range(width):
+			disparityMap[i,j] = - disparityMapMin + disparityMap[i,j]*6/(disparityMapMax - disparityMapMin)
+			depthMap[i,j] = 30/(disparityMap[i,j])
+>>>>>>> 7c64695a0e5ef0b852b3330129ac5850df9be582
 
 	print(np.amin(disparityMap), np.amax(disparityMap))	
 	print(np.amin(depthMap), np.amax(depthMap))

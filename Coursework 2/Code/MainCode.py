@@ -89,6 +89,7 @@ K = np.array([[f, 0, ]])
 
 # stereoRectification(test[0], test[1], corrBasePoints, corrTestPoints, T, R, f)
 
+<<<<<<< HEAD
 disparityMap, depthMap, depthMap1 = dispMap(test[1], test[0], 7, derivative, T)
 # disparityMap = cv2.applyColorMap(disparityMap, cv2.COLORMAP_JET)
 
@@ -185,11 +186,11 @@ fig22.colorbar(im4, orientation='horizontal')
 plt.xlabel('Pixels', fontsize=12)
 plt.ylabel('Pixels', fontsize=12)
 
-# X,Y = np.meshgrid(np.arange(depthMap.shape[1]), np.arange(depthMap.shape[0]))
+X,Y = np.meshgrid(np.arange(depthMap.shape[1]), np.arange(depthMap.shape[0]))
 
-# fig = plt.figure(15)
-# ax = fig.gca(projection='3d')
-# surf = ax.plot_surface(X,Y,depthMap, cmap='gray')# vmin = np.amin(depthMap), vmax = np.amax(depthMap))
+fig = plt.figure(15)
+ax = fig.gca(projection='3d')
+surf = ax.plot_surface(X,Y,depthMap, cmap='gray')# vmin = np.amin(depthMap), vmax = np.amax(depthMap))
 # fig2 = plt.figure(16)
 # ax2 = fig2.gca(projection='3d')
 # scatter = ax2.scatter(X, Y, depthMap, cmap = 'gray')
